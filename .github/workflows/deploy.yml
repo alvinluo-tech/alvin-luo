@@ -1,0 +1,76 @@
+# 部署到 GitHub Pages
+# 两种模式（自动适配）：
+#   A. 仓库名 = 你的自定义域名（如 alvin-luo.me）：
+#      仓库根放一个 CNAME 文件（内容就是域名），basePath 自动留空，
+#      站点落在 https://alvin-luo.me 根路径
+#   B. 普通项目仓库名（如 personal-website）：
+#      站点落在 https://<用户名>.github.io/<仓库名>/，basePath 自动取仓库名
+# 前置：仓库 Settings → Pages → Build and deployment → Source 选择 “GitHub Actions”
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # basePath 自动判断：用户主站仓库（*.github.io）或带 CNAME 的仓库 → 留空；
+      # 其余项目仓库 → /仓库名
+      - name: Compute basePath
+        id: basepath
+        run: |
+          NAME="${{ github.event.repository.name }}"
+          if [[ "$NAME" == *.github.io ]] || [ -f CNAME ]; then
+            echo "value=" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=/$NAME" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 注入 basePath + 静态导出开关（静态模式没有 /api 代理，NOW PLAYING 走降级）
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.basepath.outputs.value }}
+          BUILD_STATIC: "1"
+
+      # 自定义域名：仓库根的 CNAME 文件原样带进产物
+      - name: Copy CNAME
+        if: hashFiles('CNAME') != ''
+        run: cp CNAME out/CNAME
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
