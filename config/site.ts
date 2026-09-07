@@ -13,6 +13,12 @@ export const GITHUB_URL = `https://github.com/${GITHUB_USER}`;
 /** 联系邮箱 —— Bento 的 SAY HELLO 瓷砖 */
 export const EMAIL = "luoyaosheng123@gmail.com";
 
+/** 导航活态指示器：你的所在城市与时区（访客看到的时钟以你为准） */
+export const LIVE_STATUS = {
+  city: "DURHAM",
+  timeZone: "Europe/London",
+};
+
 /** 网易云 NOW PLAYING 数据源（netease-now-playing 项目部署后的地址）
  *  base 和 key 都填上才启用；留空则音乐瓷砖整体隐藏 */
 export const NETEASE_API = {
@@ -33,6 +39,8 @@ export type Project = {
   repo?: string;
   /** 封面花纹样式：dots / lines / grid / waves */
   art: "dots" | "lines" | "grid" | "waves";
+  /** 架构 X-Ray：底层技术栈链路（UI → 逻辑 → 存储 → 平台） */
+  arch?: string[];
 };
 
 export const PROJECTS: Project[] = [
@@ -47,6 +55,8 @@ export const PROJECTS: Project[] = [
     demo: "#",
     repo: "#",
     art: "dots",
+
+    arch: ["Next.js UI", "Server Actions", "Postgres", "Vercel Edge"],
   },
   {
     id: "p2",
@@ -58,6 +68,8 @@ export const PROJECTS: Project[] = [
     demo: "#",
     repo: "#",
     art: "lines",
+
+    arch: ["Canvas 2D", "requestAnimationFrame", "Pointer Events", "Zero deps"],
   },
   {
     id: "p3",
@@ -68,6 +80,8 @@ export const PROJECTS: Project[] = [
     tags: ["Python", "爬虫"],
     repo: "#",
     art: "grid",
+
+    arch: ["Python ETL", "Pandas", "scikit-learn", "Matplotlib"],
   },
   {
     id: "p4",
@@ -78,5 +92,7 @@ export const PROJECTS: Project[] = [
     tags: ["CLI", "工具"],
     repo: "#",
     art: "waves",
+
+    arch: ["CLI (Rust)", "clap", "Files & Pipes", "Cross-platform"],
   },
 ];

@@ -205,8 +205,13 @@ export default function Travel() {
         <div className="travel-track" ref={trackRef}>
           {FILM.map((item) =>
             item.kind === "chapter" ? (
-              /* 章节分隔卡：同一国家连续多站 */
-              <figure className="postcard postcard-chapter" key={item.key}>
+              /* 章节分隔卡：同一国家连续多站（点击筛选该国家足迹） */
+              <Link
+                href={`/travel?country=${encodeURIComponent(item.country)}`}
+                className="postcard postcard-chapter postcard-link"
+                key={item.key}
+                title={pick(locale, `View all ${item.country} stops in archive`, `在归档中查看${item.country}所有足迹`)}
+              >
                 <div className="chapter-inner">
                   <span className="chapter-label">CHAPTER</span>
                   <b>
@@ -217,12 +222,18 @@ export default function Travel() {
                     )}
                   </b>
                   <span className="chapter-count">
-                    <T en={`${item.count} stops`} zh={`${item.count} 站`} />
+                    <T en={`${item.count} stops →`} zh={`${item.count} 站 →`} />
                   </span>
                 </div>
-              </figure>
+              </Link>
             ) : (
-              <figure className="postcard" key={item.key}>
+              /* 明信片照片卡片：点击直达 /travel 地图聚焦 + 相册卡片高亮 */
+              <Link
+                href={`/travel?stop=${item.trip.img}`}
+                className="postcard postcard-link"
+                key={item.key}
+                title={pick(locale, `Explore ${item.trip.place} on map & stories`, `在足迹地图与相册中查看 ${item.trip.place}`)}
+              >
                 <div className="postcard-photo">
                   {failed[item.trip.img] ? (
                     <div className="photo-placeholder">
@@ -263,6 +274,9 @@ export default function Travel() {
                   )}
                   <span className="postcard-no">N°{item.trip.img}</span>
                   <span className="country-chip">{countryLabel(item.trip, locale)}</span>
+                  <span className="postcard-explore-hint">
+                    {locale === "en" ? "EXPLORE ↗" : "探索本站 ↗"}
+                  </span>
                 </div>
                 <figcaption>
                   <b>{item.trip.place}</b>
@@ -274,12 +288,16 @@ export default function Travel() {
                     />
                   </span>
                 </figcaption>
-              </figure>
+              </Link>
             ),
           )}
 
-          {/* 叙事收尾：下一站 */}
-          <figure className="postcard postcard-next">
+          {/* 叙事收尾：下一站（点击直接进入全量足迹地图） */}
+          <Link
+            href="/travel"
+            className="postcard postcard-next postcard-link"
+            title={locale === "en" ? "Explore full travel map" : "查看全部足迹地图"}
+          >
             <div className="next-inner">
               <span className="plane-big" aria-hidden="true">
                 ✈
@@ -287,9 +305,9 @@ export default function Travel() {
               <b>
                 <T en="Next stop?" zh="下一站？" />
               </b>
-              <span>TO BE CONTINUED</span>
+              <span>ALL FOOTPRINTS →</span>
             </div>
-          </figure>
+          </Link>
         </div>
 
         {/* 胶片进度条 + 站数计数 */}

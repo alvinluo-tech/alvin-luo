@@ -3037,3 +3037,1452 @@ a {
   top: 46px;
   left: 14px;
 }
+
+/* ================= 「策展画廊 + 极客彩蛋」批次 ================= */
+
+/* ---- 工程制图装饰层：四角刻度与准星（低调到 4%） ---- */
+
+.blueprint {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  color: var(--ink);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.blueprint .bp {
+  position: absolute;
+  opacity: 0.14;
+}
+
+.blueprint .bp::before {
+  content: "+";
+  margin-right: 0.5em;
+  opacity: 0.7;
+}
+
+.blueprint .tl { top: 10px; left: 12px; }
+.blueprint .tr { top: 10px; right: 12px; }
+.blueprint .bl { bottom: 10px; left: 12px; }
+.blueprint .br { bottom: 10px; right: 12px; }
+
+/* 顶边与左边刻度尺 */
+.blueprint::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 39px,
+    color-mix(in srgb, var(--ink) 22%, transparent) 39px,
+    color-mix(in srgb, var(--ink) 22%, transparent) 40px
+  );
+  opacity: 0.35;
+}
+
+.blueprint::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 7px;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent,
+    transparent 39px,
+    color-mix(in srgb, var(--ink) 22%, transparent) 39px,
+    color-mix(in srgb, var(--ink) 22%, transparent) 40px
+  );
+  opacity: 0.35;
+}
+
+/* ---- WANDERLUST 瓷砖：首页的旅行引子 ---- */
+
+.tile-travel {
+  grid-column: span 12;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 1.4rem;
+}
+
+.wt-photo {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  flex: none;
+  border-radius: 16px;
+  border: 1.5px solid var(--ink);
+  background:
+    radial-gradient(120px 90px at 30% 20%, color-mix(in srgb, var(--lime) 30%, transparent), transparent 70%),
+    var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transform: rotate(-2.4deg);
+  transition: transform var(--dur) var(--ease);
+}
+
+.tile-travel:hover .wt-photo {
+  transform: rotate(0deg) scale(1.03);
+}
+
+.wt-cover {
+  font-size: 3rem;
+}
+
+.wt-stamp {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 74px;
+  height: 74px;
+  border: 2px dashed var(--ink);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(8deg);
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.wt-stamp small {
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+}
+
+.wt-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.wt-latest {
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.wt-latest span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--grey);
+  margin-top: 0.2rem;
+}
+
+.wt-cta {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--grey);
+  transition: color var(--dur) var(--ease);
+}
+
+.tile-travel:hover .wt-cta {
+  color: var(--ink);
+}
+
+/* ---- 极客终端 ---- */
+
+.tile-term {
+  grid-column: span 5;
+  min-height: 0;
+}
+
+.term-body {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.76rem;
+  line-height: 1.65;
+  min-height: 150px;
+  max-height: 210px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.term-in {
+  color: var(--lime);
+}
+
+.term-ok {
+  color: color-mix(in srgb, var(--paper) 80%, var(--lime));
+}
+
+.term-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  padding: 0.4rem 0.75rem;
+  background: var(--paper);
+}
+
+.term-prompt {
+  color: var(--grey);
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+}
+
+.term-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--ink);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+/* ---- 3D 书架 ---- */
+
+.tile-books {
+  grid-column: span 7;
+}
+
+.shelf-scene {
+  perspective: 900px;
+  padding-top: 0.6rem;
+}
+
+.shelf-row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 0 0.4rem 14px;
+  border-bottom: 3px solid var(--ink);
+}
+
+.book {
+  position: relative;
+  flex: 1;
+  max-width: 96px;
+  cursor: pointer;
+  outline: none;
+}
+
+.book-spine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 148px;
+  border-radius: 4px 8px 8px 4px;
+  border: 1.5px solid var(--ink);
+  box-shadow: inset -6px 0 10px -6px rgba(0, 0, 0, 0.45);
+  transform: rotateY(-24deg);
+  transform-origin: left center;
+  transition: transform var(--dur) var(--ease);
+}
+
+.book:hover .book-spine,
+.book:focus-visible .book-spine {
+  transform: rotateY(-6deg) translateY(-12px) translateZ(26px);
+}
+
+.book-title {
+  writing-mode: vertical-rl;
+  color: var(--paper);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  max-height: 130px;
+  overflow: hidden;
+}
+
+.book-note {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%) translateY(6px);
+  width: 190px;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 6px 8px 20px -12px color-mix(in srgb, var(--ink) 55%, transparent);
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  z-index: 5;
+}
+
+.book:hover .book-note,
+.book:focus-visible .book-note {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.book-note b {
+  font-size: 0.8rem;
+}
+
+.book-note i {
+  font-style: normal;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--grey);
+}
+
+.book-note em {
+  font-style: normal;
+  color: color-mix(in srgb, var(--ink) 62%, var(--lime));
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+}
+
+/* ---- ABOUT：伦敦时钟 + 拍立得 ---- */
+
+.london-clock {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--grey);
+  margin-bottom: 0.7rem;
+}
+
+.london-clock b {
+  color: var(--ink);
+}
+
+.lc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+.lc-status .cn {
+  letter-spacing: 0.03em;
+}
+
+/* 拍立得：打破网格的手作感（hover 摆正放大） */
+
+.polaroid {
+  position: absolute;
+  right: 1.1rem;
+  bottom: 1rem;
+  width: 118px;
+  padding: 7px 7px 24px;
+  background: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
+  box-shadow: 6px 10px 22px -12px color-mix(in srgb, var(--ink) 55%, transparent);
+  transform: rotate(4deg);
+  transition: transform var(--dur) var(--ease);
+  z-index: 2;
+}
+
+.tile-about {
+  position: relative;
+  overflow: visible;
+}
+
+.polaroid:hover {
+  transform: rotate(0deg) scale(1.08);
+  z-index: 6;
+}
+
+.washi {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 64px;
+  height: 20px;
+  transform: translateX(-50%) rotate(-3deg);
+  background: color-mix(in srgb, var(--lime) 55%, transparent);
+  border-left: 1px dashed color-mix(in srgb, var(--ink) 20%, transparent);
+  border-right: 1px dashed color-mix(in srgb, var(--ink) 20%, transparent);
+}
+
+.polaroid-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  font-size: 2.6rem;
+  background:
+    radial-gradient(90px 60px at 70% 25%, color-mix(in srgb, var(--lime) 30%, transparent), transparent 70%),
+    linear-gradient(160deg, color-mix(in srgb, var(--ink) 12%, transparent), color-mix(in srgb, var(--ink) 4%, transparent));
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+}
+
+.polaroid-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  text-align: center;
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--grey);
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+/* ---- NOW PLAYING 黑胶：播放时唱片旋转 ---- */
+
+.np-cover {
+  border-radius: 50%;
+  position: relative;
+  flex: none;
+}
+
+.np-cover::after {
+  /* 唱片纹路 */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle at 50% 50%,
+    transparent,
+    transparent 3px,
+    color-mix(in srgb, var(--ink) 14%, transparent) 3px,
+    color-mix(in srgb, var(--ink) 14%, transparent) 4px
+  );
+  pointer-events: none;
+}
+
+.np-cover::before {
+  /* 主轴孔 */
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--paper);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+}
+
+.band-np.is-playing .np-cover {
+  animation: vinyl 3.2s linear infinite;
+}
+
+@keyframes vinyl {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .band-np.is-playing .np-cover {
+    animation: none;
+  }
+}
+
+/* ---- Projects 架构 X-Ray ---- */
+
+.project-cover-wrap {
+  position: relative;
+}
+
+.project-cover .cover-xray {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s var(--ease);
+}
+
+.cover-xray.is-open {
+  opacity: 1;
+}
+
+.xray-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--lime);
+}
+
+.xray-node {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.xray-arrow {
+  color: var(--lime);
+  font-weight: 800;
+}
+
+.xray-chip {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--lime) 60%, transparent);
+  border-radius: 8px;
+  padding: 0.25em 0.8em;
+  background: color-mix(in srgb, var(--lime) 10%, transparent);
+}
+
+.xray-btn {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 5;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  padding: 0.45em 1em;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.xray-btn:hover,
+.xray-btn.is-on {
+  background: var(--lime);
+}
+
+/* ---- /travel 上的城市脉冲导航条 ---- */
+
+.city-strip {
+  margin-top: 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem 1.4rem;
+  padding: 0.9rem 1.2rem;
+  border: 1.5px dashed color-mix(in srgb, var(--ink) 40%, transparent);
+  border-radius: 16px;
+}
+
+.city {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  font-family: var(--font);
+}
+
+.city-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lime);
+  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+.city:nth-child(2n) .city-dot {
+  animation-delay: 0.5s;
+}
+
+.city:nth-child(3n) .city-dot {
+  animation-delay: 1s;
+}
+
+.city-name {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--grey);
+  transition: color var(--dur) var(--ease);
+}
+
+.city:hover .city-name {
+  color: var(--ink);
+}
+
+/* ---- 归档页在胶片下方：给归档头部留出衔接 ---- */
+
+.archive .archive-head {
+  padding-top: 1rem;
+}
+
+/* ================= TERMINAL 终端彩蛋（恒暗屏，两种主题下都是终端本相） ================= */
+
+.tile-term {
+  background: #0d100a;
+  color: #cde3a1;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+}
+
+.tile-term .tile-title {
+  color: #8a9179;
+}
+
+.tile-term .tile-title::before {
+  outline-color: rgba(205, 227, 161, 0.3);
+}
+
+.term-body {
+  height: 190px;
+  overflow-y: auto;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  scrollbar-width: none;
+}
+
+.term-body::-webkit-scrollbar {
+  display: none;
+}
+
+.term-body p {
+  white-space: pre-wrap;
+}
+
+.term-in {
+  color: #e9f5d0;
+  font-weight: 700;
+}
+
+.term-ok {
+  color: #9fdc5a;
+}
+
+.term-input {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(205, 227, 161, 0.18);
+}
+
+.term-prompt {
+  color: var(--lime);
+  font-weight: 800;
+}
+
+.term-input input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e9f5d0;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.term-input input::placeholder {
+  color: #5f6650;
+}
+
+/* ================= 足迹地图（WorldMap — 离线 SVG 矢量投影） ================= */
+
+.archive-map {
+  margin-bottom: 3.5rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .archive-map {
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.worldmap-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+  background: var(--panel);
+}
+
+/* 顶部状态条 HUD */
+.worldmap-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.4rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--grey);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .worldmap-hud {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.worldmap-hud-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.hud-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 8px var(--lime);
+  animation: radarBlink 1.8s ease-in-out infinite;
+}
+
+@keyframes radarBlink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.hud-title {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.12em;
+}
+
+.worldmap-hud-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+}
+
+.hud-sep {
+  opacity: 0.35;
+}
+
+.hud-base {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+/* 矢量地图包裹器与 SVG 渲染 */
+.worldmap-canvas-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 960 / 480;
+  overflow: hidden;
+  background: radial-gradient(circle at 60% 45%, rgba(163, 230, 53, 0.04) 0%, transparent 65%);
+}
+
+.worldmap-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 地球外轮廓 */
+.geo-sphere {
+  fill: transparent;
+  stroke: rgba(16, 20, 0, 0.15);
+  stroke-width: 1px;
+  stroke-dasharray: 3 6;
+  opacity: 0.7;
+}
+
+[data-theme="dark"] .geo-sphere {
+  stroke: rgba(240, 240, 230, 0.15);
+}
+
+/* 经纬度网格线 */
+.geo-graticule {
+  fill: none;
+  stroke: rgba(16, 20, 0, 0.08);
+  stroke-width: 0.6px;
+}
+
+[data-theme="dark"] .geo-graticule {
+  stroke: rgba(240, 240, 230, 0.08);
+}
+
+/* 国家基础多边形 */
+.geo-country {
+  fill: rgba(16, 20, 0, 0.05);
+  stroke: rgba(16, 20, 0, 0.12);
+  stroke-width: 0.65px;
+  transition: fill 0.25s ease, stroke 0.25s ease;
+}
+
+[data-theme="dark"] .geo-country {
+  fill: rgba(240, 240, 230, 0.05);
+  stroke: rgba(240, 240, 230, 0.1);
+}
+
+/* 访问过的国家高亮 */
+.geo-country.is-visited {
+  fill: rgba(163, 230, 53, 0.16);
+  stroke: var(--lime);
+  stroke-width: 1.15px;
+  cursor: pointer;
+  filter: drop-shadow(0 0 4px rgba(163, 230, 53, 0.25));
+}
+
+[data-theme="light"] .geo-country.is-visited {
+  fill: rgba(163, 230, 53, 0.28);
+  stroke: #65a30d;
+  filter: drop-shadow(0 0 3px rgba(101, 163, 13, 0.2));
+}
+
+.geo-country.is-visited:hover {
+  fill: rgba(163, 230, 53, 0.38);
+  stroke: var(--ink);
+  stroke-width: 1.4px;
+}
+
+/* 航线大圆轨迹虚线流动 */
+.geo-flight-path {
+  fill: none;
+  stroke: url(#flightGradient);
+  stroke-width: 1.6px;
+  stroke-linecap: round;
+  stroke-dasharray: 5 7;
+  animation: flightDash 24s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(163, 230, 53, 0.6));
+  pointer-events: none;
+}
+
+[data-theme="light"] .geo-flight-path {
+  stroke: #65a30d;
+  filter: drop-shadow(0 0 2px rgba(101, 163, 13, 0.35));
+}
+
+@keyframes flightDash {
+  to {
+    stroke-dashoffset: -200;
+  }
+}
+
+/* ---- 缩放交互光标与画布容器 ---- */
+.worldmap-svg.is-zoomable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.worldmap-svg.is-zoomable:active {
+  cursor: grabbing;
+}
+
+/* 城市足迹标点（SVG 底标） */
+.geo-pin {
+  pointer-events: none;
+}
+
+.pin-radar {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 1.6px;
+  animation: radarWave 2.4s cubic-bezier(0.15, 0.8, 0.25, 1) infinite;
+}
+
+@keyframes radarWave {
+  0% { r: 3; opacity: 1; }
+  100% { r: 16; opacity: 0; }
+}
+
+.pin-outer {
+  fill: rgba(163, 230, 53, 0.35);
+  stroke: var(--lime);
+  stroke-width: 1.4px;
+}
+
+.pin-center {
+  fill: #ffffff;
+}
+
+[data-theme="light"] .pin-center {
+  fill: #101400;
+}
+
+/* 英国杜伦 Base 标点 */
+.geo-pin.is-base .base-radar {
+  stroke: #38bdf8;
+}
+
+.geo-pin.is-base .base-ring {
+  fill: rgba(56, 189, 248, 0.25);
+  stroke: #38bdf8;
+  stroke-width: 1.5px;
+  stroke-dasharray: 2 2;
+  animation: spinBase 12s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes spinBase {
+  to { transform: rotate(360deg); }
+}
+
+.geo-pin.is-base .base-dot {
+  fill: #38bdf8;
+}
+
+.pin-text-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 8px;
+  font-weight: 800;
+  fill: #38bdf8;
+  letter-spacing: 0.08em;
+  text-anchor: middle;
+}
+
+/* ================= 拟物堆叠拍立得相册（Stacked Polaroids） ================= */
+
+.worldmap-html-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.photo-stack-anchor {
+  position: absolute;
+  pointer-events: auto;
+  transform-origin: center bottom;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 5;
+}
+
+.photo-stack-anchor.is-active,
+.photo-stack-anchor:hover {
+  z-index: 40;
+}
+
+.photo-stack {
+  position: relative;
+  width: 58px;
+  height: 68px;
+  transform: translate(-50%, calc(-100% - 6px));
+  cursor: pointer;
+  perspective: 600px;
+}
+
+/* 单张拍立得卡片基类 */
+.stack-card {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 4px 4px 5px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.38s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.38s ease;
+  transform-origin: center bottom;
+  backface-visibility: hidden;
+}
+
+[data-theme="dark"] .stack-card {
+  background: #f5f5ee;
+  color: #12140e;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 和纸胶带贴纸（顶部手作质感） */
+.card-washi {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 8px;
+  background: rgba(210, 255, 0, 0.75);
+  border-left: 1px dashed rgba(0, 0, 0, 0.15);
+  border-right: 1px dashed rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+}
+
+.washi-left {
+  transform: translateX(-50%) rotate(-4deg);
+  background: rgba(56, 189, 248, 0.7);
+}
+
+.washi-right {
+  transform: translateX(-50%) rotate(5deg);
+  background: rgba(244, 114, 182, 0.7);
+}
+
+/* 照片视口区域 */
+.card-inner {
+  width: 100%;
+  height: 44px;
+  background: #e8e8df;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .card-inner {
+  background: #1e2218;
+}
+
+.card-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-emoji-fallback,
+.card-emoji {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+/* 底部留白手写说明区 */
+.card-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 3px;
+  padding: 0 1px;
+}
+
+.card-city-name {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #101400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-count-badge {
+  font-size: 0.52rem;
+  font-weight: 800;
+  background: #101400;
+  color: var(--lime);
+  border-radius: 999px;
+  padding: 0.05rem 0.32rem;
+  font-family: var(--font-mono, monospace);
+  line-height: 1;
+}
+
+/* 静止状态下的层叠角度 */
+.card-back-left {
+  transform: translate(-3px, -2px) rotate(-8deg);
+  z-index: 1;
+}
+
+.card-back-right {
+  transform: translate(3px, -1px) rotate(6deg);
+  z-index: 2;
+}
+
+.card-front {
+  transform: translate(0, 0) rotate(0deg);
+  z-index: 3;
+}
+
+/* ---- 扑克牌扇形展开动画（Hover / Active Fan-out） ---- */
+.photo-stack-anchor:hover .card-back-left,
+.photo-stack-anchor.is-active .card-back-left {
+  transform: translate(-42px, -10px) rotate(-16deg) scale(0.96);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.photo-stack-anchor:hover .card-back-right,
+.photo-stack-anchor.is-active .card-back-right {
+  transform: translate(42px, -10px) rotate(16deg) scale(0.96);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.photo-stack-anchor:hover .card-front,
+.photo-stack-anchor.is-active .card-front {
+  transform: translate(0, -18px) scale(1.08);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* 扇形展开时下方浮现的详情说明框 */
+.stack-popup-info {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, 4px) scale(0.94);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--lime);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  width: 180px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 60;
+}
+
+.photo-stack-anchor:hover .stack-popup-info,
+.photo-stack-anchor.is-active .stack-popup-info {
+  opacity: 1;
+  transform: translate(-50%, 12px) scale(1);
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+
+.popup-city {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--lime);
+}
+
+.popup-date {
+  font-size: 0.6rem;
+  font-weight: 700;
+  opacity: 0.75;
+  font-family: var(--font-mono, monospace);
+}
+
+.popup-note {
+  font-size: 0.66rem;
+  line-height: 1.35;
+  margin: 0 0 0.35rem;
+  opacity: 0.9;
+}
+
+.popup-hint {
+  font-size: 0.56rem;
+  font-weight: 800;
+  color: var(--lime);
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  padding-top: 0.25rem;
+}
+
+/* ================= 协同滚轮手势提示 (Cooperative Gestures Hint) ================= */
+.worldmap-wheel-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: transparent;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+  z-index: 50;
+}
+
+.worldmap-wheel-hint.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.wheel-hint-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(14, 18, 2, 0.9);
+  color: #f5f5ee;
+  border: 1px solid var(--lime);
+  border-radius: 999px;
+  padding: 0.55rem 1.15rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 16px rgba(210, 255, 0, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transform: translateY(8px) scale(0.96);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.worldmap-wheel-hint.is-visible .wheel-hint-content {
+  transform: translateY(0) scale(1);
+}
+
+.wheel-hint-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 0.3rem;
+  background: var(--lime);
+  color: #101400;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  font-family: var(--font-mono, monospace);
+  line-height: 1;
+}
+
+[data-theme="light"] .wheel-hint-content {
+  background: rgba(255, 255, 255, 0.94);
+  color: #12140e;
+  border-color: rgba(16, 20, 0, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 0 16px rgba(100, 150, 0, 0.15);
+}
+
+[data-theme="light"] .wheel-hint-icon {
+  background: #12140e;
+  color: var(--lime);
+}
+
+/* ================= 右上角 HUD 缩放控制器 ================= */
+
+.worldmap-controls {
+  position: absolute;
+  top: 1rem;
+  right: 1.2rem;
+  display: flex;
+  align-items: center;
+  background: rgba(16, 20, 0, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.22rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  z-index: 30;
+  gap: 0.2rem;
+}
+
+[data-theme="light"] .worldmap-controls {
+  background: rgba(248, 248, 243, 0.85);
+  border-color: rgba(16, 20, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.ctrl-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  font-family: var(--font-mono, monospace);
+  line-height: 1;
+}
+
+[data-theme="light"] .ctrl-btn {
+  color: #101400;
+}
+
+.ctrl-btn:hover {
+  background: var(--lime);
+  color: #101400 !important;
+  transform: scale(1.08);
+}
+
+.ctrl-btn:active {
+  transform: scale(0.94);
+}
+
+.ctrl-btn.ctrl-reset {
+  font-size: 0.82rem;
+}
+
+.ctrl-btn.ctrl-focus {
+  width: auto;
+  border-radius: 999px;
+  padding: 0 0.65rem;
+  gap: 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  background: rgba(163, 230, 53, 0.12);
+  color: var(--lime);
+}
+
+[data-theme="light"] .ctrl-btn.ctrl-focus {
+  background: rgba(101, 163, 13, 0.12);
+  color: #4d7c0f;
+}
+
+.ctrl-focus-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 6px var(--lime);
+}
+
+/* 悬停国家底标 */
+.worldmap-country-badge {
+  position: absolute;
+  left: 1.4rem;
+  bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--lime);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+.worldmap-country-badge span {
+  opacity: 0.7;
+  font-weight: 700;
+}
+
+.worldmap-country-badge b {
+  color: var(--lime);
+}
+
+/* 图例底部条 */
+.worldmap-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.4rem;
+  padding: 0.75rem 1.4rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--grey);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .worldmap-legend {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 6px var(--lime);
+}
+
+.legend-line {
+  width: 18px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--lime), transparent);
+  border-radius: 1px;
+}
+
+.legend-base {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px dashed #38bdf8;
+}
+
+.legend-tip {
+  margin-left: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  color: var(--grey);
+}
+
+/* ---- 点击城市后分组标题闪光（保持已有兼容） ---- */
+.group-title.is-flash {
+  animation: flash-glow 2.2s var(--ease) 1;
+}
+
+@keyframes flash-glow {
+  0%,
+  55% {
+    background: var(--lime);
+    color: var(--ink);
+    padding-inline: 0.6em;
+    border-radius: 8px;
+  }
+
+  100% {
+    background: transparent;
+  }
+}
+
+@media (max-width: 768px) {
+  .worldmap-hud,
+  .worldmap-legend {
+    padding: 0.6rem 1rem;
+    gap: 0.8rem;
+  }
+
+  .worldmap-hud-stats,
+  .legend-tip {
+    display: none;
+  }
+
+  .worldmap-controls {
+    top: 0.6rem;
+    right: 0.6rem;
+    transform: scale(0.9);
+  }
+
+  .photo-stack {
+    width: 46px;
+    height: 56px;
+  }
+
+  .card-inner {
+    height: 34px;
+  }
+
+  .photo-stack-anchor:hover .card-back-left,
+  .photo-stack-anchor.is-active .card-back-left {
+    transform: translate(-30px, -6px) rotate(-14deg) scale(0.94);
+  }
+
+  .photo-stack-anchor:hover .card-back-right,
+  .photo-stack-anchor.is-active .card-back-right {
+    transform: translate(30px, -6px) rotate(14deg) scale(0.94);
+  }
+}

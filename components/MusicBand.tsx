@@ -90,7 +90,7 @@ export default function MusicBand() {
 
       <div className="band-top">
         {/* ---- NOW PLAYING ---- */}
-        <div className="band-np">
+        <div className={np.playing ? "band-np is-playing" : "band-np"}>
           {np.playing && np.cover ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img className="np-cover" src={np.cover} alt={`${np.name} 专辑封面`} />

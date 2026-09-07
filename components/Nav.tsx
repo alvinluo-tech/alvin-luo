@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 import LangToggle from "./LangToggle";
+import SfxToggle from "./SfxToggle";
 import { GITHUB_URL } from "@/config/site";
 
 /* 导航：滚动后变为半透明毛玻璃条。
@@ -27,7 +28,7 @@ export default function Nav() {
       <nav className="nav-links">
         {/* TODO: 换成你的链接 */}
         <Link href="/#projects">Work</Link>
-        <Link href="/#travel">Travel</Link>
+        <Link href="/travel">Travel</Link>
         <Link href="/blog">Writing</Link>
         <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
           GitHub&nbsp;↗
@@ -43,6 +44,7 @@ export default function Nav() {
         >
           ⌘K
         </button>
+        <SfxToggle />
         <ThemeToggle />
       </div>
     </header>

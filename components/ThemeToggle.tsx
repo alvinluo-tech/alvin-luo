@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { playClick } from "@/lib/sfx";
 
 /* 深色模式切换：主题在 layout.tsx 的内联脚本里提前写入，避免闪烁 */
 export default function ThemeToggle() {
@@ -19,6 +20,7 @@ export default function ThemeToggle() {
       /* 隐私模式下 localStorage 不可用，忽略 */
     }
     setTheme(next);
+    playClick(2200); // 机械开关般的咔哒（音效开启时）
   };
 
   return (

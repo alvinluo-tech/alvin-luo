@@ -53,6 +53,13 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={mona.variable} suppressHydrationWarning>
       <body>
+        {/* 工程制图装饰层：四角刻度与准星（纯装饰） */}
+        <div className="blueprint" aria-hidden="true">
+          <span className="bp tl">[0,0]</span>
+          <span className="bp tr">+</span>
+          <span className="bp bl">+</span>
+          <span className="bp br">ALVIN.LUO — v2.0</span>
+        </div>
         {/* 主题防闪烁：beforeInteractive 注入 head，先于首帧执行 */}
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeInit }} />
         <LocaleProvider>

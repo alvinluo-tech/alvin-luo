@@ -1,20 +1,27 @@
 import Link from "next/link";
 import HeroStage from "@/components/HeroStage";
-import Travel from "@/components/Travel";
 import Projects from "@/components/Projects";
 import GitHubTile from "@/components/GitHubTile";
 import MusicBand from "@/components/MusicBand";
 import DailyPick from "@/components/DailyPick";
+import LondonClock from "@/components/LondonClock";
+import TerminalTile from "@/components/TerminalTile";
+import BookshelfTile from "@/components/BookshelfTile";
 import { T } from "@/components/i18n";
 import { EMAIL, GITHUB_URL, GITHUB_USER } from "@/config/site";
+import { TRIPS } from "@/data/trips";
 
 export default function Home() {
+  /* WANDERLUST 瓷砖数据：最近一站 + 累计足迹 */
+  const latest = [...TRIPS].sort((a, b) => b.date.localeCompare(a.date))[0];
+  const countries = new Set(TRIPS.map((t) => t.country)).size;
+
   return (
     <main>
       {/* ============ HERO：居中人像 × 破格大字 ============ */}
       <section className="hero" aria-label="Intro">
-      {/* 环境光晕：填补宽屏人像两侧的空旷带 */}
-      <div className="hero-glow" aria-hidden="true" />
+        {/* 环境光晕：填补宽屏人像两侧的空旷带 */}
+        <div className="hero-glow" aria-hidden="true" />
         {/* 巨型排版（纯装饰） */}
         <div className="hero-type" aria-hidden="true">
           <span className="type-solid">ALVIN</span>
@@ -116,13 +123,13 @@ export default function Home() {
             <GitHubTile />
           </article>
 
-          {/* 网易云音乐叙事区：NOW PLAYING + ON REPEAT + 歌单 + 统计
-              （config/site.ts 里 NETEASE_API 未配置时整块自动隐藏） */}
+          {/* 网易云音乐叙事区（NETEASE_API 未配置时整块自动隐藏） */}
           <MusicBand />
 
           {/* TODO: 换成你自己的介绍 */}
           <article className="tile tile-about">
             <h3 className="tile-title">ABOUT</h3>
+            <LondonClock />
             <p>
               <T
                 en={
@@ -143,6 +150,12 @@ export default function Home() {
                 }
               />
             </p>
+            {/* 拍立得：故意打破网格的手作感（真实照片就位前用 CSS 画作占位） */}
+            <span className="polaroid" aria-hidden="true">
+              <span className="washi" />
+              <span className="polaroid-art">☕</span>
+              <span className="polaroid-cap">02:14 AM — ship it</span>
+            </span>
           </article>
 
           {/* TODO: 改成你自己的数据 */}
@@ -183,6 +196,34 @@ export default function Home() {
             <span className="tile-more">MORE →</span>
           </Link>
 
+          {/* 极客终端彩蛋 */}
+          <TerminalTile />
+
+          {/* 精神食粮书架 */}
+          <BookshelfTile />
+
+          {/* 旅行引子：首页留引子，完整画廊在 /travel */}
+          <Link href="/travel" className="tile tile-travel is-link">
+            <div className="wt-photo" aria-hidden="true">
+              <span className="wt-cover">✈</span>
+              <span className="wt-stamp">
+                {countries} <small>COUNTRIES</small>
+              </span>
+            </div>
+            <div className="wt-meta">
+              <h3 className="tile-title">WANDERLUST</h3>
+              <p className="wt-latest">
+                LATEST — {latest.place}
+                <span>
+                  {latest.date} · {latest.note}
+                </span>
+              </p>
+              <p className="wt-cta">
+                {TRIPS.length} stops &amp; counting — All footprints →
+              </p>
+            </div>
+          </Link>
+
           {/* 联系 */}
           <article className="tile tile-contact">
             <h3 className="tile-title">SAY HELLO</h3>
@@ -193,9 +234,6 @@ export default function Home() {
           </article>
         </div>
       </section>
-
-      {/* ============ 旅行胶片：钉住式横向滚动 ============ */}
-      <Travel />
     </main>
   );
 }

@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GITHUB_URL } from "@/config/site";
+import { playClick } from "@/lib/sfx";
 import { useRouter } from "next/navigation";
 
 /* ⌘K / Ctrl+K 命令面板：站内跳转（SPA 无刷新）+ 过滤 */
 const ITEMS = [
   { label: "首页 — Home", href: "/", hint: "page" },
   { label: "作品 — Projects", href: "/#projects", hint: "section" },
-  { label: "旅行 — Travel", href: "/#travel", hint: "section" },
+  { label: "旅行 — Travel", href: "/travel", hint: "page" },
   { label: "现在 — Now", href: "/now", hint: "page" },
   { label: "博客 — Blog", href: "/blog", hint: "page" },
   {
@@ -29,7 +30,10 @@ export default function Palette() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((v) => !v);
+        setOpen((v) => {
+          if (!v) playClick(900);
+          return !v;
+        });
         setQuery("");
       }
       if (e.key === "Escape") setOpen(false);

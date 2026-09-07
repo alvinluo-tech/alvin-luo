@@ -17,6 +17,7 @@ export type Trip = {
   dateEn?: string;
   note: string;
   noteEn?: string;
+  coord: [number, number]; // [lng, lat] —— 归档页地图脉冲点
   featured?: boolean; // 是否上首页胶片
 };
 
@@ -30,6 +31,7 @@ export const TRIPS: Trip[] = [
     dateEn: "Spring 2024",
     note: "第一次一个人出国",
     noteEn: "First solo trip abroad",
+    coord: [139.69, 35.68],
     featured: true,
   },
   {
@@ -41,6 +43,7 @@ export const TRIPS: Trip[] = [
     dateEn: "Autumn 2024",
     note: "算法和烤肉都不好消化",
     noteEn: "Algorithms and BBQ — neither digests well",
+    coord: [126.98, 37.57],
     featured: true,
   },
   {
@@ -52,6 +55,7 @@ export const TRIPS: Trip[] = [
     dateEn: "Summer 2025",
     note: "古城骑车，后座是笔记本电脑",
     noteEn: "Cruising the old town, laptop on the back seat",
+    coord: [98.98, 18.79],
     featured: true,
   },
   {
@@ -63,6 +67,7 @@ export const TRIPS: Trip[] = [
     dateEn: "Autumn 2025",
     note: "洱海边写代码，风比风扇好用",
     noteEn: "Coding by the lake — the breeze beats any fan",
+    coord: [100.16, 25.69],
     featured: true,
   },
   {
@@ -74,6 +79,7 @@ export const TRIPS: Trip[] = [
     dateEn: "Summer 2026",
     note: "红瓦绿树，啤酒要袋装",
     noteEn: "Red roofs, green trees, beer in a plastic bag",
+    coord: [120.38, 36.07],
     featured: true,
   },
   // TODO: 继续往下加你的足迹，例如：
