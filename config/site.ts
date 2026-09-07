@@ -11,13 +11,13 @@ export const GITHUB_USER: string = "alvinluo-tech";
 export const GITHUB_URL = `https://github.com/${GITHUB_USER}`;
 
 /** 联系邮箱 —— Bento 的 SAY HELLO 瓷砖 */
-export const EMAIL = "you@example.com";
+export const EMAIL = "luoyaosheng123@gmail.com";
 
 /** 网易云 NOW PLAYING 数据源（netease-now-playing 项目部署后的地址）
  *  base 和 key 都填上才启用；留空则音乐瓷砖整体隐藏 */
 export const NETEASE_API = {
-  base: "", // 如 "https://你的项目.vercel.app"（不带末尾斜杠）
-  key: "", // 服务端 API_KEY 环境变量的值
+  base: "https://netease-api-ruby.vercel.app", // 如 "https://你的项目.vercel.app"（不带末尾斜杠）
+  key: "1722aaefad7e456c4091617bbd21f43e", // 服务端 API_KEY 环境变量的值
 };
 
 /** 项目展示数据 —— TODO: 替换成你自己的项目
