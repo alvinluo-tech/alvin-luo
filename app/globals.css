@@ -624,8 +624,8 @@ a {
 }
 
 /* 12 列破格分布 */
-.tile-about { grid-column: span 7; }
-.tile-gym { grid-column: span 5; }
+.tile-about { grid-column: span 12; }
+.tile-about p { max-width: 62ch; }
 .tile-now { grid-column: span 7; }
 .tile-contact { grid-column: span 5; }
 
@@ -986,6 +986,46 @@ a {
   padding: 0.2em 0.7em;
 }
 
+.postcard-link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.postcard-explore-hint {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(16, 20, 0, 0.88);
+  color: var(--lime);
+  border: 1px solid var(--lime);
+  border-radius: 999px;
+  padding: 0.22rem 0.6rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 3;
+}
+
+.postcard:hover .postcard-explore-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-theme="light"] .postcard-explore-hint {
+  background: rgba(255, 255, 255, 0.92);
+  color: #12140e;
+  border-color: rgba(16, 20, 0, 0.4);
+}
+
 /* 未放照片时的占位框 */
 .photo-placeholder {
   position: absolute;
@@ -1291,6 +1331,31 @@ a {
 /* 归档页复用 .postcard 拍立得质感；入场用 CSS 动画（组件里控制延迟） */
 .acard {
   animation: rise 0.6s var(--ease) backwards;
+  scroll-margin-top: 140px;
+}
+
+@keyframes targetCardFlash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(210, 255, 0, 0);
+    transform: scale(1);
+  }
+  25% {
+    box-shadow: 0 0 0 8px var(--lime), 0 24px 48px rgba(0, 0, 0, 0.45);
+    transform: scale(1.04);
+  }
+  60% {
+    box-shadow: 0 0 0 12px rgba(210, 255, 0, 0.35), 0 24px 48px rgba(0, 0, 0, 0.45);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(210, 255, 0, 0);
+    transform: scale(1);
+  }
+}
+
+.acard.is-target-flash {
+  animation: targetCardFlash 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  z-index: 15;
 }
 
 .acard-photo {
@@ -2427,9 +2492,11 @@ a {
   }
 
   .tile-about,
-  .tile-gym,
   .tile-now,
-  .tile-contact {
+  .tile-term,
+  .tile-books,
+  .tile-contact,
+  .tile-travel {
     grid-column: span 12;
   }
 
@@ -4485,4 +4552,19 @@ a {
   .photo-stack-anchor.is-active .card-back-right {
     transform: translate(30px, -6px) rotate(14deg) scale(0.94);
   }
+}
+
+/* ================= 终端彩蛋：压轴区块 ================= */
+
+.terminal-section {
+  width: min(760px, calc(100% - 2.5rem));
+  margin: 0 auto 4.5rem;
+}
+
+.terminal-section .tile-term {
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.55);
+}
+
+.terminal-section .term-body {
+  height: 240px;
 }
