@@ -45,54 +45,42 @@ export type Project = {
 
 export const PROJECTS: Project[] = [
   {
-    id: "p1",
-    title: "TODO: Project one",
-    titleZh: "TODO：项目名称一",
-    desc: "One line on what problem it solves and what makes it interesting. Replace with a real project, then add screenshots or links.",
+    id: "encounter",
+    title: "Encounter — Encrypted Intimacy Tracker",
+    titleZh: "Encounter — 加密亲密记录",
+    desc: "A secure digital sanctuary for couples: log moments in under 3 seconds, then explore timeline analytics, map heatmaps and replay — all end-to-end encrypted, PIN-locked, with full audit logs.",
     descZh:
-      "一句话讲清楚它解决什么问题、亮点是什么。这里是项目简介的占位，替换成真实项目后记得配上截图或链接。",
-    tags: ["Next.js", "TypeScript"],
-    demo: "#",
-    repo: "#",
-    art: "dots",
-
-    arch: ["Next.js UI", "Server Actions", "Postgres", "Vercel Edge"],
-  },
-  {
-    id: "p2",
-    title: "TODO: Project two",
-    titleZh: "TODO：项目名称二",
-    desc: "Second project placeholder. Pick the 3-4 projects that best represent you — quality over quantity.",
-    descZh: "第二个项目的简介占位。建议挑最能代表你的 3-4 个项目，宁缺毋滥。",
-    tags: ["Canvas", "动画"],
-    demo: "#",
-    repo: "#",
-    art: "lines",
-
-    arch: ["Canvas 2D", "requestAnimationFrame", "Pointer Events", "Zero deps"],
-  },
-  {
-    id: "p3",
-    title: "TODO: Project three",
-    titleZh: "TODO：项目名称三",
-    desc: "Third project placeholder. Add a live demo link if you have one, otherwise just the repo.",
-    descZh: "第三个项目的简介占位。有线上 demo 就放 demo 链接，没有就只留仓库地址。",
-    tags: ["Python", "爬虫"],
-    repo: "#",
-    art: "grid",
-
-    arch: ["Python ETL", "Pandas", "scikit-learn", "Matplotlib"],
-  },
-  {
-    id: "p4",
-    title: "TODO: Project four",
-    titleZh: "TODO：项目名称四",
-    desc: "Fourth project placeholder. An open-source library, a small tool, or even a fun refactor works.",
-    descZh: "第四个项目的简介占位。也可以是一个开源库、一个小工具，甚至一次有趣的重构。",
-    tags: ["CLI", "工具"],
-    repo: "#",
+      "给伴侣的安全数字空间：3 秒极速记录亲密时刻，时间线分析、地图热力与回放；AES-256-GCM 端到端加密 + PIN 锁 + 审计日志，隐私压倒一切。",
+    tags: ["Next.js 16", "Supabase", "E2E 加密", "PWA"],
+    demo: "https://encounter.alvin-luo.me/",
+    repo: "https://github.com/alvinluo-tech/intimacy-tracker",
     art: "waves",
-
-    arch: ["CLI (Rust)", "clap", "Files & Pipes", "Cross-platform"],
+    arch: ["Next.js 16 UI", "Server Actions", "Supabase Postgres + RLS", "AES-256-GCM"],
+  },
+  {
+    id: "taskflow",
+    title: "TaskFlow — Cognitive-Load Task OS",
+    titleZh: "TaskFlow — 认知负荷任务系统",
+    desc: "A productivity OS that manages cognitive energy instead of time: a daily load cap with overload warnings, an immersive flow timer, AI one-click planning, and unlimited nested task trees.",
+    descZh:
+      "不管理时间，管理认知能量：每日负荷上限与过载预警、沉浸式专注计时、AI 一键排程、无限层级任务树——为高强度深度工作者打造的生产力操作系统。",
+    tags: ["AI 排程", "任务管理", "专注计时", "Web 应用"],
+    demo: "https://taskflow.luodo.app",
+    repo: "https://github.com/alvinluo-tech/Taskflow",
+    art: "grid",
+    // 技术栈未核实（仓库暂不可访问），X-Ray 架构链路留空，组件自动隐藏按钮
+  },
+  {
+    id: "corelayer",
+    title: "CoreLayer — Local-First AI Agent Control Plane",
+    titleZh: "CoreLayer — 本地优先 AI Agent 指挥台",
+    desc: "A Tauri desktop control plane that turns goals into governed agent work: task graphs, risk-tiered approvals, an MCP tool registry, and a multi-model router across Groq, OpenRouter, Ollama and more.",
+    descZh:
+      "Tauri 桌面指挥台：把目标拆成任务图交给 Agent 执行——权限分级审批、MCP 工具注册表、多模型路由（Groq / OpenRouter / Ollama），带语音管线的本地 Jarvis。",
+    tags: ["Tauri 2", "Rust", "React 19", "MCP"],
+    demo: "https://corelayer.alvin-luo.me/",
+    repo: "https://github.com/alvinluo-tech/CoreLayer",
+    art: "lines",
+    arch: ["Tauri 2 (Rust)", "React 19 + Vite", "Node Daemon (Hono)", "SQLite + Drizzle"],
   },
 ];
