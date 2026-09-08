@@ -1493,7 +1493,8 @@ a {
 }
 
 .palette-trigger,
-.theme-toggle {
+.theme-toggle,
+.sfx-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1512,14 +1513,27 @@ a {
 }
 
 .palette-trigger:hover,
-.theme-toggle:hover {
+.theme-toggle:hover,
+.sfx-toggle:hover {
   background: var(--lime);
   transform: translateY(-1px);
 }
 
-.theme-toggle svg {
+.theme-toggle svg,
+.sfx-toggle svg {
   width: 1.05rem;
   height: 1.05rem;
+}
+
+/* 音效开启：全站“激活 = 荧光绿”语言。
+   图标固定墨色——暗色主题下 var(--ink) 变浅奶油色，在绿底上对比不足 */
+.sfx-toggle.is-on {
+  background: var(--lime);
+  color: #101400;
+}
+
+.sfx-toggle.is-on:hover {
+  transform: translateY(-1px);
 }
 
 /* ---- 移动端导航：logo + 工具一行，链接换行铺满，杜绝横向溢出 ----
