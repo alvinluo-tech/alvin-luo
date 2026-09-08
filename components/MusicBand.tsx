@@ -66,7 +66,7 @@ export default function MusicBand() {
   // 首次加载中：占位骨架（已有 is-loaded 淡入的传统）
   if (!data) {
     return (
-      <article className="tile tile-wide music-band">
+      <article className="tile tile-wide music-band" id="now-playing">
         <h3 className="tile-title">MUSIC</h3>
         <p className="music-loading">
           <T en="Tuning in…" zh="正在调频…" />
@@ -83,7 +83,7 @@ export default function MusicBand() {
   );
 
   return (
-    <article className="tile tile-wide music-band">
+    <article className="tile tile-wide music-band" id="now-playing">
       <h3 className="tile-title">
         <T en="MUSIC" zh="音乐" />
       </h3>

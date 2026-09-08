@@ -19,7 +19,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) return { title: "Not found" };
-  return { title: `${post.title} — Alvin Luo`, description: post.summary };
+  const title = `${post.title} — Alvin Luo`;
+  return {
+    title,
+    description: post.summary,
+    // 不写 openGraph 的话 og:title 会继承根 layout 的默认值，分享卡上不是文章标题
+    openGraph: { title, description: post.summary, type: "article" },
+  };
 }
 
 export default async function PostPage({

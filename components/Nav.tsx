@@ -5,6 +5,7 @@ import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
 import LangToggle from "./LangToggle";
 import SfxToggle from "./SfxToggle";
+import NowPlayingTicker from "./NowPlayingTicker";
 import { GITHUB_URL } from "@/config/site";
 
 /* 导航：滚动后变为半透明毛玻璃条。
@@ -25,6 +26,8 @@ export default function Nav() {
       <Link className="nav-logo" href="/">
         alvin<span className="accent">.luo</span>
       </Link>
+      {/* 迷你 Now Playing：在播才出现，点击滚到音乐瓷砖 */}
+      <NowPlayingTicker />
       <nav className="nav-links">
         {/* TODO: 换成你的链接 */}
         <Link href="/#projects">Work</Link>

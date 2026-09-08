@@ -8,6 +8,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import Palette from "@/components/Palette";
 import { LocaleProvider } from "@/components/i18n";
 import { SITE_URL } from "@/config/site";
+import { getAllPosts, CATEGORY_LABELS } from "@/lib/blog";
 import "./globals.css";
 
 /* Mona Sans：landonorris.com 同款字体（GitHub 开源、Google Fonts 托管），
@@ -62,11 +63,20 @@ export default function RootLayout({
         </div>
         {/* 主题防闪烁：beforeInteractive 注入 head，先于首帧执行 */}
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeInit }} />
+        {/* Umami 访问统计（隐私友好、无 cookie） */}
+        <Script src="https://cloud.umami.is/script.js" data-website-id="e420f55f-cf8c-452d-8155-b21dedaee1bd" strategy="afterInteractive" />
         <LocaleProvider>
           <Nav />
           <span id="top" />
           {children}
-          <Palette />
+          <Palette
+            posts={getAllPosts().map((p) => ({
+              label: p.title,
+              href: `/blog/${p.slug}`,
+              hint: "post",
+              keywords: [CATEGORY_LABELS[p.category] ?? p.category, ...p.tags].join(" "),
+            }))}
+          />
           <ScrollReveal />
           <ScrollFX />
           <SmoothScroll />
