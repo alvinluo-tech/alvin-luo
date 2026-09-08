@@ -554,10 +554,16 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
           <span>{locale === "en" ? "Current base (Durham, UK)" : "当前常驻（英国杜伦）"}</span>
         </div>
         <div className="legend-tip">
-          <span>
+          {/* 桌面/触屏各一份文案，pointer:coarse 时切换（触屏没有 Ctrl+滚轮） */}
+          <span className="tip-mouse">
             {locale === "en"
               ? "🖱️ Ctrl + Scroll to zoom · Drag to pan · Click card for stories"
               : "🖱️ Ctrl + 滚轮缩放 · 拖拽平移 · 点击卡片查看故事"}
+          </span>
+          <span className="tip-touch">
+            {locale === "en"
+              ? "Double-tap to zoom · Two fingers to pan · Tap cards for stories"
+              : "双击缩放 · 双指平移 · 点击卡片查看故事"}
           </span>
         </div>
       </footer>

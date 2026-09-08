@@ -197,6 +197,9 @@ export default function HeroStage() {
     /* 触屏没有 hover：点身体开启透视（可滑动跟随），点其他区域关闭 */
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === "mouse") return;
+      // 胶囊自己有 click 处理：不拦截会让 pointerdown 先开启、click 再翻转关闭，
+      // 净效果为零——触屏上胶囊永远开不了
+      if ((e.target as HTMLElement | null)?.closest?.(".xray-toggle")) return;
       const rect = canvas.getBoundingClientRect();
       const nx = (e.clientX - rect.left) / rect.width;
       const ny = (e.clientY - rect.top) / rect.height;

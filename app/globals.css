@@ -35,6 +35,9 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  /* 兜底：任何装饰性溢出（跑马灯/胶片轨道等）不得把整页撑出横向滚动。
+     clip 不产生滚动容器，sticky/内部 overflow-x:auto 均不受影响 */
+  overflow-x: clip;
 }
 
 /* Lenis 惯性滚动接管后，禁用原生平滑避免打架 */
@@ -433,6 +436,9 @@ a {
   bottom: 4%;
   transform: translateX(-50%);
   z-index: 2;
+  /* 纯展示：不挡触屏（stage-card 有视差 transform 形成堆叠上下文，
+     胶囊的 z-index 出不来，标签会把触屏 X 光胶囊整块盖住） */
+  pointer-events: none;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -529,6 +535,7 @@ a {
   left: -2.6rem;
   top: 26%;
   z-index: 2;
+  pointer-events: none;
   writing-mode: vertical-rl;
   font-size: 0.78rem;
   color: var(--grey);
@@ -1513,6 +1520,50 @@ a {
 .theme-toggle svg {
   width: 1.05rem;
   height: 1.05rem;
+}
+
+/* ---- 移动端导航：logo + 工具一行，链接换行铺满，杜绝横向溢出 ----
+   （390px 下单行排 logo+4 链接+4 工具会撑破视口，整页可左右晃动） */
+@media (max-width: 700px) {
+  .nav {
+    flex-wrap: wrap;
+    row-gap: 0.6rem;
+    padding-block: 1rem;
+  }
+
+  .nav.is-scrolled {
+    padding-block: 0.75rem;
+  }
+
+  .nav-links {
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .nav-tools {
+    margin-left: auto;
+    gap: 0.45rem;
+  }
+
+  /* 巨型实心字下移：1100px 断点的 6svh / 9svh 会撞上双行导航
+     （链接与字同为纸色会融在一起）。提高优先级压过两条旧规则 */
+  .hero .hero-type .type-solid {
+    top: max(9svh, 7.5rem);
+  }
+
+  /* 状态标签缩小：给右侧 X-RAY 胶囊让位，避免重叠 */
+  .stage-label {
+    font-size: 0.6rem;
+    padding: 0.45rem 0.8rem;
+    gap: 0.45rem;
+  }
+
+  /* iOS Safari：输入框字号 <16px 聚焦时会强制放大页面 */
+  .term-input input {
+    font-size: 16px;
+  }
 }
 
 /* 语言切换：EN / 中 分段控件 */
@@ -4607,6 +4658,21 @@ a {
   font-family: var(--font-mono, monospace);
   font-size: 0.64rem;
   color: var(--grey);
+}
+
+/* 触屏设备没有 Ctrl+滚轮：图例提示按指针类型切换文案 */
+.tip-touch {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .tip-mouse {
+    display: none;
+  }
+
+  .tip-touch {
+    display: inline;
+  }
 }
 
 /* ---- 点击城市后分组标题闪光（保持已有兼容） ---- */

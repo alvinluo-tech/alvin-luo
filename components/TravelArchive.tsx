@@ -94,7 +94,7 @@ export default function TravelArchive() {
     };
     document.addEventListener("error", onErr, true);
     const sweep = setTimeout(() => {
-      document.querySelectorAll<HTMLImageElement>(".acard-photo img").forEach((img) => {
+      document.querySelectorAll<HTMLImageElement>(".postcard-photo img").forEach((img) => {
         if (img.complete && img.naturalWidth === 0) markFromSrc(img.src);
       });
     }, 1200);
