@@ -27,6 +27,7 @@ export default function ThemeToggle() {
     <button
       className="theme-toggle"
       onClick={toggle}
+      aria-pressed={theme === "dark"}
       aria-label={theme === "dark" ? "切换到浅色模式" : "切换到深色模式"}
       title="切换深色 / 浅色"
     >

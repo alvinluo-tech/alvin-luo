@@ -2561,12 +2561,15 @@ a {
     display: none;
   }
 
-  .tile-about,
-  .tile-now,
-  .tile-term,
-  .tile-books,
-  .tile-contact,
-  .tile-travel {
+  /* 提 specificity：base 的 .tile-books(span 7)/.tile-travel(span 5) 规则
+     在源码顺序上位于本块之后，同优先级会反过来覆盖这里的 span 12，
+     导致 ≤1100px 时书架/旅行瓷砖被挤成半宽窄条 */
+  .bento-grid .tile-about,
+  .bento-grid .tile-now,
+  .bento-grid .tile-term,
+  .bento-grid .tile-books,
+  .bento-grid .tile-contact,
+  .bento-grid .tile-travel {
     grid-column: span 12;
   }
 
@@ -2612,11 +2615,23 @@ a {
   font-size: 0.9rem;
 }
 
+/* CURRENTLY 瓷砖里的“算法今天推给我”彩蛋行：区别于正经 TODO 条目 */
+.daily-pick {
+  font-style: italic;
+  color: var(--grey);
+}
+
 .band-top {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 1.4rem;
   align-items: center;
+}
+
+/* 长歌名/长专辑名不撑破网格列 */
+.band-repeat,
+.np-meta {
+  min-width: 0;
 }
 
 .band-np {
@@ -4274,6 +4289,12 @@ a {
 .washi-right {
   transform: translateX(-50%) rotate(5deg);
   background: rgba(244, 114, 182, 0.7);
+}
+
+/* 前置主卡的胶带：保留 lime 底色，加一点手作歪斜 */
+.washi-center {
+  transform: translateX(-50%) rotate(-2deg);
+  width: 24px;
 }
 
 /* 照片视口区域 */

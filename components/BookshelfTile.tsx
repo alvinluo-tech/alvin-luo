@@ -58,7 +58,6 @@ export default function BookshelfTile() {
               </span>
             </div>
           ))}
-          <span className="shelf-board" aria-hidden="true" />
         </div>
       </div>
     </article>
