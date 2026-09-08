@@ -141,6 +141,73 @@ a {
   transform-origin: left;
 }
 
+/* ---- 导航迷你 Now Playing：在播才出现 ----
+   长歌名无缝跑马灯，点击滚到音乐瓷砖；
+   margin-right:auto 把链接和工具推到右侧 */
+.nav-np {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 2.1rem;
+  max-width: 250px;
+  padding: 0 0.95rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-right: auto;
+  transition: background var(--dur) var(--ease);
+}
+
+.nav-np:hover {
+  background: var(--lime);
+}
+
+.nav-np-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lime);
+  outline: 1px solid rgba(16, 20, 0, 0.4);
+  flex: none;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.nav-np-clip {
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.nav-np-scroll {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: np-tick 12s linear infinite;
+}
+
+@keyframes np-tick {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 700px) {
+  /* 手机：ticker 嵌进第一行（logo 和工具之间），占满剩余宽度；
+     链接 order 3 换行铺满，导航保持两行高 */
+  .nav-np {
+    order: 1;
+    flex: 1 1 0; /* basis 0：不按内容宽度参与换行计算，否则会把工具挤到第二行 */
+    min-width: 0;
+    max-width: none;
+    margin: 0 0.7rem;
+  }
+
+  .nav-tools {
+    order: 2;
+    margin-left: 0;
+  }
+}
+
 /* ================= 公共小组件 ================= */
 
 .eyebrow {
@@ -1681,6 +1748,12 @@ a {
   font-size: 0.92rem;
   font-weight: 600;
   transition: background 0.2s ease;
+}
+
+/* 键盘 ↑↓ 高亮项（与 hover 同款荧光绿） */
+.palette-list a.is-active {
+  background: var(--lime);
+  color: var(--ink);
 }
 
 .palette-list a:hover {
