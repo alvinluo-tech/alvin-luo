@@ -1658,8 +1658,12 @@ a {
   align-items: center;
 }
 
-/* 交错排布：偶数行翻转 */
-.project-row.is-flipped .project-cover {
+/* 交错排布：偶数行翻转（左图右文 / 右图左文） */
+.project-row.is-flipped {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+}
+
+.project-row.is-flipped .project-cover-wrap {
   order: 2;
 }
 
@@ -1931,12 +1935,13 @@ a {
 /* ================= 作品区响应式 ================= */
 
 @media (max-width: 900px) {
-  .project-row {
+  .project-row,
+  .project-row.is-flipped {
     grid-template-columns: 1fr;
   }
 
   /* 翻转行在窄屏恢复图上文下 */
-  .project-row.is-flipped .project-cover {
+  .project-row.is-flipped .project-cover-wrap {
     order: 1;
   }
 
@@ -3174,19 +3179,19 @@ a {
 /* ---- WANDERLUST 瓷砖：首页的旅行引子 ---- */
 
 .tile-travel {
-  grid-column: span 12;
+  grid-column: span 5;
   flex-direction: row;
   align-items: center;
-  gap: 1.6rem;
-  padding: 1.4rem;
+  gap: 1.15rem;
+  padding: 1.3rem;
 }
 
 .wt-photo {
   position: relative;
-  width: 148px;
-  height: 148px;
+  width: 112px;
+  height: 112px;
   flex: none;
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1.5px solid var(--ink);
   background:
     radial-gradient(120px 90px at 30% 20%, color-mix(in srgb, var(--lime) 30%, transparent), transparent 70%),
@@ -3204,16 +3209,16 @@ a {
 }
 
 .wt-cover {
-  font-size: 3rem;
+  font-size: 2.2rem;
 }
 
 .wt-stamp {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 74px;
-  height: 74px;
-  border: 2px dashed var(--ink);
+  right: 6px;
+  bottom: 6px;
+  width: 54px;
+  height: 54px;
+  border: 1.5px dashed var(--ink);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -3226,7 +3231,7 @@ a {
 }
 
 .wt-stamp small {
-  font-size: 0.5rem;
+  font-size: 0.45rem;
   letter-spacing: 0.1em;
 }
 
@@ -3260,63 +3265,6 @@ a {
 
 .tile-travel:hover .wt-cta {
   color: var(--ink);
-}
-
-/* ---- 极客终端 ---- */
-
-.tile-term {
-  grid-column: span 5;
-  min-height: 0;
-}
-
-.term-body {
-  background: var(--ink);
-  color: var(--paper);
-  border-radius: 12px;
-  padding: 0.9rem 1rem;
-  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-  font-size: 0.76rem;
-  line-height: 1.65;
-  min-height: 150px;
-  max-height: 210px;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.term-in {
-  color: var(--lime);
-}
-
-.term-ok {
-  color: color-mix(in srgb, var(--paper) 80%, var(--lime));
-}
-
-.term-input {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-  border: 1.5px solid var(--ink);
-  border-radius: 10px;
-  padding: 0.4rem 0.75rem;
-  background: var(--paper);
-}
-
-.term-prompt {
-  color: var(--grey);
-  font-family: ui-monospace, Consolas, monospace;
-  font-weight: 700;
-}
-
-.term-input input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: none;
-  color: var(--ink);
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 0.85rem;
 }
 
 /* ---- 3D 书架 ---- */
@@ -3698,59 +3646,194 @@ a {
   padding-top: 1rem;
 }
 
-/* ================= TERMINAL 终端彩蛋（恒暗屏，两种主题下都是终端本相） ================= */
+/* ================= TERMINAL 终端彩蛋（恒暗黑曜屏，全分辨率极致清晰） ================= */
 
 .tile-term {
-  background: #0d100a;
-  color: #cde3a1;
-  font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  grid-column: span 12;
+  background: #080a06 !important;
+  border: 1.5px solid var(--ink);
+  color: #f1f5f9;
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.45);
+  cursor: text;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
-.tile-term .tile-title {
+/* 窗体栏 */
+.term-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
   color: #8a9179;
 }
 
-.tile-term .tile-title::before {
-  outline-color: rgba(205, 227, 161, 0.3);
+.term-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
+.term-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.term-dot-red { background: #ff5f56; }
+.term-dot-yellow { background: #ffbd2e; }
+.term-dot-green { background: #27c93f; }
+
+.term-chrome-title {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.term-live-tag {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #a3e635;
+  background: rgba(163, 230, 53, 0.12);
+  border: 1px solid rgba(163, 230, 53, 0.3);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+.term-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a3e635;
+  box-shadow: 0 0 6px #a3e635;
+  animation: pulse-dot 1.8s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* 终端主屏幕 */
 .term-body {
-  height: 190px;
+  height: 220px;
   overflow-y: auto;
-  font-size: 0.78rem;
-  line-height: 1.7;
-  scrollbar-width: none;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  background: transparent;
+  color: #f1f5f9;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  padding-right: 0.5rem;
 }
 
-.term-body::-webkit-scrollbar {
-  display: none;
-}
-
-.term-body p {
+.tile-term .term-body p,
+.tile-term .term-line {
   white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0.35rem;
+  font-size: 0.94rem;
+  line-height: 1.75;
+  color: #f1f5f9 !important;
 }
 
-.term-in {
-  color: #e9f5d0;
+.tile-term .term-line-in {
+  color: #ffffff !important;
   font-weight: 700;
 }
 
-.term-ok {
-  color: #9fdc5a;
+.tile-term .term-line-out {
+  color: #f1f5f9 !important;
 }
 
+.tile-term .term-line-ok {
+  color: #a3e635 !important;
+  font-weight: 600;
+}
+
+.tile-term .term-line-err {
+  color: #f87171 !important;
+}
+
+.tile-term .term-line-dim {
+  color: #94a3b8 !important;
+  font-style: italic;
+}
+
+/* 快捷操作胶囊条 */
+.term-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0;
+}
+
+.term-chips-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #717764;
+  margin-right: 0.2rem;
+}
+
+.term-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.term-chip:hover {
+  background: #a3e635;
+  color: #090c07;
+  border-color: #a3e635;
+  font-weight: 700;
+  transform: translateY(-1px);
+}
+
+/* 命令行输入条 */
 .term-input {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  margin-top: 0.7rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(205, 227, 161, 0.18);
+  gap: 0.65rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 0.5rem 0.85rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.term-input:focus-within {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: #a3e635;
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.22);
 }
 
 .term-prompt {
-  color: var(--lime);
+  color: #a3e635;
   font-weight: 800;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  user-select: none;
 }
 
 .term-input input {
@@ -3759,13 +3842,42 @@ a {
   background: transparent;
   border: none;
   outline: none;
-  color: #e9f5d0;
-  font: inherit;
-  font-size: 0.82rem;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  caret-color: #a3e635;
 }
 
 .term-input input::placeholder {
-  color: #5f6650;
+  color: #555d49;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.term-run-btn {
+  background: #a3e635;
+  color: #080a06;
+  border: none;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.32rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+  flex: none;
+}
+
+.term-run-btn:hover {
+  background: #bbf451;
+  transform: scale(1.04);
+}
+
+.term-run-btn:active {
+  transform: scale(0.96);
 }
 
 /* ================= 足迹地图（WorldMap — 离线 SVG 矢量投影） ================= */
@@ -4552,19 +4664,4 @@ a {
   .photo-stack-anchor.is-active .card-back-right {
     transform: translate(30px, -6px) rotate(14deg) scale(0.94);
   }
-}
-
-/* ================= 终端彩蛋：压轴区块 ================= */
-
-.terminal-section {
-  width: min(760px, calc(100% - 2.5rem));
-  margin: 0 auto 4.5rem;
-}
-
-.terminal-section .tile-term {
-  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.55);
-}
-
-.terminal-section .term-body {
-  height: 240px;
 }

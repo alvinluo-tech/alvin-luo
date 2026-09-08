@@ -21,6 +21,13 @@ import worldTopology from "@/data/countries-110m.json";
 import { TRIPS, dateLabel } from "@/data/trips";
 import { useLocale } from "./i18n";
 
+/* GitHub Pages 子路径部署：构建时内联 */
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
+/* 国家/站数随 TRIPS 数据源自动更新（HUD 展示用） */
+const COUNTRY_COUNT = new Set(TRIPS.map((t) => t.country)).size;
+const STOP_COUNT = TRIPS.length;
+
 /** 访问过的国家映射表（ISO 编码 + 匹配关键字） */
 const VISITED_COUNTRIES: Record<string, { id: string; nameEn: string; nameZh: string }> = {
   "156": { id: "156", nameEn: "China", nameZh: "中国" },
@@ -290,9 +297,15 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
           <span className="hud-title">GEO RADAR // 交互足迹相册</span>
         </div>
         <div className="worldmap-hud-stats">
-          <span>{locale === "en" ? "4 COUNTRIES EXPLORED" : "4 个国家 / 地区"}</span>
+          <span>
+            {locale === "en"
+              ? `${COUNTRY_COUNT} COUNTRIES EXPLORED`
+              : `${COUNTRY_COUNT} 个国家 / 地区`}
+          </span>
           <span className="hud-sep">/</span>
-          <span>{locale === "en" ? "5 STOPS" : "5 处足迹"}</span>
+          <span>
+            {locale === "en" ? `${STOP_COUNT} STOPS` : `${STOP_COUNT} 处足迹`}
+          </span>
           <span className="hud-sep">/</span>
           <span className="hud-base">{locale === "en" ? "BASE: DURHAM, UK" : "常驻: 英国杜伦"}</span>
         </div>
@@ -427,7 +440,7 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                       {/* 如果有实际照片则优先渲染，否则使用拟物符号 */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`/travel/${city.img}.jpg`}
+                        src={`${BASE_PATH}/travel/${city.img}.jpg`}
                         alt={city.place}
                         className="card-photo"
                         onError={(e) => {

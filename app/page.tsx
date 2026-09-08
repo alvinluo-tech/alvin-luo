@@ -178,17 +178,15 @@ export default function Home() {
                     </>
                   }
                 />
-                <a className="tile-more" href="/now">
+                {/* 不能再用 <a>：外层 Link 已是锚点，HTML 禁止嵌套（会打碎水合） */}
+                <span className="tile-more">
                   <T en="more →" zh="更多 →" />
-                </a>
+                </span>
               </li>
               <DailyPick />
             </ul>
             <span className="tile-more">MORE →</span>
           </Link>
-
-          {/* 精神食粮书架 */}
-          <BookshelfTile />
 
           {/* 联系 */}
           <article className="tile tile-contact">
@@ -198,6 +196,9 @@ export default function Home() {
               <span className="arrow">→</span>
             </a>
           </article>
+
+          {/* 精神食粮书架 */}
+          <BookshelfTile />
 
           {/* 旅行引子：点击平滑下滚到电影胶片卷轴 */}
           <a href="#travel" className="tile tile-travel is-link">
@@ -220,16 +221,14 @@ export default function Home() {
               </p>
             </div>
           </a>
+
+          {/* 极客终端彩蛋：Bento 底部通栏压轴 */}
+          <TerminalTile />
         </div>
       </section>
 
       {/* ============ 电影感旅行足迹胶片卷轴（横向钉住滑动） ============ */}
       <Travel />
-
-      {/* ============ 终端彩蛋：压轴 ============ */}
-      <section className="terminal-section" aria-label="Terminal easter egg">
-        <TerminalTile />
-      </section>
     </main>
   );
 }

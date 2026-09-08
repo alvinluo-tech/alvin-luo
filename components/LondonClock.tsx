@@ -35,7 +35,8 @@ export default function LondonClock() {
         new Intl.DateTimeFormat("en-GB", {
           timeZone: "Europe/London",
           hour: "2-digit",
-          hour12: false,
+          // h23 固定 0-23；部分引擎对 hour12:false 会输出 "24"，导致状态句落到兜底分支
+          hourCycle: "h23",
         }).format(now),
       )
     : 12;

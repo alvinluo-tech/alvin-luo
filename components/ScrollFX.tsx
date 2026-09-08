@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 /* 滚动与指针驱动的动效：
    1. hero 滚动视差 —— 把进度写进 .hero 的 --p（0~1），位移全部由 CSS calc 完成
-   2. bento 瓷砖 3D 倾斜 —— 指针位置写入每块瓷砖的 --rx / --ry */
+   2. bento 瓷砖 3D 倾斜 —— 指针位置写入每块瓷砖的 --rx / --ry
+   依赖 pathname：layout 层组件不重挂载，SPA 换页后要重新抓取 .hero / .tile */
 export default function ScrollFX() {
+  const pathname = usePathname();
+
   useEffect(() => {
     const hero = document.querySelector<HTMLElement>(".hero");
 
@@ -54,7 +58,7 @@ export default function ScrollFX() {
       window.removeEventListener("scroll", onScroll);
       cleanups.forEach((fn) => fn());
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }
