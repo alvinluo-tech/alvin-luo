@@ -4,6 +4,9 @@ import { useState } from "react";
 import { PROJECTS } from "@/config/site";
 import { T } from "./i18n";
 
+/* GitHub Pages 子路径部署：构建时内联 */
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 /* 作品集：编辑部式交错排布。
    封面支持「架构 X-Ray」：点击按钮淡出 UI 层，透视出底层技术链路 */
 export default function Projects() {
@@ -54,6 +57,15 @@ export default function Projects() {
                     </span>
                   </span>
                   <span className={`cover-art art-${p.art}`} aria-hidden="true" />
+                  {p.image && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      className="cover-shot"
+                      src={`${BASE_PATH}${p.image}`}
+                      alt=""
+                      loading="lazy"
+                    />
+                  )}
                   <span className="cover-sheen" aria-hidden="true" />
                   <span className="cover-index" aria-hidden="true">
                     N°{String(i + 1).padStart(2, "0")}
