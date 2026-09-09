@@ -228,11 +228,17 @@ a {
   outline: 1px solid rgba(16, 20, 0, 0.25);
 }
 
-/* 滚动淡入（ScrollReveal 组件驱动） */
+/* 滚动淡入（ScrollReveal 组件驱动）。
+   默认可见：只有被 JS 标记为 reveal-pending（视口下方、还没滚到的元素）
+   才隐藏。弱网下 HTML 先到、JS 未水合的窗口里内容不会是一片空白，
+   水合失败 / 无 JS 时内容也永远可见 */
 [data-reveal] {
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+
+[data-reveal].reveal-pending {
   opacity: 0;
   transform: translateY(26px);
-  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
 }
 
 [data-reveal].is-in {
@@ -678,13 +684,17 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  /* 自带滚动淡入（ScrollReveal 观察 .tile），
-     3D 倾斜由 ScrollFX 写入 --rx / --ry */
-  opacity: 0;
-  transform: translateY(26px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  /* 滚动淡入：默认可见，reveal-pending（视口下方）才隐藏——
+     见 [data-reveal] 处的说明。3D 倾斜由 ScrollFX 写入 --rx / --ry */
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
   transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
     opacity 0.7s var(--ease);
   will-change: transform;
+}
+
+.tile.reveal-pending {
+  opacity: 0;
+  transform: translateY(26px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
 }
 
 .tile.is-in {
