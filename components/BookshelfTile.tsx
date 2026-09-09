@@ -1,5 +1,6 @@
-/* 精神食粮书架：CSS 3D 书脊，hover 抽出一半露出批注与推荐指数 */
-const BOOKS = [
+/* 精神食粮书架：CSS 3D 书脊，hover 抽出一半露出批注与推荐指数
+   BOOKS 同时被 /year 年度报告书架卡复用 */
+export const BOOKS = [
   {
     title: "黑客与画家",
     en: "Hackers & Painters",

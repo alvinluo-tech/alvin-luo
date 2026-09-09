@@ -15,6 +15,11 @@
   --ease: cubic-bezier(0.65, 0.05, 0, 1);
   --dur: 0.55s;
 
+  /* 等宽字体（房间标签/终端）：此前 --font-mono 未定义，
+     var() 一律落到 Courier（带衬线感），此处显式声明 */
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", Menlo,
+    monospace;
+
   /* --font-mona 由 next/font 注入（app/layout.tsx） */
   --font: var(--font-mona), "Segoe UI", system-ui, -apple-system, "PingFang SC",
     "Microsoft YaHei", sans-serif;
@@ -191,20 +196,71 @@ a {
   }
 }
 
-@media (max-width: 700px) {
-  /* 手机：ticker 嵌进第一行（logo 和工具之间），占满剩余宽度；
-     链接 order 3 换行铺满，导航保持两行高 */
+@media (max-width: 768px) {
+  .nav {
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem 0;
+  }
+
+  .nav.is-scrolled {
+    padding-block: 0.55rem;
+  }
+
+  .nav-logo {
+    order: 0;
+    font-size: 1.05rem;
+  }
+
   .nav-np {
     order: 1;
-    flex: 1 1 0; /* basis 0：不按内容宽度参与换行计算，否则会把工具挤到第二行 */
+    flex: 1 1 0;
     min-width: 0;
     max-width: none;
-    margin: 0 0.7rem;
+    margin: 0 0.5rem;
+    height: 1.9rem;
+    font-size: 0.72rem;
+    padding: 0 0.65rem;
   }
 
   .nav-tools {
     order: 2;
-    margin-left: 0;
+    margin-left: auto;
+    gap: 0.35rem;
+  }
+
+  .nav-tools button,
+  .nav-tools a {
+    height: 32px;
+    padding: 0 0.45rem;
+    font-size: 0.76rem;
+  }
+
+  .nav-links {
+    order: 3;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    font-size: 0.76rem;
+    letter-spacing: 0.05em;
+    overflow-x: auto;
+    padding: 0.35rem 0.2rem 0.15rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to right, black 88%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 88%, transparent 100%);
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-links a {
+    white-space: nowrap;
+    padding: 0.2rem 0;
+    flex-shrink: 0;
   }
 }
 
@@ -886,6 +942,169 @@ a {
 .contact-link:hover {
   color: transparent;
   -webkit-text-stroke: 1.2px var(--ink);
+}
+
+/* ---- BENTO: ROOM 入口瓷砖 ---- */
+.tile-room {
+  grid-column: span 12;
+  background:
+    radial-gradient(420px 240px at 90% 50%, color-mix(in srgb, var(--lime) 12%, transparent) 0%, transparent 70%),
+    var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 22px;
+  padding: 1.8rem 2.2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.tile-room:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px -12px rgba(163, 230, 53, 0.35), 4px 4px 0 var(--ink);
+  border-color: var(--lime);
+}
+
+.tile-room-body {
+  flex: 1;
+  min-width: 0;
+  max-width: 680px;
+}
+
+.tile-room-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.tile-room-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 0.28em 0.8em;
+  border-radius: 999px;
+  background: var(--lime);
+  color: #101400;
+  border: 1.2px solid var(--ink);
+}
+
+.tile-room-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #101400;
+  animation: pulse-dot 1.5s infinite;
+}
+
+.tile-room-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--grey);
+  font-family: var(--font-mono, monospace);
+}
+
+.tile-room-desc {
+  font-size: 0.95rem;
+  color: var(--grey);
+  line-height: 1.65;
+  margin: 0.5rem 0 0;
+}
+
+.tile-room-cta-zone {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1.1rem;
+}
+
+.tile-room-preview {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.tile-room-preview span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1.2px solid var(--ink);
+  background: var(--panel);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.tile-room:hover .tile-room-preview span {
+  background: var(--paper);
+}
+
+.tile-room-preview small {
+  font-size: 0.7rem;
+  color: var(--grey);
+}
+
+.tile-room-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  background: var(--lime);
+  color: #101400;
+  font-weight: 800;
+  font-size: 0.84rem;
+  letter-spacing: 0.1em;
+  border: 1.5px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.tile-room:hover .tile-room-enter {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--ink);
+  background: #c3f53b;
+}
+
+@media (max-width: 900px) {
+  .tile-room {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.3rem;
+    padding: 1.5rem;
+  }
+
+  .tile-room-body {
+    max-width: 100%;
+  }
+
+  .tile-room-cta-zone {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .tile-room-preview {
+    justify-content: flex-start;
+  }
+
+  .tile-room-enter {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ================= 旅行胶片：钉住式横向滚动 =================
@@ -1630,12 +1849,26 @@ a {
     order: 3;
     flex: 1 1 100%;
     justify-content: space-between;
-    gap: 1rem;
+    /* 6 个链接（WORK ROOM YEAR TRAVEL WRITING GITHUB）在 390px
+       单行放不下：min-content 418px 会撑破 350px 行宽把 GITHUB 裁出视口 */
+    gap: 0.7rem;
+    min-width: 0;
+  }
+
+  .nav-links a {
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
   }
 
   .nav-tools {
     margin-left: auto;
     gap: 0.45rem;
+  }
+
+  /* 迷你 now-playing 在 390px 被挤成两三个字的药丸，观感像坏了：
+     移动端直接隐藏（音乐数据在首页音乐瓷砖/bento 仍可见） */
+  .nav-np {
+    display: none;
   }
 
   /* 巨型实心字下移：1100px 断点的 6svh / 9svh 会撞上双行导航
@@ -2662,6 +2895,7 @@ a {
   .bento-grid .tile-term,
   .bento-grid .tile-books,
   .bento-grid .tile-contact,
+  .bento-grid .tile-room,
   .bento-grid .tile-travel {
     grid-column: span 12;
   }
@@ -4859,3 +5093,1638 @@ a {
     transform: translate(30px, -6px) rotate(14deg) scale(0.94);
   }
 }
+
+/* ============================================================
+ * A · Alvin 的房间 (/room) 空间等距 2.5D 手绘设计系统
+ * ============================================================ */
+
+.room-page {
+  min-height: 100svh;
+  padding-top: calc(var(--nav-height, 5.5rem) + 0.8rem);
+  padding-bottom: 2.5rem;
+  padding-inline: clamp(1rem, 3vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.room-head {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0.9rem;
+}
+
+.room-head .eyebrow {
+  justify-content: center;
+  margin-bottom: 0.35rem;
+}
+
+.room-head h2 {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.room-sub {
+  margin-top: 0.4rem;
+  max-width: 640px;
+  color: var(--grey);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+/* 房间舞台容器 */
+.room-stage {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  max-height: min(540px, 58vh);
+  background: var(--panel);
+  border: 1.5px solid var(--ink);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 16px 45px -12px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="dark"] .room-stage {
+  box-shadow: 0 24px 70px -15px rgba(0, 0, 0, 0.65);
+}
+
+.room-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* 鼠标两层视差位移 */
+.room-l {
+  transition: transform 0.15s ease-out;
+}
+
+.room-l-back {
+  transform: translate(calc(var(--mx, 0) * -6px), calc(var(--my, 0) * -4px));
+}
+
+.room-l-mid {
+  transform: translate(calc(var(--mx, 0) * -2px), calc(var(--my, 0) * -1px));
+}
+
+.room-l-front {
+  transform: translate(calc(var(--mx, 0) * 7px), calc(var(--my, 0) * 5px));
+}
+
+/* ---- 房间材质：浅色与时段联动 ---- */
+.room-wall {
+  fill: #eae6db;
+  transition: fill 0.5s ease;
+}
+
+.room-wall-r {
+  fill: #ded9cd;
+  transition: fill 0.5s ease;
+}
+
+.room-floor {
+  fill: #d7c9a8;
+  transition: fill 0.5s ease;
+}
+
+.room-floor-edge {
+  fill: #b3a483;
+  transition: fill 0.5s ease;
+}
+
+.room-planks line {
+  stroke: rgba(90, 75, 45, 0.2);
+  stroke-width: 1.2px;
+  stroke-dasharray: 4 3;
+}
+
+.room-skirt {
+  stroke: #9d8d6d;
+  stroke-width: 3.5px;
+  stroke-linecap: round;
+}
+
+/* ---- 昼夜联动氛围 ---- */
+.is-sky-dusk .room-wall { fill: #f2dfce; }
+.is-sky-dusk .room-wall-r { fill: #e5ccb6; }
+.is-sky-dusk .room-floor { fill: #dcb899; }
+
+.is-sky-dawn .room-wall { fill: #eae1ec; }
+.is-sky-dawn .room-wall-r { fill: #ded1e2; }
+.is-sky-dawn .room-floor { fill: #d3c4d9; }
+
+[data-theme="dark"] .room-wall,
+.is-sky-night .room-wall {
+  fill: #1d2218;
+}
+
+[data-theme="dark"] .room-wall-r,
+.is-sky-night .room-wall-r {
+  fill: #151811;
+}
+
+[data-theme="dark"] .room-floor,
+.is-sky-night .room-floor {
+  fill: #22271c;
+}
+
+[data-theme="dark"] .room-floor-edge,
+.is-sky-night .room-floor-edge {
+  fill: #161912;
+}
+
+[data-theme="dark"] .room-planks line,
+.is-sky-night .room-planks line {
+  stroke: rgba(240, 240, 230, 0.08);
+}
+
+[data-theme="dark"] .room-skirt,
+.is-sky-night .room-skirt {
+  stroke: #333a29;
+}
+
+/* 串旗 */
+.room-bunting path {
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+  opacity: 0.5;
+}
+
+.flag-a {
+  fill: var(--lime);
+  stroke: var(--ink);
+  stroke-width: 1.2px;
+}
+
+.flag-b {
+  fill: #f43f5e;
+  stroke: var(--ink);
+  stroke-width: 1.2px;
+}
+
+/* ---- 窗户与天空时段系统 ---- */
+.room-window {
+  cursor: pointer;
+}
+
+.room-win-frame {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+}
+
+.room-win-sky {
+  transition: fill 0.5s ease;
+}
+
+.room-win-hills {
+  transition: fill 0.5s ease;
+  stroke: var(--ink);
+  stroke-width: 1.2px;
+}
+
+/* 白天 */
+.sky-day .room-win-sky { fill: #6ec4fd; }
+.sky-day .room-win-hills { fill: #487e45; }
+.sky-day .room-win-sun { fill: #ffd043; stroke: #e69d00; stroke-width: 2px; }
+.sky-day .room-win-stars { display: none; }
+
+/* 黄昏 */
+.sky-dusk .room-win-sky { fill: #f97352; }
+.sky-dusk .room-win-hills { fill: #4b3044; }
+.sky-dusk .room-win-sun { fill: #ff4757; stroke: #c0392b; stroke-width: 2px; }
+.sky-dusk .room-win-stars { display: none; }
+
+/* 深夜 */
+.sky-night .room-win-sky { fill: #0a1120; }
+.sky-night .room-win-hills { fill: #060a12; }
+.sky-night .room-win-moon { fill: #fef08a; filter: drop-shadow(0 0 8px rgba(254, 240, 138, 0.6)); }
+.sky-night .room-win-stars { display: block; }
+.room-star {
+  fill: #ffffff;
+  animation: star-twinkle 2.2s ease-in-out infinite;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* 清晨 */
+.sky-dawn .room-win-sky { fill: #d8b4e2; }
+.sky-dawn .room-win-hills { fill: #475569; }
+.sky-dawn .room-win-sun { fill: #fbcfe8; stroke: #f472b6; stroke-width: 2px; }
+.sky-dawn .room-win-stars { display: none; }
+
+/* 窗台与时钟 */
+.room-clock-face {
+  fill: #ffffff;
+  stroke: var(--ink);
+  stroke-width: 3px;
+}
+
+.room-clock-hand {
+  stroke: var(--ink);
+  stroke-width: 2.8px;
+  stroke-linecap: round;
+}
+
+.room-clock-min {
+  stroke-width: 1.8px;
+}
+
+.room-clock-pin {
+  fill: #ef4444;
+}
+
+/* 时钟刻度（验收补充：无刻度时指针角度难以辨认） */
+.room-clock-tick {
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+  opacity: 0.4;
+}
+
+/* 海报 */
+.room-poster {
+  fill: #22271d;
+  stroke: var(--ink);
+  stroke-width: 2px;
+}
+
+.room-poster-art {
+  fill: var(--lime);
+}
+
+.room-poster-ray {
+  stroke: var(--lime);
+  stroke-width: 1.5px;
+  opacity: 0.6;
+}
+
+.room-poster-text {
+  fill: #ffffff;
+  font-weight: 800;
+  font-family: var(--font);
+  letter-spacing: 0.08em;
+}
+
+.room-poster-lime .room-poster-fill {
+  fill: var(--lime);
+}
+
+.room-poster-year {
+  fill: #101400;
+  font-weight: 900;
+  font-family: var(--font);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.room-poster-text-dark {
+  fill: #101400;
+  font-weight: 800;
+}
+
+/* 地毯 */
+.room-rug {
+  fill: #566e51;
+  stroke: var(--ink);
+  stroke-width: 2px;
+}
+
+.room-rug-inner {
+  fill: #6d8867;
+  stroke: rgba(0, 0, 0, 0.15);
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 3;
+}
+
+[data-theme="dark"] .room-rug {
+  fill: #2b3929;
+}
+
+[data-theme="dark"] .room-rug-inner {
+  fill: #394a36;
+}
+
+/* 等距箱体基础材质（床、桌、柜） */
+.room-box-top {
+  fill: #f5f2e9;
+  stroke: var(--ink);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
+.room-box-sw {
+  fill: #dfd8c7;
+  stroke: var(--ink);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
+.room-box-se {
+  fill: #cfc6b3;
+  stroke: var(--ink);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
+[data-theme="dark"] .room-box-top {
+  fill: #2a3123;
+  stroke: #4d5740;
+}
+
+[data-theme="dark"] .room-box-sw {
+  fill: #20261b;
+  stroke: #4d5740;
+}
+
+[data-theme="dark"] .room-box-se {
+  fill: #191e14;
+  stroke: #4d5740;
+}
+
+/* 床品 */
+.room-quilt {
+  fill: var(--lime);
+  stroke: var(--ink);
+  stroke-width: 2px;
+}
+
+.room-quilt-line {
+  stroke: color-mix(in srgb, var(--ink) 40%, transparent);
+  stroke-width: 1.2px;
+  stroke-dasharray: 4 3;
+}
+
+.room-pillow {
+  fill: #ffffff;
+  stroke: var(--ink);
+  stroke-width: 1.6px;
+}
+
+.room-mag {
+  fill: #f43f5e;
+  stroke: var(--ink);
+  stroke-width: 1px;
+}
+
+/* 显示器与代码屏 */
+.room-monitor {
+  fill: #1e221a;
+  stroke: var(--ink);
+  stroke-width: 2px;
+}
+
+.room-screen {
+  fill: #0c0f0a;
+  stroke: var(--lime);
+  stroke-width: 1.2px;
+}
+
+.room-code {
+  fill: var(--lime);
+  opacity: 0.9;
+}
+
+.room-code-2 {
+  fill: #38bdf8;
+  opacity: 0.9;
+}
+
+.room-code-3 {
+  fill: #f43f5e;
+  opacity: 0.9;
+}
+
+.room-cursor {
+  fill: var(--lime);
+  animation: pulse-dot 1s infinite;
+}
+
+.room-keyboard {
+  fill: #394031;
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+}
+
+.room-mug {
+  fill: #facc15;
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+}
+
+.room-desk-leg {
+  stroke: var(--ink);
+  stroke-width: 3.5px;
+  stroke-linecap: round;
+}
+
+/* 椅子 */
+.room-chair-base {
+  fill: #2c3127;
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+}
+
+.room-chair-pole {
+  stroke: var(--ink);
+  stroke-width: 3.5px;
+  stroke-linecap: round;
+}
+
+.room-chair-seat {
+  fill: #4b5563;
+  stroke: var(--ink);
+  stroke-width: 2px;
+}
+
+.room-chair-back {
+  fill: #374151;
+  stroke: var(--ink);
+  stroke-width: 2px;
+}
+
+/* 书架 */
+.room-shelf-frame {
+  fill: #5a4733;
+  stroke: var(--ink);
+  stroke-width: 2px;
+}
+
+.room-shelf-board {
+  fill: #735a41;
+  stroke: var(--ink);
+  stroke-width: 1.8px;
+}
+
+[data-theme="dark"] .room-shelf-frame {
+  fill: #2c2218;
+}
+
+[data-theme="dark"] .room-shelf-board {
+  fill: #3d3023;
+}
+
+.room-spine {
+  stroke: var(--ink);
+  stroke-width: 1px;
+}
+
+/* 唱片机 */
+.room-disc-vinyl {
+  fill: #141611;
+  stroke: #33382c;
+  stroke-width: 1.5px;
+}
+
+.room-disc-groove {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1px;
+}
+
+.room-disc-shine {
+  stroke: rgba(255, 255, 255, 0.45);
+  stroke-width: 2px;
+}
+
+.room-disc-shine-subtle {
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 3;
+}
+
+.room-disc-label {
+  fill: #ef4444;
+}
+
+.room-disc-label-marker {
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 1px;
+}
+
+.room-disc-label-dot {
+  fill: #fef08a;
+}
+
+.room-disc-spindle {
+  fill: #141611;
+}
+
+.room-tonearm {
+  stroke: #c4b59d;
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+}
+
+.room-tonearm-pivot {
+  fill: #a89f91;
+  stroke: var(--ink);
+  stroke-width: 1px;
+}
+
+.room-cartridge {
+  fill: #ef4444;
+  stroke: #101400;
+  stroke-width: 0.8px;
+}
+
+.room-disc-rotor {
+  transform-origin: 0px 0px;
+}
+
+.room-disc-rotor.is-spinning {
+  animation: room-vinyl-spin 2.8s linear infinite;
+}
+
+@keyframes room-vinyl-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-disc-rotor.is-spinning {
+    animation: none;
+  }
+}
+
+.room-np-label {
+  fill: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+}
+
+.room-note {
+  fill: var(--lime);
+  font-size: 18px;
+  font-weight: 800;
+  animation: float-note 2s ease-in-out infinite;
+}
+
+.room-note-2 {
+  animation-delay: 0.9s;
+  fill: #38bdf8;
+}
+
+@keyframes float-note {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-8px) scale(1.15); opacity: 1; }
+}
+
+/* 音箱 */
+.speaker-face {
+  fill: #1f241a;
+  stroke: var(--ink);
+  stroke-width: 2px;
+}
+
+/* 台灯 */
+.room-lamp-base {
+  fill: #cca43b;
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+}
+
+.room-lamp-pole {
+  stroke: var(--ink);
+  stroke-width: 2.5px;
+}
+
+.room-lamp-shade {
+  fill: #e5b94c;
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+}
+
+.room-lamp-glow {
+  fill: rgba(254, 240, 138, 0.45);
+  filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.room-lamp-pool {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.is-sky-night .room-lamp-glow,
+[data-theme="dark"] .room-lamp-glow {
+  opacity: 1;
+}
+
+.is-sky-night .room-lamp-pool,
+[data-theme="dark"] .room-lamp-pool {
+  opacity: 0.95;
+}
+
+/* 植物 */
+.room-plant-leaf {
+  fill: #3f7e44;
+  stroke: var(--ink);
+  stroke-width: 1.6px;
+}
+
+.room-plant-pot {
+  fill: #c86a3e;
+  stroke: var(--ink);
+  stroke-width: 1.8px;
+}
+
+/* 明信片串 */
+.room-string {
+  stroke: #96866b;
+  stroke-width: 1.5px;
+}
+
+.room-postcard {
+  fill: #fdfdfb;
+  stroke: var(--ink);
+  stroke-width: 1.2px;
+}
+
+.room-postcard-art {
+  fill: #70c4ff;
+  stroke: rgba(0, 0, 0, 0.1);
+}
+
+/* 猫咪交互 */
+.room-cat {
+  cursor: pointer;
+  outline: none;
+}
+
+.room-cat-fur {
+  fill: #f59e0b;
+  stroke: var(--ink);
+  stroke-width: 1.8px;
+}
+
+.room-cat-stripe {
+  stroke: #b45309;
+  stroke-width: 1.8px;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.room-cat-tail {
+  stroke: #f59e0b;
+  stroke-width: 6px;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.room-cat-head {
+  fill: #f59e0b;
+  stroke: var(--ink);
+  stroke-width: 1.8px;
+}
+
+.room-cat-ear {
+  fill: #f59e0b;
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+}
+
+.room-cat-eyes-closed path {
+  stroke: var(--ink);
+  stroke-width: 1.8px;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.room-cat-eyes-open circle {
+  fill: var(--ink);
+}
+
+/* 昼夜猫咪闭眼/睁眼状态 */
+.sky-day .room-cat-eyes-open,
+.sky-dawn .room-cat-eyes-open {
+  display: none;
+}
+
+.sky-night .room-cat-eyes-closed,
+.sky-dusk .room-cat-eyes-closed {
+  display: none;
+}
+
+/* 喵呜气泡 */
+.room-meow-bubble {
+  fill: #ffffff;
+  stroke: var(--ink);
+  stroke-width: 1.8px;
+  animation: pop 0.3s var(--ease);
+}
+
+.room-meow-text {
+  fill: #101400;
+  font-weight: 800;
+  font-size: 14px;
+  font-family: var(--font);
+}
+
+.room-meow-heart {
+  fill: #ef4444;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* 悬停胶囊提示框 (Tooltag) */
+.room-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.room-hot {
+  outline: none;
+  cursor: pointer;
+}
+
+.room-hot:hover,
+.room-hot:focus-visible {
+  filter: drop-shadow(0 0 10px rgba(163, 230, 53, 0.5));
+}
+
+.room-tag {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.room-tag text {
+  fill: #101400;
+  font-weight: 800;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.05em;
+  paint-order: stroke fill;
+  stroke: var(--lime);
+  stroke-width: 6px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.room-hot:hover .room-tag,
+.room-hot:focus-visible .room-tag {
+  opacity: 1;
+}
+
+/* 底部家具图例 chips */
+.room-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1.6rem;
+  max-width: 800px;
+}
+
+.room-legend a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 700;
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.room-legend a:hover {
+  background: var(--lime);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px -4px rgba(163, 230, 53, 0.4);
+}
+
+.room-footnote {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--grey);
+  font-size: 0.84rem;
+  max-width: 640px;
+  line-height: 1.6;
+}
+
+/* ============================================================
+ * C · 个人年度报告 (/year) Spotify Wrapped 沉浸翻卡设计系统
+ * ============================================================ */
+
+.yr-page {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* 右侧垂直进度胶囊导轨 */
+.yr-rail {
+  position: fixed;
+  right: clamp(1rem, 2.5vw, 2.5rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.yr-rail button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  padding: 4px;
+}
+
+.yr-rail button i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: transparent;
+  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.yr-rail button.is-on i {
+  width: 10px;
+  height: 10px;
+  background: var(--lime);
+  border-color: var(--ink);
+  transform: scale(1.3);
+  box-shadow: 0 0 10px var(--lime);
+}
+
+.yr-rail button span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--grey);
+  opacity: 0;
+  transform: translateX(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  pointer-events: none;
+}
+
+.yr-rail button:hover span,
+.yr-rail button.is-on span {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--ink);
+}
+
+/* 全屏 Scroll-Snap 容器 */
+.yr-scroller {
+  height: 100svh;
+  width: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.yr-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* 单张卡片视口：始终满屏居中，给顶部导航留足安全间距 */
+.yr-card {
+  min-height: 100svh;
+  height: 100svh;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--nav-height, 5rem) + 1.2rem) clamp(1.25rem, 5vw, 4rem) 2rem;
+  position: relative;
+}
+
+/* 卡片内部实体面板 */
+.yr-inner {
+  position: relative;
+  width: 100%;
+  max-width: 840px;
+  background: var(--panel);
+  border: 1.5px solid var(--ink);
+  border-radius: 28px;
+  padding: clamp(1.8rem, 4.5vw, 3.2rem);
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+[data-theme="dark"] .yr-inner {
+  box-shadow: 0 24px 70px -16px rgba(0, 0, 0, 0.6);
+}
+
+/* 子元素错峰入场动效 */
+.yr-anim {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+  transition-delay: calc(var(--i, 0) * 0.08s);
+}
+
+.yr-card.is-active .yr-anim {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yr-anim {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* 卡片顶部标签 */
+.yr-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--grey);
+  margin-bottom: 1.4rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.yr-label::before {
+  content: "";
+  flex: none;
+  width: 2rem;
+  height: 2px;
+  background: var(--lime);
+  outline: 1px solid rgba(16, 20, 0, 0.25);
+  /* 文字折行时短杠对齐首行，不再孤零零掉到下一行 */
+  margin-top: 0.55em;
+}
+
+/* 00 封面 */
+.yr-cover {
+  text-align: center;
+  align-items: center;
+}
+
+.yr-cover .washi-tl {
+  top: -10px;
+  left: 36px;
+  transform: rotate(-6deg);
+}
+
+.yr-cover .washi-br {
+  bottom: -10px;
+  right: 36px;
+  top: auto;
+  left: auto;
+  transform: rotate(5deg);
+}
+
+.yr-type {
+  font-size: clamp(5.5rem, 16vw, 10.5rem);
+  font-weight: 900;
+  line-height: 0.88;
+  letter-spacing: -0.05em;
+  display: flex;
+  justify-content: center;
+  gap: 0.08em;
+  margin: 1.2rem 0;
+}
+
+.yr-type-solid {
+  color: var(--ink);
+}
+
+.yr-type-outline {
+  color: transparent;
+  -webkit-text-stroke: 3px var(--ink);
+}
+
+[data-theme="dark"] .yr-type-outline {
+  -webkit-text-stroke-color: var(--lime);
+}
+
+.yr-sub {
+  max-width: 580px;
+  font-size: 1.08rem;
+  line-height: 1.6;
+  color: var(--grey);
+  margin-bottom: 1.8rem;
+}
+
+.yr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+}
+
+.yr-chips span {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 0.35em 0.9em;
+  border-radius: 999px;
+  border: 1.2px solid var(--ink);
+  background: color-mix(in srgb, var(--lime) 18%, var(--paper));
+}
+
+.yr-scroll-hint {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--grey);
+  animation: bounce-y 1.8s infinite;
+}
+
+@keyframes bounce-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* 核心数字看板 */
+.yr-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.8rem;
+}
+
+.yr-fig {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-left: 3.5px solid var(--lime);
+  padding-left: 1rem;
+}
+
+.yr-fig strong {
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.yr-fig span {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--grey);
+}
+
+/* 01 写作分类条 */
+.yr-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.8rem;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  padding: 1.2rem;
+}
+
+.yr-bar-row {
+  display: grid;
+  grid-template-columns: 95px 1fr 45px;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.yr-bar-name {
+  color: var(--ink);
+  letter-spacing: 0.05em;
+}
+
+.yr-bar {
+  height: 10px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.yr-bar i {
+  display: block;
+  height: 100%;
+  width: var(--w, 0%);
+  background: var(--lime);
+  border-radius: 999px;
+  transition: width 1s var(--ease);
+}
+
+.yr-bar-n {
+  text-align: right;
+  color: var(--grey);
+  font-family: var(--font-mono, monospace);
+}
+
+.yr-notes {
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--grey);
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+  padding-top: 1rem;
+}
+
+.yr-notes b {
+  color: var(--ink);
+}
+
+.yr-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 800;
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--lime);
+  margin-top: 0.6rem;
+  transition: background 0.2s ease;
+  width: fit-content;
+}
+
+.yr-link:hover {
+  background: var(--lime);
+}
+
+/* 02 代码与开源项目 */
+.yr-chart,
+.yr-gh-chart {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  padding: 1.2rem;
+  margin: 1.2rem 0 1.6rem;
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 140px;
+}
+
+.yr-chart img,
+.yr-gh-chart img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+[data-theme="light"] .yr-chart,
+[data-theme="light"] .yr-gh-chart {
+  background: #ffffff;
+  border-color: rgba(16, 20, 0, 0.2);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.yr-repos {
+  font-size: 0.9rem;
+  color: var(--ink);
+  font-weight: 600;
+  margin-top: 0.8rem;
+  line-height: 1.6;
+}
+
+.yr-repos .yr-link {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.yr-top-repos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.yr-repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink);
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.yr-repo:hover {
+  background: var(--lime);
+  transform: translateY(-2px);
+}
+
+/* 03 音乐循环榜 */
+.yr-repeat {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.yr-repeat li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.65rem 1rem;
+  border-radius: 14px;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  font-size: 0.9rem;
+}
+
+.yr-repeat em {
+  font-style: normal;
+  font-weight: 900;
+  color: var(--lime);
+  font-family: var(--font-mono, monospace);
+  font-size: 1.1rem;
+}
+
+.yr-repeat b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.yr-repeat span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--grey);
+  font-size: 0.82rem;
+}
+
+.yr-repeat i {
+  font-style: normal;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--lime);
+  background: var(--ink);
+  padding: 0.2em 0.65em;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* 04 旅行拍立得 */
+.yr-postcard {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 2rem;
+  align-items: center;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 20px;
+  padding: 1.4rem;
+  margin-top: 1.5rem;
+}
+
+.yr-photo-frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yr-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 优雅降级邮戳插画 */
+.yr-photo-stamp-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: 1rem;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--panel),
+    var(--panel) 10px,
+    color-mix(in srgb, var(--ink) 5%, transparent) 10px,
+    color-mix(in srgb, var(--ink) 5%, transparent) 20px
+  );
+}
+
+.yr-stamp-icon {
+  font-size: 2.4rem;
+}
+
+.yr-stamp-text {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+}
+
+.yr-tape {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 54px;
+  height: 18px;
+  background: color-mix(in srgb, var(--lime) 65%, transparent);
+  border-left: 1px dashed rgba(0, 0, 0, 0.2);
+  border-right: 1px dashed rgba(0, 0, 0, 0.2);
+}
+
+.yr-photo-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.yr-photo-meta b {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.yr-photo-meta span {
+  font-size: 0.82rem;
+  color: var(--grey);
+  font-weight: 600;
+}
+
+.yr-photo-meta p {
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: var(--grey);
+  margin: 0.3rem 0 0.6rem;
+}
+
+/* 05 书架 */
+.yr-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 1rem;
+  margin: 1.8rem 0;
+}
+
+.yr-book {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  padding: 1rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.yr-book:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.25);
+}
+
+.yr-book i {
+  display: block;
+  width: 26px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+.yr-book b {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.35;
+  min-height: 2.7em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yr-book em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--lime);
+  background: var(--ink);
+  padding: 0.15em 0.55em;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.yr-note {
+  font-size: 0.88rem;
+  color: var(--grey);
+  line-height: 1.6;
+}
+
+/* 06 海报总结 */
+.yr-finale {
+  align-items: center;
+  text-align: center;
+}
+
+.yr-poster {
+  position: relative;
+  max-width: 480px;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.4);
+  margin: 1rem 0 1.5rem;
+  background: #12140e;
+}
+
+.yr-poster img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.yr-poster-stamp {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--lime);
+  color: var(--ink);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 0.25em 0.75em;
+  border-radius: 999px;
+  border: 1.2px solid var(--ink);
+}
+
+@media (max-width: 700px) {
+  /* 海报全宽时印章缩小右移，不压图片里的 ANNUAL REPORT 徽章 */
+  .yr-poster-stamp {
+    top: 6px;
+    right: 6px;
+    font-size: 0.52rem;
+    padding: 0.2em 0.55em;
+  }
+}
+
+.yr-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+
+.yr-actions .btn {
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1.5px solid var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.yr-actions .btn-primary {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.yr-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -6px var(--lime);
+}
+
+.yr-actions .btn-ghost {
+  background: transparent;
+  color: var(--ink);
+}
+
+.yr-actions .btn-ghost:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  transform: translateY(-2px);
+}
+
+/* 响应式调整 */
+@media (max-width: 860px) {
+  .yr-rail {
+    display: none;
+  }
+
+  .yr-card {
+    padding-inline: 0.85rem;
+  }
+
+  .yr-inner {
+    padding: 1.6rem 1.15rem;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+
+  .yr-type {
+    font-size: clamp(3.8rem, 16vw, 6.5rem);
+  }
+
+  .yr-figures {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .yr-fig {
+    padding-left: 0.75rem;
+  }
+
+  .yr-fig strong {
+    font-size: clamp(1.8rem, 5.5vw, 2.5rem);
+  }
+
+  .yr-chart,
+  .yr-gh-chart {
+    padding: 0.75rem 0.5rem;
+    margin: 0.8rem 0 1.2rem;
+    min-height: 110px;
+  }
+
+  .yr-shelf {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+    margin: 1.2rem 0;
+  }
+
+  .yr-book {
+    padding: 0.75rem 0.65rem;
+  }
+
+  .yr-book b {
+    font-size: 0.78rem;
+    min-height: 2.4em;
+  }
+
+  .yr-postcard {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .yr-photo-frame {
+    max-width: 240px;
+    margin: 0 auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  .yr-repeat li {
+    grid-template-columns: 24px 1fr auto;
+  }
+
+  .yr-repeat li span {
+    display: none;
+  }
+}
+

@@ -31,6 +31,8 @@ export default function Nav() {
       <nav className="nav-links">
         {/* TODO: 换成你的链接 */}
         <Link href="/#projects">Work</Link>
+        <Link href="/room">Room</Link>
+        <Link href="/year">Year</Link>
         <Link href="/travel">Travel</Link>
         <Link href="/blog">Writing</Link>
         <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">

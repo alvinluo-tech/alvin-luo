@@ -55,7 +55,48 @@ export default function TerminalTile() {
         });
         out.push({
           kind: "out",
-          text: "  help        Show this command guide\n  skills      Inspect technical skill matrix\n  cat bio.txt Read personal background & philosophy\n  ls          List files and directories in workspace\n  whoami      Current identity, location & role\n  workout     Get a randomized daily training menu\n  contact     Show email and GitHub links\n  date        Print live local time in Durham, UK\n  sudo        Attempt admin execution\n  clear       Clear terminal output buffer",
+          text: "  help                Show this command guide\n  room                Visit /room (Alvin's 2.5D isometric room)\n  year                Open /year (2026 Annual Report Wrapped)\n  cat xray-hero-effect Read the flagship post summary\n  skills              Inspect technical skill matrix\n  cat bio.txt         Read personal background & philosophy\n  ls                  List files and directories in workspace\n  whoami              Current identity, location & role\n  workout             Get a randomized daily training menu\n  contact             Show email and GitHub links\n  date                Print live local time in Durham, UK\n  sudo hire-alvin     Attempt special hiring protocol\n  clear               Clear terminal output buffer",
+        });
+        break;
+
+      case "room":
+        out.push({ kind: "ok", text: "Opening Alvin's 2.5D Room: /room ..." });
+        if (typeof window !== "undefined") {
+          setTimeout(() => { window.location.href = "/room"; }, 400);
+        }
+        break;
+
+      case "year":
+      case "wrapped":
+        out.push({ kind: "ok", text: "Opening 2026 Annual Report: /year ..." });
+        if (typeof window !== "undefined") {
+          setTimeout(() => { window.location.href = "/year"; }, 400);
+        }
+        break;
+
+      case "cat xray-hero-effect":
+      case "cat xray":
+      case "xray":
+        out.push({
+          kind: "ok",
+          text: "ARTICLE: X-Ray Hero Effect — 透视层与物理光影的工程实现",
+        });
+        out.push({
+          kind: "out",
+          text: "深入剖析利用 WebGL/Canvas 与 CSS 混合模式打造具深度感的透视人像、\n视差位移与 X 光透视骨骼。阅读完整长文: /blog/xray-hero-effect",
+        });
+        break;
+
+      case "sudo hire-alvin":
+      case "hire":
+      case "hire-alvin":
+        out.push({
+          kind: "ok",
+          text: "Access Granted: [200 OK] — High-Impact Software Engineer detected!",
+        });
+        out.push({
+          kind: "out",
+          text: "Thank you for your interest. Let's craft refined software and build bold products together.\nReach out directly: luoyaosheng123@gmail.com",
         });
         break;
 
@@ -63,7 +104,7 @@ export default function TerminalTile() {
       case "dir":
         out.push({
           kind: "out",
-          text: "drwxr-xr-x  projects/\ndrwxr-xr-x  travel/\n-rw-r--r--  bio.txt\n-rwxr-xr-x  skills.sh\n-rw-r--r--  contact.json",
+          text: "drwxr-xr-x  projects/\ndrwxr-xr-x  room/\ndrwxr-xr-x  year/\ndrwxr-xr-x  travel/\n-rw-r--r--  bio.txt\n-rw-r--r--  xray-hero-effect.md\n-rwxr-xr-x  skills.sh\n-rw-r--r--  contact.json",
         });
         break;
 
@@ -188,7 +229,7 @@ export default function TerminalTile() {
     inputRef.current?.focus();
   };
 
-  const QUICK_COMMANDS = ["help", "skills", "cat bio.txt", "whoami", "workout", "clear"];
+  const QUICK_COMMANDS = ["help", "room", "year", "skills", "cat bio.txt", "whoami", "workout", "clear"];
 
   return (
     <article className="tile tile-term" onClick={focusInput} aria-label="Interactive developer terminal">

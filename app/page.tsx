@@ -222,6 +222,42 @@ export default function Home() {
             </div>
           </a>
 
+          {/* Alvin 的等距小房间入口瓷砖 */}
+          <Link href="/room" className="tile tile-room is-link">
+            <div className="tile-room-body">
+              <div className="tile-room-head">
+                <span className="tile-room-pill">
+                  <span className="tile-room-dot" />
+                  <T en="2.5D ISOMETRIC" zh="2.5D 等距空间" />
+                </span>
+                <span className="tile-room-badge">
+                  <T en="LIVE DURHAM CLOCK" zh="杜伦真实时间" />
+                </span>
+              </div>
+              <h3 className="tile-title">
+                <T en="ALVIN'S ROOM" zh="ALVIN 的房间" />
+              </h3>
+              <p className="tile-room-desc">
+                <T
+                  en="A room, not a page. Desk holds my projects, window follows real time, and the cat purrs when you click it."
+                  zh="一个房间，不只是一个页面。书桌藏着项目，窗户跟着真实时间明暗，点一下猫还会打呼噜。"
+                />
+              </p>
+            </div>
+            <div className="tile-room-cta-zone">
+              <div className="tile-room-preview" aria-hidden="true">
+                <span>🛏 <small>Bed</small></span>
+                <span>🖥 <small>Projects</small></span>
+                <span>📚 <small>Books</small></span>
+                <span>🐱 <small>Pet Cat</small></span>
+                <span>♪ <small>Vinyl</small></span>
+              </div>
+              <span className="tile-room-enter">
+                <T en="ENTER ROOM →" zh="推门进去看看 →" />
+              </span>
+            </div>
+          </Link>
+
           {/* 极客终端彩蛋：Bento 底部通栏压轴 */}
           <TerminalTile />
         </div>
