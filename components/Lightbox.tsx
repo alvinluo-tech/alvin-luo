@@ -7,12 +7,11 @@ export default function Lightbox() {
   useEffect(() => {
     const overlay = document.createElement("div");
     overlay.className = "lightbox";
-    overlay.innerHTML = '<img alt="" />';
-    const img = overlay.querySelector("img")!;
     let open = false;
-
+    /* 打开时才注入 <img>：常驻的 src="" 空图会以当前页 URL 发起一次无效请求 */
     const show = (src: string, alt: string) => {
-      img.src = src;
+      overlay.innerHTML = `<img alt="" src="${src.replace(/"/g, "&quot;")}" />`;
+      const img = overlay.querySelector("img")!;
       img.alt = alt;
       overlay.classList.add("is-open");
       document.documentElement.style.overflow = "hidden";
@@ -20,6 +19,7 @@ export default function Lightbox() {
     };
     const hide = () => {
       overlay.classList.remove("is-open");
+      overlay.querySelector("img")?.remove();
       document.documentElement.style.overflow = "";
       open = false;
     };

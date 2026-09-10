@@ -41,6 +41,19 @@ function boxIso(pos: P, a: number, b: number, h: number) {
   return { top: poly(A2, B2, C2, D2), sw: poly(A, D, D2, A2), se: poly(D, C, C2, D2) };
 }
 
+/** 悬空/置顶等距箱体：h0=底面高度，h1=顶面高度 */
+function boxIsoRaised(pos: P, a: number, b: number, h0: number, h1: number) {
+  const A = pt(pos, -a, -b, h0);
+  const B = pt(pos, a, -b, h0);
+  const C = pt(pos, a, b, h0);
+  const D = pt(pos, -a, b, h0);
+  const A2 = pt(pos, -a, -b, h1);
+  const B2 = pt(pos, a, -b, h1);
+  const C2 = pt(pos, a, b, h1);
+  const D2 = pt(pos, -a, b, h1);
+  return { top: poly(A2, B2, C2, D2), sw: poly(A, D, D2, A2), se: poly(D, C, C2, D2) };
+}
+
 /* 房间骨架 */
 const C_TOP: P = [600, 96];
 const A_TOP: P = [200, 216];
@@ -185,6 +198,17 @@ export default function RoomScene() {
               <stop offset="45%" stopColor="#fde047" stopOpacity="0.22" />
               <stop offset="100%" stopColor="#eab308" stopOpacity="0" />
             </radialGradient>
+            {/* 窗户防溢出遮罩 */}
+            <clipPath id="roomWindowClip">
+              <polygon
+                points={poly(
+                  pt(C_BOT, 70, 0, 230),
+                  pt(C_BOT, 190, 0, 230),
+                  pt(C_BOT, 190, 0, 90),
+                  pt(C_BOT, 70, 0, 90),
+                )}
+              />
+            </clipPath>
           </defs>
           {/* ============ 远层：墙 / 地板 / 墙饰 ============ */}
           <g className="room-l room-l-back">
@@ -261,33 +285,38 @@ export default function RoomScene() {
                   onClick={cycleSky}
                   onKeyDown={(e) => e.key === "Enter" && cycleSky()}
                 >
-                  <polygon className="room-win-sky" points={poly(w0, w1, w2, w3)} />
-                  <path
-                    className="room-win-hills"
-                    d={`M ${w3[0]} ${w3[1] - 18} Q ${(w3[0] + w2[0]) / 2 - 20} ${w3[1] - 44} ${(w3[0] + w2[0]) / 2 + 12} ${w3[1] - 16} T ${w2[0]} ${w2[1] - 6} L ${w2[0]} ${w2[1]} L ${w3[0]} ${w3[1]} Z`}
-                  />
-                  {isNight ? (
-                    <circle className="room-win-moon" cx={(w0[0] + w1[0]) / 2 + 18} cy={w0[1] + 26} r={11} />
-                  ) : (
-                    <circle className="room-win-sun" cx={(w0[0] + w1[0]) / 2 - 12} cy={w0[1] + 24} r={12} />
-                  )}
-                  <g className="room-win-stars" aria-hidden="true">
-                    {[
-                      [0.25, 0.22],
-                      [0.5, 0.14],
-                      [0.72, 0.3],
-                      [0.38, 0.4],
-                      [0.62, 0.48],
-                    ].map(([fx, fy], i) => (
-                      <circle
-                        key={i}
-                        className="room-star"
-                        style={{ animationDelay: `${i * 0.7}s` } as React.CSSProperties}
-                        cx={w0[0] + (w1[0] - w0[0]) * fx}
-                        cy={w0[1] + (w2[1] - w0[1]) * fy}
-                        r={2.2}
-                      />
-                    ))}
+                  <g clipPath="url(#roomWindowClip)">
+                    <polygon className="room-win-sky" points={poly(w0, w1, w2, w3)} />
+                    <path
+                      className="room-win-hills"
+                      d={`M ${w3[0]} ${w3[1] - 18} Q ${(w3[0] + w2[0]) / 2 - 20} ${w3[1] - 44} ${(w3[0] + w2[0]) / 2 + 12} ${w3[1] - 16} T ${w2[0]} ${w2[1] - 6} L ${w2[0]} ${w2[1]} L ${w3[0]} ${w3[1]} Z`}
+                    />
+                    {isNight ? (
+                      <circle className="room-win-moon" cx={(w0[0] + w1[0]) / 2 + 18} cy={w0[1] + 26} r={11} />
+                    ) : (
+                      <circle className="room-win-sun" cx={(w0[0] + w1[0]) / 2 - 12} cy={w0[1] + 24} r={12} />
+                    )}
+                    <g className="room-win-stars" aria-hidden="true">
+                      {[
+                        [0.22, 0.72],
+                        [0.46, 0.85],
+                        [0.72, 0.68],
+                        [0.34, 0.48],
+                        [0.64, 0.42],
+                      ].map(([fu, fv], i) => {
+                        const p = pt(C_BOT, 70 + fu * 120, 0, 90 + fv * 140);
+                        return (
+                          <circle
+                            key={i}
+                            className="room-star"
+                            style={{ animationDelay: `${i * 0.7}s` } as React.CSSProperties}
+                            cx={p[0]}
+                            cy={p[1]}
+                            r={2.2}
+                          />
+                        );
+                      })}
+                    </g>
                   </g>
                   <polygon className="room-win-frame" points={poly(w0, w1, w2, w3)} />
                   <line
@@ -334,7 +363,7 @@ export default function RoomScene() {
                     <line className="room-string" x1={x} y1={y - 2} x2={x} y2={y + 6} />
                   </g>
                 ))}
-                <g className="room-tag" transform="translate(240,238)">
+                <g className="room-tag" transform="translate(450,192)">
                   <text>{pick(locale, "travel archive →", "旅行档案 →")}</text>
                 </g>
               </g>
@@ -342,23 +371,23 @@ export default function RoomScene() {
 
             {/* 时钟（真实伦敦时间）——挂在右墙左段，避开书架与墙顶边 */}
             <g className="room-clock room-pop" style={{ "--d": "0.9s" } as React.CSSProperties} aria-hidden="true">
-              <circle className="room-clock-face" cx={655} cy={175} r={28} />
+              <circle className="room-clock-face" cx={656} cy={186} r={28} />
               {Array.from({ length: 12 }).map((_, i) => {
                 const a = (i * 30 * Math.PI) / 180;
                 return (
                   <line
                     key={i}
                     className="room-clock-tick"
-                    x1={655 + Math.sin(a) * 23}
-                    y1={175 - Math.cos(a) * 23}
-                    x2={655 + Math.sin(a) * 26.5}
-                    y2={175 - Math.cos(a) * 26.5}
+                    x1={656 + Math.sin(a) * 23}
+                    y1={186 - Math.cos(a) * 23}
+                    x2={656 + Math.sin(a) * 26.5}
+                    y2={186 - Math.cos(a) * 26.5}
                   />
                 );
               })}
-              <line className="room-clock-hand" x1={655} y1={175} x2={655} y2={158} transform={`rotate(${hourDeg} 655 175)`} />
-              <line className="room-clock-hand room-clock-min" x1={655} y1={175} x2={655} y2={152} transform={`rotate(${minDeg} 655 175)`} />
-              <circle className="room-clock-pin" cx={655} cy={175} r={3} />
+              <line className="room-clock-hand" x1={656} y1={186} x2={656} y2={169} transform={`rotate(${hourDeg} 656 186)`} />
+              <line className="room-clock-hand room-clock-min" x1={656} y1={186} x2={656} y2={163} transform={`rotate(${minDeg} 656 186)`} />
+              <circle className="room-clock-pin" cx={656} cy={186} r={3} />
             </g>
 
             {/* X-RAY 海报（右墙）→ 旗舰文章 */}
@@ -379,7 +408,7 @@ export default function RoomScene() {
                 <line className="room-poster-ray" x1={916} y1={352} x2={988} y2={374} />
                 <line className="room-poster-ray" x1={916} y1={358} x2={988} y2={380} />
                 <text className="room-poster-text" x={916} y={324} fontSize={13}>X-RAY</text>
-                <g className="room-tag" transform="translate(905,252)">
+                <g className="room-tag" transform="translate(952,414)">
                   <text>{pick(locale, "read the story →", "读这篇故事 →")}</text>
                 </g>
               </g>
@@ -399,7 +428,7 @@ export default function RoomScene() {
                 <text className="room-poster-year" x={318} y={266} fontSize={30}>20</text>
                 <text className="room-poster-year room-poster-year2" x={318} y={296} fontSize={30}>26</text>
                 <text className="room-poster-text room-poster-text-dark" x={318} y={228} fontSize={12}>REPORT</text>
-                <g className="room-tag" transform="translate(310,330)">
+                <g className="room-tag" transform="translate(315,324)">
                   <text>{pick(locale, "the year report →", "年度报告 →")}</text>
                 </g>
               </g>
@@ -418,8 +447,8 @@ export default function RoomScene() {
             {(() => {
               const bedP: P = [400, 468];
               const b = boxIso(bedP, 108, 46, 40);
-              const quilt = boxIso([bedP[0] + 30, bedP[1] + 9], 66, 40, 46);
-              const pil = boxIso(pt(bedP, -72, 0), 24, 38, 52);
+              const quilt = boxIsoRaised([bedP[0] + 30, bedP[1] + 9], 66, 40, 40, 44);
+              const pil = boxIsoRaised(pt(bedP, -72, 0), 24, 38, 40, 50);
               return (
                 <g
                   role="link"
@@ -433,24 +462,26 @@ export default function RoomScene() {
                     <polygon className="room-box-top" points={b.top} />
                     <polygon className="room-box-sw" points={b.sw} />
                     <polygon className="room-box-se" points={b.se} />
+                    <polygon className="room-quilt-side" points={quilt.se} />
                     <polygon className="room-quilt" points={quilt.top} />
                     <line
                       className="room-quilt-line"
-                      x1={pt(bedP, 8, -40, 46)[0]}
-                      y1={pt(bedP, 8, -40, 46)[1]}
-                      x2={pt(bedP, 8, 40, 46)[0]}
-                      y2={pt(bedP, 8, 40, 46)[1]}
+                      x1={pt(bedP, 8, -40, 44)[0]}
+                      y1={pt(bedP, 8, -40, 44)[1]}
+                      x2={pt(bedP, 8, 40, 44)[0]}
+                      y2={pt(bedP, 8, 40, 44)[1]}
                     />
                     <line
                       className="room-quilt-line"
-                      x1={pt(bedP, 40, -40, 46)[0]}
-                      y1={pt(bedP, 40, -40, 46)[1]}
-                      x2={pt(bedP, 40, 40, 46)[0]}
-                      y2={pt(bedP, 40, 40, 46)[1]}
+                      x1={pt(bedP, 40, -40, 44)[0]}
+                      y1={pt(bedP, 40, -40, 44)[1]}
+                      x2={pt(bedP, 40, 40, 44)[0]}
+                      y2={pt(bedP, 40, 40, 44)[1]}
                     />
+                    <polygon className="room-pillow-side" points={pil.se} />
                     <polygon className="room-pillow" points={pil.top} />
                     <rect className="room-mag" x={330} y={432} width={26} height={18} transform="rotate(-6 343 441)" />
-                    <g className="room-tag" transform="translate(440,540)">
+                    <g className="room-tag" transform="translate(360,495)">
                       <text>{pick(locale, "what I'm doing now →", "我最近在干嘛 →")}</text>
                     </g>
                   </g>
@@ -502,7 +533,7 @@ export default function RoomScene() {
                   <rect className="room-mug" x={760} y={402} width={14} height={16} rx={3} />
                   <path className="room-mug" d="M 774 406 q 8 2 0 9" fill="none" />
                 </g>
-                <g className="room-tag" transform="translate(770,584)">
+                <g className="room-tag" transform="translate(750,560)">
                   <text>{pick(locale, "projects live here →", "项目都在这 →")}</text>
                 </g>
               </g>
@@ -527,8 +558,6 @@ export default function RoomScene() {
             >
               <g className="room-pop" style={{ "--d": "0.8s" } as React.CSSProperties}>
                 {(() => {
-                  /* 三层横板，横向范围固定 112..256（此前按 si 递增横向起点，
-                     第 4 层板拼到 v=423 → x=1023 直接戳出墙体） */
                   const boards = [164, 204, 244];
                   const spineColors = ["#3d4a2a", "#6b6f3f", "#8a8f5a", "#2f3524", "#544a1e", "#7a8a1e"];
                   return (
@@ -562,7 +591,7 @@ export default function RoomScene() {
                     </>
                   );
                 })()}
-                <g className="room-tag" transform="translate(606,236)">
+                <g className="room-tag" transform="translate(746,305)">
                   <text>{pick(locale, "what I read →", "我在读什么 →")}</text>
                 </g>
               </g>
@@ -585,6 +614,15 @@ export default function RoomScene() {
                       <polygon className="room-box-top" points={con.top} />
                       <polygon className="room-box-sw" points={con.sw} />
                       <polygon className="room-box-se" points={con.se} />
+                      {/* 经典 Hi-Fi 唱机控制面板：金属旋钮、指示灯与前出音隔栅 */}
+                      <g className="room-hifi-details" aria-hidden="true">
+                        <line x1={375} y1={616} x2={455} y2={592} stroke="rgba(255,255,255,0.12)" strokeWidth={1.8} />
+                        <line x1={375} y1={620} x2={455} y2={596} stroke="rgba(255,255,255,0.12)" strokeWidth={1.8} />
+                        <line x1={375} y1={624} x2={455} y2={600} stroke="rgba(255,255,255,0.12)" strokeWidth={1.8} />
+                        <circle cx={468} cy={588} r={2.5} fill="#cca43b" stroke="var(--ink)" strokeWidth={0.8} />
+                        <circle cx={476} cy={586} r={2.5} fill="#cca43b" stroke="var(--ink)" strokeWidth={0.8} />
+                        <circle cx={460} cy={590} r={1.5} fill={playing ? "#a3e635" : "#64748b"} />
+                      </g>
                     </>
                   );
                 })()}
@@ -615,30 +653,16 @@ export default function RoomScene() {
                 <circle className="room-tonearm-pivot" cx={446} cy={556} r={2.8} />
                 <rect className="room-cartridge" x={422} y={562} width={5} height={3} rx={1} transform="rotate(22 424.5 563.5)" />
                 {playing && np?.name && (
-                  <text className="room-np-label" x={406} y={600} textAnchor="middle">
+                  <text className="room-np-label" x={406} y={596} textAnchor="middle">
                     ♪ {np.name.slice(0, 12)}
                   </text>
                 )}
                 {playing && <text className="room-note room-note-1" x={450} y={548} aria-hidden="true">♪</text>}
                 {playing && <text className="room-note room-note-2" x={360} y={538} aria-hidden="true">♫</text>}
-                <g className="room-tag" transform="translate(300,648)">
+                <g className="room-tag" transform="translate(365,630)">
                   <text>{pick(locale, "now playing →", "正在播放 →")}</text>
                 </g>
               </g>
-            </g>
-
-            {/* 音箱 */}
-            <g className="room-pop" style={{ "--d": "0.6s" } as React.CSSProperties} aria-hidden="true">
-              {(() => {
-                const sp = boxIso([565, 610], 15, 12, 44);
-                return (
-                  <>
-                    <polygon className="room-box-top" points={sp.top} />
-                    <polygon className="room-box-sw" points={sp.sw} />
-                    <polygon className="room-box-se speaker-face" points={sp.se} />
-                  </>
-                );
-              })()}
             </g>
 
             {/* 植物（右后角） */}
@@ -662,26 +686,43 @@ export default function RoomScene() {
                 <ellipse className="room-cat-fur" cx={592} cy={560} rx={40} ry={21} />
                 <path className="room-cat-stripe" d="M 564 546 q 6 14 2 28 M 582 542 q 6 16 2 34 M 600 544 q 5 14 2 30" />
                 <path className="room-cat-tail" d="M 556 566 q -28 4 -26 -18" />
+                {/* 揣进肚肚下的可爱猫爪爪 */}
+                <ellipse className="room-cat-paw" cx={612} cy={571} rx={6.5} ry={3.2} />
+                <ellipse className="room-cat-paw" cx={590} cy={573} rx={5.5} ry={2.8} />
                 <circle className="room-cat-head" cx={630} cy={552} r={15} />
                 <polygon className="room-cat-ear" points="620,540 626,526 632,539" />
                 <polygon className="room-cat-ear" points="634,538 642,526 644,540" />
-                <g className="room-cat-eyes-closed">
-                  <path d="M 623 552 q 3 3 6 0 M 632 552 q 3 3 6 0" />
-                </g>
-                <g className="room-cat-eyes-open">
-                  <circle cx={625} cy={551} r={1.8} />
-                  <circle cx={635} cy={551} r={1.8} />
-                </g>
+                {/* 粉红小鼻头 */}
+                <polygon points="629,554 632,554 630.5,556" fill="#f43f5e" />
+                {/* 猫咪表情状态机：撸猫时闭眼享受微笑脸、深夜精神睁眼、白天安静睡觉 */}
+                {meow ? (
+                  <g className="room-cat-eyes-purr">
+                    <path d="M 622 552 q 3.5 -3.5 7 0 M 631 552 q 3.5 -3.5 7 0" />
+                    <circle cx={621} cy={556} r={2.5} fill="#f43f5e" opacity={0.65} />
+                    <circle cx={639} cy={556} r={2.5} fill="#f43f5e" opacity={0.65} />
+                  </g>
+                ) : isNight ? (
+                  <g className="room-cat-eyes-open">
+                    <ellipse cx={625} cy={551} rx={2.2} ry={2.5} />
+                    <circle cx={625.8} cy={550.2} r={0.8} fill="#ffffff" />
+                    <ellipse cx={635} cy={551} rx={2.2} ry={2.5} />
+                    <circle cx={635.8} cy={550.2} r={0.8} fill="#ffffff" />
+                  </g>
+                ) : (
+                  <g className="room-cat-eyes-closed">
+                    <path d="M 622 550 q 3.5 3.5 7 0 M 631 550 q 3.5 3.5 7 0" />
+                  </g>
+                )}
               </g>
               <polygon className="room-hit" points="536,528 660,528 660,588 536,588" />
               {meow && (
                 <g className="room-meow" aria-hidden="true">
                   <path className="room-meow-bubble" d="M 650 500 q 30 -18 60 0 q 26 16 0 30 q -30 16 -56 2 l -14 12 l 4 -16 q -18 -14 6 -28 Z" />
                   <text className="room-meow-text" x={682} y={522} textAnchor="middle">喵~</text>
-                  <path className="room-meow-heart" d="M 710 470 q 6 -10 12 0 q 6 -10 12 0 q 0 8 -12 16 q -12 -8 -12 -16 Z" />
+                  <path className="room-meow-heart" d="M 676 480 q 3 -5 6 0 q 3 -5 6 0 q 0 4 -6 8 q -6 -4 -6 -8 Z" />
                 </g>
               )}
-              <g className="room-tag" transform="translate(520,616)">
+              <g className="room-tag" transform="translate(554,608)">
                 <text>{pick(locale, "pet the cat", "撸猫")}</text>
               </g>
             </g>
