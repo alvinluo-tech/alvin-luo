@@ -40,6 +40,8 @@ export default function ScrollFX() {
           const ry = ((e.clientX - r.left) / r.width - 0.5) * 4.5;
           tile.style.setProperty("--rx", `${rx.toFixed(2)}deg`);
           tile.style.setProperty("--ry", `${ry.toFixed(2)}deg`);
+          tile.style.setProperty("--mx", `${(e.clientX - r.left).toFixed(1)}px`);
+          tile.style.setProperty("--my", `${(e.clientY - r.top).toFixed(1)}px`);
         };
         const leave = () => {
           tile.style.setProperty("--rx", "0deg");

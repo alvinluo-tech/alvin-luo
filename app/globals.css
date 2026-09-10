@@ -732,6 +732,7 @@ a {
 }
 
 .tile {
+  position: relative;
   border: 1.5px solid var(--ink);
   border-radius: 22px;
   background: rgba(248, 248, 243, 0.72);
@@ -746,6 +747,40 @@ a {
   transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
     opacity 0.7s var(--ease);
   will-change: transform;
+}
+
+/* Bento 2.0 空间光标聚光灯（Radial Spotlight） */
+.tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    460px circle at var(--mx, -999px) var(--my, -999px),
+    rgba(210, 255, 0, 0.18),
+    transparent 66%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+  z-index: 0;
+}
+
+[data-theme="dark"] .tile::before {
+  background: radial-gradient(
+    500px circle at var(--mx, -999px) var(--my, -999px),
+    rgba(210, 255, 0, 0.13),
+    transparent 65%
+  );
+}
+
+.tile:hover::before {
+  opacity: 1;
+}
+
+.tile > * {
+  position: relative;
+  z-index: 1;
 }
 
 .tile.reveal-pending {
@@ -4301,6 +4336,82 @@ a {
   transform: scale(0.96);
 }
 
+/* 高亮快捷芯片 */
+.term-chip-highlight {
+  background: rgba(163, 230, 53, 0.16) !important;
+  color: #a3e635 !important;
+  border-color: rgba(163, 230, 53, 0.45) !important;
+}
+
+.term-chip-highlight:hover {
+  background: #a3e635 !important;
+  color: #080a06 !important;
+}
+
+/* ================= 终端 Matrix 绿色数字代码雨浮层 ================= */
+.term-matrix-overlay {
+  position: absolute;
+  inset: 0;
+  background: #080c05;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.term-matrix-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.term-matrix-hud {
+  position: absolute;
+  top: 0.85rem;
+  left: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.term-matrix-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #a3e635;
+  background: rgba(8, 12, 5, 0.88);
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(163, 230, 53, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.term-matrix-exit {
+  pointer-events: auto;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #080c05;
+  background: var(--lime);
+  border: none;
+  padding: 0.32rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 2px 8px rgba(210, 255, 0, 0.3);
+}
+
+.term-matrix-exit:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
 /* ================= 足迹地图（WorldMap — 离线 SVG 矢量投影） ================= */
 
 .archive-map {
@@ -6878,6 +6989,352 @@ a {
     display: inline-block;
     margin: 1.1rem 0 0.3rem;
   }
+}
+
+/* ================= BENCH PRESS 卧推破百俱乐部交互瓷砖 ================= */
+
+.tile-bench {
+  grid-column: span 12;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  overflow: hidden;
+}
+
+.bench-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.bench-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bench-subtitle {
+  font-size: 0.85rem;
+  color: var(--grey);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.bench-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  background: var(--paper);
+  padding: 0.35rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.bench-weight-num {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1;
+  font-feature-settings: "tnum";
+}
+
+.bench-weight-unit {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--grey);
+}
+
+.bench-lbs {
+  font-size: 0.78rem;
+  color: var(--grey);
+  margin-left: 0.2rem;
+}
+
+/* 杠铃可视化舞台 */
+.barbell-stage {
+  padding: 2.2rem 1rem 1.4rem;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .barbell-stage {
+  background: #0b0e08;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.barbell-assembly {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 680px;
+  height: 96px;
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.barbell-assembly.is-heavy {
+  animation: bar-flex 0.4s ease-out;
+}
+
+@keyframes bar-flex {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.985) translateY(2.5px); }
+  75% { transform: scale(1.01) translateY(-1px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+/* 杠铃杆核心钢轴 */
+.bar-shaft {
+  flex: 1;
+  height: 10px;
+  background: linear-gradient(180deg, #d4d4d8 0%, #71717a 50%, #3f3f46 100%);
+  border-radius: 2px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.knurling {
+  height: 100%;
+  background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 2px, transparent 2px, transparent 4px);
+  border-radius: 1px;
+}
+.knurl-left { width: 22%; }
+.knurl-center { width: 15%; }
+.knurl-right { width: 22%; }
+
+.knurl-ring {
+  width: 3px;
+  height: 13px;
+  background: #e4e4e7;
+  border-radius: 1px;
+  box-shadow: 0 0 2px rgba(0,0,0,0.4);
+}
+.ring-1, .ring-2 {
+  opacity: 0.95;
+}
+
+/* 杠铃套筒 (Sleeve) */
+.bar-sleeve {
+  display: flex;
+  align-items: center;
+  height: 16px;
+  background: linear-gradient(180deg, #e4e4e7 0%, #a1a1aa 50%, #52525b 100%);
+  border-radius: 2px;
+  position: relative;
+  min-width: 90px;
+}
+
+.sleeve-left {
+  flex-direction: row-reverse;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.sleeve-right {
+  flex-direction: row;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.collar-stop {
+  width: 8px;
+  height: 28px;
+  background: #3f3f46;
+  border: 1px solid #18181b;
+  border-radius: 2px;
+  flex: none;
+}
+
+.plates-rack {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.plates-left {
+  flex-direction: row-reverse;
+  padding-right: 2px;
+}
+
+.plates-right {
+  flex-direction: row;
+  padding-left: 2px;
+}
+
+/* 彩色奥林匹克竞赛杠铃片 */
+.plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #18181b;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  animation: plate-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes plate-slide-in {
+  from { opacity: 0; transform: scaleY(0.7) translateY(-6px); }
+  to { opacity: 1; transform: scaleY(1) translateY(0); }
+}
+
+.plate-inner {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #ffffff;
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  opacity: 0.95;
+  user-select: none;
+}
+
+.plate-20 {
+  width: 17px;
+  height: 84px;
+  background: linear-gradient(90deg, #dc2626 0%, #ef4444 50%, #b91c1c 100%);
+}
+
+.plate-15 {
+  width: 15px;
+  height: 72px;
+  background: linear-gradient(90deg, #ca8a04 0%, #eab308 50%, #a16207 100%);
+}
+
+.plate-10 {
+  width: 13px;
+  height: 60px;
+  background: linear-gradient(90deg, #16a34a 0%, #22c55e 50%, #15803d 100%);
+}
+
+.plate-5 {
+  width: 10px;
+  height: 46px;
+  background: linear-gradient(90deg, #cbd5e1 0%, #e2e8f0 50%, #94a3b8 100%);
+}
+.plate-5 .plate-inner {
+  color: #1e293b;
+}
+
+/* 弹簧卡扣 (Collar) */
+.spring-collar {
+  width: 8px;
+  height: 24px;
+  background: #27272a;
+  border: 1px solid #71717a;
+  border-radius: 2px;
+  flex: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.barbell-hint {
+  font-size: 0.72rem;
+  color: var(--grey);
+  margin-top: 1rem;
+  letter-spacing: 0.05em;
+  opacity: 0.75;
+}
+
+/* 控制按钮与徽章 */
+.bench-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.bench-presets {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.bench-preset-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 0.55rem 0.85rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.preset-weight {
+  display: inline-block;
+  font-weight: 700;
+}
+
+.bench-preset-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0 var(--lime), 3px 3px 0 1.5px var(--ink);
+}
+
+.bench-preset-btn.is-active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 var(--lime);
+}
+
+[data-theme="dark"] .bench-preset-btn.is-active {
+  background: var(--lime);
+  color: #080a06;
+  border-color: var(--lime);
+  box-shadow: 0 0 14px rgba(210, 255, 0, 0.3);
+}
+
+/* 100KG 专属彩蛋徽章 */
+.bench-pr-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.95rem;
+  background: color-mix(in srgb, var(--lime) 15%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--lime) 60%, var(--ink));
+  border-radius: 10px;
+  animation: pr-glow 2s infinite alternate ease-in-out;
+}
+
+.pr-sparkle {
+  color: var(--lime);
+  font-size: 0.95rem;
+  flex: none;
+}
+
+.pr-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+@keyframes pr-glow {
+  0% { border-color: color-mix(in srgb, var(--lime) 40%, var(--ink)); }
+  100% { border-color: var(--lime); }
 }
 
 

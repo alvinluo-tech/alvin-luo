@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { T, pick, useLocale } from "./i18n";
 import { getMusic, isMusicConfigured } from "@/lib/music";
-import { playClick } from "@/lib/sfx";
+import { playClick, playVinylNeedle } from "@/lib/sfx";
 
 const U: [number, number] = [-1, 0.3];
 const V: [number, number] = [1, 0.3];
@@ -603,8 +603,16 @@ export default function RoomScene() {
               tabIndex={0}
               className="room-hot"
               aria-label={pick(locale, "Record player — now playing", "唱片机——正在播放")}
-              onClick={() => router.push("/#now-playing")}
-              onKeyDown={(e) => e.key === "Enter" && router.push("/#now-playing")}
+              onClick={() => {
+                playVinylNeedle();
+                router.push("/#now-playing");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  playVinylNeedle();
+                  router.push("/#now-playing");
+                }
+              }}
             >
               <g className="room-pop" style={{ "--d": "0.45s" } as React.CSSProperties}>
                 {(() => {

@@ -7,6 +7,7 @@ import DailyPick from "@/components/DailyPick";
 import LondonClock from "@/components/LondonClock";
 import TerminalTile from "@/components/TerminalTile";
 import BookshelfTile from "@/components/BookshelfTile";
+import BenchPressTile from "@/components/BenchPressTile";
 import Travel from "@/components/Travel";
 import { T } from "@/components/i18n";
 import { EMAIL, GITHUB_URL, GITHUB_USER } from "@/config/site";
@@ -127,7 +128,7 @@ export default function Home() {
           {/* 网易云音乐叙事区（NETEASE_API 未配置时整块自动隐藏） */}
           <MusicBand />
 
-          {/* TODO: 换成你自己的介绍 */}
+          {/* 个人介绍与生活哲学 */}
           <article className="tile tile-about">
             <h3 className="tile-title">ABOUT</h3>
             <LondonClock />
@@ -137,16 +138,19 @@ export default function Home() {
                   <>
                     Code is my day job, lifting is how I recharge.
                     <br />
-                    Two or three lines about who you are and what you care
-                    about go here — <span className="todo">TODO: your story</span>.
+                    Full-stack software engineer based in Durham, UK. I craft
+                    resilient distributed systems, local-first AI tools, and
+                    delightful web interactions. When away from the keyboard,
+                    you&apos;ll find me benching 100KG or exploring cobblestone alleys.
                   </>
                 }
                 zh={
                   <>
                     写代码是我的日常，撸铁是我的充电方式。
                     <br />
-                    这里应该有两三句话介绍你是谁、在乎什么——
-                    <span className="todo">TODO：替换成你的故事</span>。
+                    现居英国杜伦的全栈软件工程师。专注打磨高可用分布式架构、
+                    本地优先 AI Agent 工具以及充满交互质感的数字体验。离线时，
+                    要么在健身房冲击 100KG 卧推，要么在小镇石板路上散步看云。
                   </>
                 }
               />
@@ -159,22 +163,35 @@ export default function Home() {
             </span>
           </article>
 
+          {/* 卧推破百俱乐部 — 100KG 杠铃交互模拟器 */}
+          <BenchPressTile />
+
           {/* 正在做的事 → /now 页 */}
           <Link href="/now" className="tile tile-now is-link">
             <h3 className="tile-title">CURRENTLY</h3>
             <ul className="dot-list">
-              <li><T en="TODO: project in progress" zh="TODO：正在构建的项目" /></li>
-              <li><T en="TODO: what you're learning" zh="TODO：正在学的东西" /></li>
+              <li>
+                <T
+                  en="Shipping CoreLayer — Local-first AI agent control plane in Rust & Tauri"
+                  zh="构建 CoreLayer — 基于 Rust & Tauri 的本地优先 AI Agent 指挥台"
+                />
+              </li>
+              <li>
+                <T
+                  en="Deep diving into Rust Tokio async runtime & multi-model routing"
+                  zh="深入 Rust Tokio 异步并发机制与多模型智能路由"
+                />
+              </li>
               <li>
                 <T
                   en={
                     <>
-                      TODO: latest <small>experiments</small>
+                      Bench 100KG maintenance &amp; next roadtrip <small>exploration</small>
                     </>
                   }
                   zh={
                     <>
-                      TODO：最近的<small>小实验</small>
+                      稳固 100KG 卧推状态 &amp; 筹划下一站<small>自驾探索</small>
                     </>
                   }
                 />
