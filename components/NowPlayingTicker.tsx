@@ -1,38 +1,21 @@
 "use client";
 
 /* 导航迷你 Now Playing：一进站就能看到“这人此刻在听什么”。
-   与 MusicBand 共用 lib/music 的 60s 模块缓存，不产生额外网络请求；
+   数据走 lib/music 的 useMusic（60s 模块缓存，不产生额外网络请求）；
    没在播放时整个组件不渲染，导航保持干净。
    点击 → 平滑滚到音乐瓷砖（#now-playing）；其他页面先跳回首页再滚。 */
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getMusic, isMusicConfigured } from "@/lib/music";
+import { useMusic, type NowPlaying } from "@/lib/music";
 
 export default function NowPlayingTicker() {
-  const [song, setSong] = useState<{ name: string; artist?: string } | null>(null);
+  const { data: np } = useMusic<NowPlaying>("/api/now-playing");
   const [overflowing, setOverflowing] = useState(false);
   const clipRef = useRef<HTMLSpanElement>(null);
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (!isMusicConfigured()) return;
-    let alive = true;
-    const load = async () => {
-      const np = await getMusic<{
-        playing: boolean;
-        name?: string;
-        artist?: string;
-      }>("/api/now-playing");
-      if (alive) setSong(np?.playing && np.name ? { name: np.name, artist: np.artist } : null);
-    };
-    load();
-    const id = setInterval(load, 60_000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
-  }, []);
+  const song = np?.playing && np.name ? { name: np.name, artist: np.artist } : null;
 
   /* 长歌名 → 无缝跑马灯；短歌名 → 原地展示 */
   useEffect(() => {

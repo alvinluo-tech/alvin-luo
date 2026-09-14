@@ -18,7 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { T, pick, useLocale } from "./i18n";
-import { getMusic, isMusicConfigured } from "@/lib/music";
+import { useMusic, type NowPlaying } from "@/lib/music";
 import { playClick, playVinylNeedle } from "@/lib/sfx";
 
 const U: [number, number] = [-1, 0.3];
@@ -78,7 +78,7 @@ export default function RoomScene() {
 
   const [now, setNow] = useState<Date | null>(null);
   const [skyOverride, setSkyOverride] = useState<Sky | null>(null);
-  const [np, setNp] = useState<{ playing: boolean; name?: string } | null>(null);
+  const { data: np } = useMusic<NowPlaying>("/api/now-playing");
   const [meow, setMeow] = useState(false);
   const meowTimer = useRef<number | null>(null);
 
@@ -87,21 +87,6 @@ export default function RoomScene() {
     tick();
     const id = setInterval(tick, 30_000);
     return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (!isMusicConfigured()) return;
-    let alive = true;
-    const load = async () => {
-      const d = await getMusic<{ playing: boolean; name?: string }>("/api/now-playing");
-      if (alive) setNp(d ?? { playing: false });
-    };
-    load();
-    const id = setInterval(load, 60_000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
   }, []);
 
   /* 鼠标视差（仅精确指针 + 未开启 reduced-motion） */

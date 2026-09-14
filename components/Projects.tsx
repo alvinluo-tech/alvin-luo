@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PROJECTS } from "@/config/site";
+import { PROJECTS } from "@/data/projects";
 import { T } from "./i18n";
 
 /* GitHub Pages 子路径部署：构建时内联 */

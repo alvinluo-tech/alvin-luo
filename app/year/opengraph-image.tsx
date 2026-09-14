@@ -1,11 +1,11 @@
 import { ImageResponse } from "next/og";
 import { getAllPosts } from "@/lib/blog";
 import { TRIPS } from "@/data/trips";
-import { GITHUB_USER } from "@/config/site";
+import { GITHUB_USER, REPORT_YEAR } from "@/config/site";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Alvin Luo — 2026 年度报告";
+export const alt = `Alvin Luo — ${REPORT_YEAR} 年度报告`;
 /* 静态导出（output: export）要求 image 路由显式静态化 */
 export const dynamic = "force-static";
 
@@ -22,7 +22,7 @@ function loadCjkFont() {
 
 /* 年度海报：深色底 + 荧光绿数据拼贴，与博客 OG 卡同一视觉体系 */
 export default async function OgImage() {
-  const posts = getAllPosts().filter((p) => p.date.startsWith("2026"));
+  const posts = getAllPosts().filter((p) => p.date.startsWith(REPORT_YEAR));
   const minutes = posts.reduce((s, p) => s + p.readingMinutes, 0);
   const countries = new Set(TRIPS.map((t) => t.country)).size;
   const fontData = await loadCjkFont();
@@ -78,7 +78,7 @@ export default async function OgImage() {
 
         <div style={{ display: "flex", alignItems: "baseline", gap: 28 }}>
           <span style={{ color: "#f0f0e6", fontSize: 150, fontWeight: 800, lineHeight: 1 }}>
-            20
+            {REPORT_YEAR.slice(0, 2)}
           </span>
           <span
             style={{
@@ -91,7 +91,7 @@ export default async function OgImage() {
               borderRadius: 18,
             }}
           >
-            26
+            {REPORT_YEAR.slice(2)}
           </span>
           <span style={{ color: "#9aa08d", fontSize: 40, fontWeight: 700 }}>
             年度报告 · SO FAR

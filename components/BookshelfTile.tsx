@@ -1,42 +1,6 @@
 /* 精神食粮书架：CSS 3D 书脊，hover 抽出一半露出批注与推荐指数
-   BOOKS 同时被 /year 年度报告书架卡复用 */
-export const BOOKS = [
-  {
-    title: "黑客与画家",
-    en: "Hackers & Painters",
-    color: "#3d4a2a",
-    note: "程序员是数字时代的匠人，创造和画画一样是设计。",
-    stars: 5,
-  },
-  {
-    title: "Atomic Habits",
-    en: "掌控习惯",
-    color: "#6b6f3f",
-    note: "1% 的每天进步——健身和写代码都吃这一套。",
-    stars: 5,
-  },
-  {
-    title: "设计心理学",
-    en: "DoET",
-    color: "#8a8f5a",
-    note: "好的设计是让人感觉不到设计。代码同理。",
-    stars: 4,
-  },
-  {
-    title: "纳瓦尔宝典",
-    en: "Almanack",
-    color: "#2f3524",
-    note: "用杠杆思考：代码、媒体、资本，都是复利的燃料。",
-    stars: 4,
-  },
-  {
-    title: "The Pragmatic Programmer",
-    en: "程序员修炼之道",
-    color: "#544a1e",
-    note: "Care about your craft。每年学一门新语言。",
-    stars: 5,
-  },
-];
+   数据在 data/books.ts（与 /year 年度报告书架卡共用） */
+import { BOOKS } from "@/data/books";
 
 export default function BookshelfTile() {
   return (

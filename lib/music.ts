@@ -1,9 +1,48 @@
 "use client";
 
-/* 网易云音乐数据获取：模块级缓存（60 秒 TTL），
-   多个组件共用同一份 Promise，避免重复请求 */
+/* ============================================================
+ * 网易云音乐数据层（领域模块）
+ *
+ * 类型、领域函数、useMusic hook 都在这里：获取/轮询/缓存/降级
+ * 的策略只有这一个落点，组件只消费。
+ * 模块级 60s TTL 缓存 —— 多组件共享同一 Promise，不产生重复网络请求。
+ * ============================================================ */
 
+import { useEffect, useState } from "react";
 import { NETEASE_API } from "@/config/site";
+
+/* ---- 领域类型（组件从这里导入，不要各自内联） ---- */
+
+export type NowPlaying = {
+  playing: boolean;
+  name?: string;
+  artist?: string;
+  album?: string;
+  cover?: string;
+  lyricLine?: string | null;
+};
+
+export type Song = {
+  name: string;
+  artist?: string;
+  cover?: string;
+  playCount?: number;
+  reason?: string;
+};
+
+export type Playlist = { id: number; name: string; cover: string; trackCount: number };
+
+export type MusicStats = {
+  ok: boolean;
+  level?: number | null;
+  likedCount?: number | null;
+  totalSongs?: number | null;
+  totalMinutes?: number | null;
+};
+
+export type DailyPickSong = { name: string; artist?: string; reason?: string };
+
+/* ---- 配置与缓存 ---- */
 
 export function isMusicConfigured() {
   return Boolean(NETEASE_API.base && NETEASE_API.key);
@@ -31,4 +70,49 @@ export async function getMusic<T = unknown>(endpoint: string): Promise<T | null>
   } catch {
     return null;
   }
+}
+
+/* ---- 领域函数：调用方不再拼端点字符串 ---- */
+
+export const getNowPlaying = () => getMusic<NowPlaying>("/api/now-playing");
+export const getOnRepeat = () => getMusic<{ songs: Song[] }>("/api/on-repeat");
+export const getPlaylists = () => getMusic<{ playlists: Playlist[] }>("/api/playlists");
+export const getStats = () => getMusic<MusicStats>("/api/stats");
+export const getDailyPicks = () => getMusic<{ songs: DailyPickSong[] }>("/api/daily-picks");
+
+/* ---- useMusic：轮询订阅 hook ----
+ * data: 最近一次成功数据（null = 还没拿到 / 接口挂了 / 未配置）
+ * settled: 首次加载是否已结束（区分"加载中"和"加载完成但没有数据"）
+ * refreshMs <= 0 表示只取一次不轮询 */
+
+export function useMusic<T>(
+  endpoint: string,
+  refreshMs = 60_000,
+): { data: T | null; settled: boolean } {
+  const [state, setState] = useState<{ data: T | null; settled: boolean }>({
+    data: null,
+    settled: false,
+  });
+
+  useEffect(() => {
+    if (!isMusicConfigured()) return;
+    let alive = true;
+    const load = async () => {
+      const d = await getMusic<T>(endpoint);
+      if (alive) setState({ data: d, settled: true });
+    };
+    load();
+    if (refreshMs > 0 && Number.isFinite(refreshMs)) {
+      const id = setInterval(load, refreshMs);
+      return () => {
+        alive = false;
+        clearInterval(id);
+      };
+    }
+    return () => {
+      alive = false;
+    };
+  }, [endpoint, refreshMs]);
+
+  return state;
 }

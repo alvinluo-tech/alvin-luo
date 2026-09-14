@@ -12,11 +12,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { T, pick, useLocale } from "./i18n";
-import { getMusic, isMusicConfigured } from "@/lib/music";
-import { GITHUB_USER, GITHUB_URL } from "@/config/site";
+import { isMusicConfigured, useMusic, type MusicStats, type Song } from "@/lib/music";
+import { GITHUB_USER, GITHUB_URL, SITE_URL } from "@/config/site";
 import { playClick } from "@/lib/sfx";
 import { TRIPS } from "@/data/trips";
-import { BOOKS } from "./BookshelfTile";
+import { BOOKS } from "@/data/books";
 
 export type YearPost = {
   slug: string;
@@ -41,14 +41,6 @@ export type YearStats = {
     img: string;
   } | null;
 };
-
-type MusicStats = {
-  ok: boolean;
-  level?: number | null;
-  likedCount?: number | null;
-  totalMinutes?: number | null;
-};
-type Song = { name: string; artist?: string; playCount?: number };
 
 const CATEGORY_LABELS: Record<string, string> = {
   projects: "PROJECTS",
@@ -104,11 +96,10 @@ export default function YearReport({ stats }: { stats: YearStats }) {
   const first = posts[0];
   const last = posts[posts.length - 1];
 
-  /* ---- 音乐（客户端实时） ---- */
-  const [music, setMusic] = useState<{
-    stats: MusicStats | null;
-    repeat: Song[];
-  } | null>(null);
+  /* ---- 音乐（客户端实时，useMusic 轮询见 lib/music） ---- */
+  const statsSet = useMusic<MusicStats>("/api/stats");
+  const repSet = useMusic<{ songs: Song[] }>("/api/on-repeat");
+  const music = { stats: statsSet.data, repeat: (repSet.data?.songs ?? []).slice(0, 3) };
   /* ---- GitHub（客户端实时，逐级降级） ---- */
   const [gh, setGh] = useState<{
     repos?: number;
@@ -129,16 +120,6 @@ export default function YearReport({ stats }: { stats: YearStats }) {
 
   useEffect(() => {
     let alive = true;
-    if (isMusicConfigured()) {
-      (async () => {
-        const [s, r] = await Promise.all([
-          getMusic<MusicStats>("/api/stats"),
-          getMusic<{ songs: Song[] }>("/api/on-repeat"),
-        ]);
-        if (alive)
-          setMusic({ stats: s, repeat: (r?.songs ?? []).slice(0, 3) });
-      })();
-    }
     (async () => {
       try {
         const u = await fetch(
@@ -243,7 +224,7 @@ export default function YearReport({ stats }: { stats: YearStats }) {
   const [copied, setCopied] = useState(false);
   const share = async () => {
     try {
-      await navigator.clipboard.writeText(`https://alvin-luo.me/year`);
+      await navigator.clipboard.writeText(`${SITE_URL}/year`);
       setCopied(true);
       playClick(2200);
       setTimeout(() => setCopied(false), 2000);

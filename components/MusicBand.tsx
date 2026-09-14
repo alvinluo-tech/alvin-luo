@@ -8,65 +8,33 @@
  * 底：PLAYLISTS 封面 + 大数字统计（等级/红心/累计听歌）
  *
  * 数据源未配置 → 整块隐藏；任一接口挂掉 → 只降级对应小块
+ * 数据获取全部走 lib/music 的 useMusic（轮询/缓存/降级在那里）
  * ============================================================ */
 
-import { useEffect, useState } from "react";
-import { getMusic, isMusicConfigured } from "@/lib/music";
+import {
+  isMusicConfigured,
+  useMusic,
+  type NowPlaying,
+  type MusicStats,
+  type Playlist,
+  type Song,
+} from "@/lib/music";
 import { T } from "./i18n";
 
-type NowPlaying = {
-  playing: boolean;
-  name?: string;
-  artist?: string;
-  album?: string;
-  cover?: string;
-  lyricLine?: string | null;
-};
-type Song = { name: string; artist?: string; cover?: string; playCount?: number; reason?: string };
-type Playlist = { id: number; name: string; cover: string; trackCount: number };
-type Stats = { ok: boolean; level?: number | null; likedCount?: number | null; totalSongs?: number | null; totalMinutes?: number | null };
-
 export default function MusicBand() {
-  const [data, setData] = useState<{
-    np: NowPlaying | null;
-    repeat: Song[];
-    playlists: Playlist[];
-    stats: Stats | null;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!isMusicConfigured()) return;
-    let alive = true;
-    const load = async () => {
-      const [np, repeat, playlists, stats] = await Promise.all([
-        getMusic<NowPlaying>("/api/now-playing"),
-        getMusic<{ songs: Song[] }>("/api/on-repeat"),
-        getMusic<{ playlists: Playlist[] }>("/api/playlists"),
-        getMusic<Stats>("/api/stats"),
-      ]);
-      if (alive) {
-        setData({
-          np: np ?? { playing: false },
-          repeat: repeat?.songs ?? [],
-          playlists: playlists?.playlists ?? [],
-          stats: stats ?? null,
-        });
-      }
-    };
-    load();
-    const id = setInterval(load, 60_000);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
-  }, []);
+  const npSet = useMusic<NowPlaying>("/api/now-playing");
+  const repeatSet = useMusic<{ songs: Song[] }>("/api/on-repeat");
+  const plSet = useMusic<{ playlists: Playlist[] }>("/api/playlists");
+  const statsSet = useMusic<MusicStats>("/api/stats");
 
   // 未配置数据源：整块隐藏，保持原 Bento 布局
   if (!isMusicConfigured()) return null;
+
   // 首次加载中：占位骨架（已有 is-loaded 淡入的传统）
-  if (!data) {
+  const settled = npSet.settled && repeatSet.settled && plSet.settled && statsSet.settled;
+  if (!settled) {
     return (
-      <article className="tile tile-wide music-band" id="now-playing">
+      <article className="tile tile-wide music-band">
         <h3 className="tile-title">MUSIC</h3>
         <p className="music-loading">
           <T en="Tuning in…" zh="正在调频…" />
@@ -75,8 +43,10 @@ export default function MusicBand() {
     );
   }
 
-  const { np: npRaw, repeat, playlists, stats } = data;
-  const np: NowPlaying = npRaw ?? { playing: false };
+  const np: NowPlaying = npSet.data ?? { playing: false };
+  const repeat: Song[] = repeatSet.data?.songs ?? [];
+  const playlists: Playlist[] = plSet.data?.playlists ?? [];
+  const stats = statsSet.data;
   const hasPlaylists = playlists.length > 0;
   const hasStats = Boolean(
     stats?.ok && (stats.level || stats.likedCount || stats.totalMinutes),

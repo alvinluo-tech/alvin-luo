@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { T } from "./i18n";
 import { playKeyThock } from "@/lib/sfx";
+import { EMAIL, GITHUB_URL, GITHUB_USER, REPORT_YEAR } from "@/config/site";
 
 /* Bento 里的极客终端：交互增强版，支持点触快捷芯片、键盘上下翻看历史、Matrix 绿色代码雨、AI 智能问答、高对比清晰配色 */
 type Line = { kind: "in" | "out" | "ok" | "err" | "dim"; text: string };
@@ -42,7 +44,7 @@ function getAiResponse(query: string): string {
     return "👨‍💻 [Alvin AI]: Alvin Luo — Software Engineer who lifts. Building products by day, building myself after hours. Passionate about thoughtful design engineering, weightless spatial interfaces, and progressive overload in code & gym.";
   }
   if (q.includes("hire") || q.includes("contact") || q.includes("job") || q.includes("email") || q.includes("reach")) {
-    return "📫 [Alvin AI]: Open to engineering opportunities and high-leverage products. Reach Alvin directly at luoyaosheng123@gmail.com or connect via GitHub @alvinluo-tech!";
+    return `📫 [Alvin AI]: Open to engineering opportunities and high-leverage products. Reach Alvin directly at ${EMAIL} or connect via GitHub @${GITHUB_USER}!`;
   }
   if (q.includes("music") || q.includes("song") || q.includes("listen")) {
     return "🎵 [Alvin AI]: Music fuels every build session. See the live NetEase Music band on the home page or head over to /room to watch the vinyl player spin in real-time!";
@@ -51,6 +53,7 @@ function getAiResponse(query: string): string {
 }
 
 export default function TerminalTile() {
+  const router = useRouter();
   const [lines, setLines] = useState<Line[]>(BANNER);
   const [value, setValue] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -171,7 +174,7 @@ export default function TerminalTile() {
         });
         out.push({
           kind: "out",
-          text: "  help                Show this command guide\n  matrix              Launch iconic Matrix digital green code rain\n  ai ask <query>      Chat with Alvin's client-side AI agent\n  bench               Check 100KG bench press & leg day status\n  room                Visit /room (Alvin's 2.5D isometric room)\n  year                Open /year (2026 Annual Report Wrapped)\n  cat xray-hero-effect Read the flagship post summary\n  skills              Inspect technical skill matrix\n  cat bio.txt         Read personal background & philosophy\n  ls                  List files and directories in workspace\n  whoami              Current identity, location & role\n  workout             Get a randomized daily training menu\n  contact             Show email and GitHub links\n  date                Print live local time in Durham, UK\n  sudo hire-alvin     Attempt special hiring protocol\n  clear               Clear terminal output buffer",
+          text: "  help                Show this command guide\n  matrix              Launch iconic Matrix digital green code rain\n  ai ask <query>      Chat with Alvin's client-side AI agent\n  bench               Check 100KG bench press & leg day status\n  room                Visit /room (Alvin's 2.5D isometric room)\n  year                Open /year (${REPORT_YEAR} Annual Report Wrapped)\n  cat xray-hero-effect Read the flagship post summary\n  skills              Inspect technical skill matrix\n  cat bio.txt         Read personal background & philosophy\n  ls                  List files and directories in workspace\n  whoami              Current identity, location & role\n  workout             Get a randomized daily training menu\n  contact             Show email and GitHub links\n  date                Print live local time in Durham, UK\n  sudo hire-alvin     Attempt special hiring protocol\n  clear               Clear terminal output buffer",
         });
         break;
 
@@ -187,15 +190,15 @@ export default function TerminalTile() {
       case "room":
         out.push({ kind: "ok", text: "Opening Alvin's 2.5D Room: /room ..." });
         if (typeof window !== "undefined") {
-          setTimeout(() => { window.location.href = "/room"; }, 400);
+          setTimeout(() => { router.push("/room"); }, 400);
         }
         break;
 
       case "year":
       case "wrapped":
-        out.push({ kind: "ok", text: "Opening 2026 Annual Report: /year ..." });
+        out.push({ kind: "ok", text: `Opening ${REPORT_YEAR} Annual Report: /year ...` });
         if (typeof window !== "undefined") {
-          setTimeout(() => { window.location.href = "/year"; }, 400);
+          setTimeout(() => { router.push("/year"); }, 400);
         }
         break;
 
@@ -221,7 +224,7 @@ export default function TerminalTile() {
         });
         out.push({
           kind: "out",
-          text: "Thank you for your interest. Let's craft refined software and build bold products together.\nReach out directly: luoyaosheng123@gmail.com",
+          text: `Thank you for your interest. Let's craft refined software and build bold products together.\nReach out directly: ${EMAIL}`,
         });
         break;
 
@@ -268,7 +271,7 @@ export default function TerminalTile() {
       case "email":
         out.push({
           kind: "ok",
-          text: "Email:  luoyaosheng123@gmail.com\nGitHub: https://github.com/alvinluo-tech",
+          text: `Email:  ${EMAIL}\nGitHub: ${GITHUB_URL}`,
         });
         break;
 
