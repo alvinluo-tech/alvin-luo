@@ -7338,3 +7338,16 @@ a {
 }
 
 
+
+/* 地图动态加载占位 */
+.worldmap-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  color: var(--grey);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border: 1.5px dashed var(--ink);
+  border-radius: 18px;
+}

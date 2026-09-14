@@ -1,9 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { TRIPS, type Trip, countryLabel, dateLabel } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
-import WorldMap from "./WorldMap";
+
+/* d3 + 105KB topojson 只有地图用得到：动态加载，滚出 travel 主包 */
+const WorldMap = dynamic(() => import("./WorldMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="worldmap-loading" aria-live="polite">
+      <T en="Loading map…" zh="地图加载中…" />
+    </div>
+  ),
+});
 
 /* GitHub Pages 子路径部署：构建时内联 */
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -226,6 +236,7 @@ export default function TravelArchive() {
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
+                      loading="lazy"
                       src={`${BASE_PATH}/travel/${t.img}.jpg`}
                       alt={pick(locale, `Travel photo of ${t.place}`, `${t.place} 的旅行照片`)}
                       onError={() => setFailed((f) => ({ ...f, [t.img]: true }))}

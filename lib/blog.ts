@@ -125,9 +125,11 @@ export function getPost(slug: string): Post | null {
   const body = content.replace(/^\s*#\s+.+?\n/, "");
   const { md, toc } = makeMarkdown();
   // 静态导出部署在子路径时，正文内的本地图片需要带上 basePath
+  // 正文图片一律懒加载 + 异步解码（文章配图可能很大，且都在首屏之下）
   const html = md
     .parse(body, { async: false })
-    .replaceAll('src="/blog/', `src="${BASE_PATH}/blog/`);
+    .replaceAll('src="/blog/', `src="${BASE_PATH}/blog/`)
+    .replaceAll("<img ", '<img loading="lazy" decoding="async" ');
   return { ...meta, toc, html };
 }
 

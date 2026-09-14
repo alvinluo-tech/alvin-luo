@@ -408,9 +408,9 @@ export default function YearReport({ stats }: { stats: YearStats }) {
               {chartOk && !gh?.failed ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
+                  loading="lazy"
                   src={`https://ghchart.rshah.org/9dc500/${GITHUB_USER}`}
                   alt={`${GITHUB_USER} 的 GitHub 贡献热力图`}
-                  loading="eager"
                   onError={() => setChartOk(false)}
                 />
               ) : (
@@ -566,6 +566,7 @@ export default function YearReport({ stats }: { stats: YearStats }) {
                   {!tripImgFailed ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
+                      loading="lazy"
                       src={`${BASE_PATH}/travel/${stats.latestTrip.img}.jpg`}
                       alt={pick(locale, stats.latestTrip.placeEn ?? stats.latestTrip.place, stats.latestTrip.place)}
                       onError={() => setTripImgFailed(true)}
@@ -649,9 +650,10 @@ export default function YearReport({ stats }: { stats: YearStats }) {
             </p>
             <div className="yr-poster yr-anim" style={{ "--i": 1 } as React.CSSProperties}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`${BASE_PATH}/year/opengraph-image`}
-                alt={`${year} 年度报告海报`}
+<img
+                   loading="lazy"
+                   src={`${BASE_PATH}/year/opengraph-image`}
+                   alt={`${year} 年度报告海报`}
                 onError={(e) => (e.currentTarget.style.display = "none")}
               />
               <span className="yr-poster-stamp" aria-hidden="true">
