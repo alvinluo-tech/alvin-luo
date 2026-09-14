@@ -14,9 +14,11 @@ import Link from "next/link";
 import { T, pick, useLocale } from "./i18n";
 import { isMusicConfigured, useMusic, type MusicStats, type Song } from "@/lib/music";
 import { GITHUB_USER, GITHUB_URL, SITE_URL } from "@/config/site";
+import { fetchGitHubYear, type GitHubYearStats } from "@/lib/github";
 import { playClick } from "@/lib/sfx";
 import { TRIPS } from "@/data/trips";
 import { BOOKS } from "@/data/books";
+import "./YearReport.css";
 
 export type YearPost = {
   slug: string;
@@ -100,14 +102,8 @@ export default function YearReport({ stats }: { stats: YearStats }) {
   const statsSet = useMusic<MusicStats>("/api/stats");
   const repSet = useMusic<{ songs: Song[] }>("/api/on-repeat");
   const music = { stats: statsSet.data, repeat: (repSet.data?.songs ?? []).slice(0, 3) };
-  /* ---- GitHub（客户端实时，逐级降级） ---- */
-  const [gh, setGh] = useState<{
-    repos?: number;
-    followers?: number;
-    pushedThisYear?: number;
-    top?: { name: string; stars: number; url: string }[];
-    failed?: boolean;
-  } | null>(null);
+  /* ---- GitHub（客户端实时，取数逻辑在 lib/github.ts） ---- */
+  const [gh, setGh] = useState<GitHubYearStats | null>(null);
   const [chartOk, setChartOk] = useState(true);
   const [tripImgFailed, setTripImgFailed] = useState(false);
 
@@ -120,49 +116,9 @@ export default function YearReport({ stats }: { stats: YearStats }) {
 
   useEffect(() => {
     let alive = true;
-    (async () => {
-      try {
-        const u = await fetch(
-          `https://api.github.com/users/${GITHUB_USER}`,
-        ).then((r) => (r.ok ? r.json() : null));
-        const repos = await fetch(
-          `https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`,
-        ).then((r) => (r.ok ? r.json() : null));
-        if (!alive) return;
-        if (!u && !Array.isArray(repos)) {
-          setGh({ failed: true });
-          return;
-        }
-        const top = Array.isArray(repos)
-          ? [...repos]
-              .sort(
-                (a, b) =>
-                  b.stargazers_count - a.stargazers_count ||
-                  b.pushed_at.localeCompare(a.pushed_at),
-              )
-              .slice(0, 3)
-              .map((r) => ({
-                name: r.name,
-                stars: r.stargazers_count ?? 0,
-                url: r.html_url,
-              }))
-          : undefined;
-        setGh({
-          repos: u?.public_repos,
-          followers: u?.followers,
-          pushedThisYear: Array.isArray(repos)
-            ? repos.filter(
-                (r) =>
-                  typeof r.pushed_at === "string" &&
-                  r.pushed_at.startsWith(year),
-              ).length
-            : undefined,
-          top,
-        });
-      } catch {
-        if (alive) setGh({ failed: true });
-      }
-    })();
+    fetchGitHubYear(year).then((d) => {
+      if (alive) setGh(d);
+    });
     return () => {
       alive = false;
     };
@@ -175,17 +131,25 @@ export default function YearReport({ stats }: { stats: YearStats }) {
     const root = scrollerRef.current;
     if (!root) return;
     const cards = Array.from(root.querySelectorAll<HTMLElement>(".yr-card"));
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting)
-            setStep(Number((e.target as HTMLElement).dataset.step ?? 0));
-        }
-      },
-      { root, threshold: 0.55 },
-    );
-    cards.forEach((c) => io.observe(c));
-    return () => io.disconnect();
+    /* 当前卡 = 滚动容器中线所落的卡。不用 IntersectionObserver 逐 entry
+       派发：平滑滚动会连续触发多张卡、最后写入的未必是落点，
+       跳卡后常把 step 判到别的卡上（计数动画卡在 0 的根因） */
+    const onScroll = () => {
+      const rootTop = root.getBoundingClientRect().top;
+      let best = 0;
+      cards.forEach((c, i) => {
+        const r = c.getBoundingClientRect();
+        if (r.top - rootTop <= root.clientHeight * 0.5) best = i;
+      });
+      setStep(best);
+    };
+    onScroll();
+    root.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      root.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
   /* 键盘 ↑↓ 翻卡（输入框聚焦时让路；⌘K 面板 preventDefault 的事件不再处理） */

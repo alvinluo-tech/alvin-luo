@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { T } from "./i18n";
 import { playKeyThock } from "@/lib/sfx";
 import { EMAIL, GITHUB_URL, GITHUB_USER, REPORT_YEAR } from "@/config/site";
+import "./TerminalTile.css";
 
 /* Bento 里的极客终端：交互增强版，支持点触快捷芯片、键盘上下翻看历史、Matrix 绿色代码雨、AI 智能问答、高对比清晰配色 */
 type Line = { kind: "in" | "out" | "ok" | "err" | "dim"; text: string };

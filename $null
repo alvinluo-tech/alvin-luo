@@ -1,0 +1,19 @@
+At line:1 char:91
++ ... ls.css -Pattern 'term-input' | ForEach-Object { "{0}: {1}" -f \$_.Lin ...
++                                                                  ~
+You must provide a value expression following the '-f' operator.
+At line:1 char:92
++ ...  'term-input' | ForEach-Object { "{0}: {1}" -f \$_.LineNumber, \$_.Li ...
++                                                    ~~~~~~~~~~~~~~
+Unexpected token '\$_.LineNumber' in expression or statement.
+At line:1 char:106
++ ... 'term-input' | ForEach-Object { "{0}: {1}" -f \$_.LineNumber, \$_.Lin ...
++                                                                 ~
+Missing argument in parameter list.
+At line:1 char:122
++ ... t' | ForEach-Object { "{0}: {1}" -f \$_.LineNumber, \$_.Line.Trim() }
++                                                                       ~
+An expression was expected after '('.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : ExpectedValueExpression
+ 

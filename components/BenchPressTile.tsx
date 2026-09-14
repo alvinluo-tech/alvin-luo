@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { T, useLocale } from "./i18n";
 import { playMetalClank, playClick } from "@/lib/sfx";
+import "./BenchPressTile.css";
 
 type PlateWeight = 20 | 15 | 10 | 5;
 

@@ -1,0 +1,313 @@
+﻿/* ============================================================
+   TERMINAL 终端 样式 —— 从 globals.css 拆出，随组件按路由加载
+   ============================================================ */
+/* ================= TERMINAL 终端彩蛋（恒暗黑曜屏，全分辨率极致清晰） ================= */
+
+.tile-term {
+  grid-column: span 12;
+  background: #080a06 !important;
+  border: 1.5px solid var(--ink);
+  color: #f1f5f9;
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  padding: 1.25rem 1.4rem;
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.45);
+  cursor: text;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* 窗体栏 */
+.term-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  color: #8a9179;
+}
+
+.term-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.term-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.term-dot-red { background: #ff5f56; }
+.term-dot-yellow { background: #ffbd2e; }
+.term-dot-green { background: #27c93f; }
+
+.term-chrome-title {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.term-live-tag {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #a3e635;
+  background: rgba(163, 230, 53, 0.12);
+  border: 1px solid rgba(163, 230, 53, 0.3);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+.term-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a3e635;
+  box-shadow: 0 0 6px #a3e635;
+  animation: pulse-dot 1.8s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* 终端主屏幕 */
+.term-body {
+  height: 220px;
+  overflow-y: auto;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  background: transparent;
+  color: #f1f5f9;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  padding-right: 0.5rem;
+}
+
+.tile-term .term-body p,
+.tile-term .term-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 0.35rem;
+  font-size: 0.94rem;
+  line-height: 1.75;
+  color: #f1f5f9 !important;
+}
+
+.tile-term .term-line-in {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+.tile-term .term-line-out {
+  color: #f1f5f9 !important;
+}
+
+.tile-term .term-line-ok {
+  color: #a3e635 !important;
+  font-weight: 600;
+}
+
+.tile-term .term-line-err {
+  color: #f87171 !important;
+}
+
+.tile-term .term-line-dim {
+  color: #94a3b8 !important;
+  font-style: italic;
+}
+
+/* 快捷操作胶囊条 */
+.term-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0;
+}
+
+.term-chips-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #717764;
+  margin-right: 0.2rem;
+}
+
+.term-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.term-chip:hover {
+  background: #a3e635;
+  color: #090c07;
+  border-color: #a3e635;
+  font-weight: 700;
+  transform: translateY(-1px);
+}
+
+/* 命令行输入条 */
+.term-input {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 0.5rem 0.85rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.term-input:focus-within {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: #a3e635;
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.22);
+}
+
+.term-prompt {
+  color: #a3e635;
+  font-weight: 800;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.term-input input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  caret-color: #a3e635;
+}
+
+.term-input input::placeholder {
+  color: #555d49;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.term-run-btn {
+  background: #a3e635;
+  color: #080a06;
+  border: none;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.32rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+  flex: none;
+}
+
+.term-run-btn:hover {
+  background: #bbf451;
+  transform: scale(1.04);
+}
+
+.term-run-btn:active {
+  transform: scale(0.96);
+}
+
+/* 高亮快捷芯片 */
+.term-chip-highlight {
+  background: rgba(163, 230, 53, 0.16) !important;
+  color: #a3e635 !important;
+  border-color: rgba(163, 230, 53, 0.45) !important;
+}
+
+.term-chip-highlight:hover {
+  background: #a3e635 !important;
+  color: #080a06 !important;
+}
+
+/* ================= 终端 Matrix 绿色数字代码雨浮层 ================= */
+.term-matrix-overlay {
+  position: absolute;
+  inset: 0;
+  background: #080c05;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.term-matrix-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.term-matrix-hud {
+  position: absolute;
+  top: 0.85rem;
+  left: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.term-matrix-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #a3e635;
+  background: rgba(8, 12, 5, 0.88);
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(163, 230, 53, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.term-matrix-exit {
+  pointer-events: auto;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #080c05;
+  background: var(--lime);
+  border: none;
+  padding: 0.32rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 2px 8px rgba(210, 255, 0, 0.3);
+}
+
+.term-matrix-exit:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
