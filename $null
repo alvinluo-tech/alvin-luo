@@ -1,0 +1,11 @@
+At line:1 char:96
++ ... s -Pattern 'tile-about .polaroid' | ForEach-Object { "{0}" -f \$_.Lin ...
++                                                                  ~
+You must provide a value expression following the '-f' operator.
+At line:1 char:97
++ ... n 'tile-about .polaroid' | ForEach-Object { "{0}" -f \$_.LineNumber }
++                                                          ~~~~~~~~~~~~~~
+Unexpected token '\$_.LineNumber' in expression or statement.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : ExpectedValueExpression
+ 

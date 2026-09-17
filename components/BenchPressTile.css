@@ -3,6 +3,19 @@
    ============================================================ */
 /* ================= BENCH PRESS 卧推破百俱乐部交互瓷砖 ================= */
 
+/* 本文件用到的 --cm-* 令牌必须就地定义：
+   压缩器按"本文件未使用"剔除 globals 里的 :root 定义（跨文件不可见） */
+:root {
+  --cm-lime-15: rgba(210, 255, 0, 0.15);
+  --cm-lime-60-ink: rgb(132, 161, 0);
+  --cm-lime-40-ink: rgb(94, 114, 0);
+}
+[data-theme="dark"] {
+  --cm-lime-15: rgba(163, 230, 53, 0.15);
+  --cm-lime-60-ink: rgb(194, 234, 124);
+  --cm-lime-40-ink: rgb(209, 236, 159);
+}
+
 .tile-bench {
   grid-column: span 12;
   background: var(--panel);
@@ -323,8 +336,8 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.6rem 0.95rem;
-  background: color-mix(in srgb, var(--lime) 15%, transparent);
-  border: 1px dashed color-mix(in srgb, var(--lime) 60%, var(--ink));
+  background: var(--cm-lime-15);
+  border: 1px dashed var(--cm-lime-60-ink);
   border-radius: 10px;
   animation: pr-glow 2s infinite alternate ease-in-out;
 }
@@ -343,7 +356,7 @@
 }
 
 @keyframes pr-glow {
-  0% { border-color: color-mix(in srgb, var(--lime) 40%, var(--ink)); }
+  0% { border-color: var(--cm-lime-40-ink); }
   100% { border-color: var(--lime); }
 }
 

@@ -28,6 +28,52 @@
   --art-blob: #ecece2;
   --art-line: rgba(16, 20, 0, 0.055);
   --art-line-soft: rgba(16, 20, 0, 0.045);
+
+  /* color-mix 兼容令牌：旧内核不支持 color-mix，预计算 rgba（亮色值） */
+  --cm-paper-86: rgba(248,248,243,0.86);
+  --cm-paper-94: rgba(248,248,243,0.94);
+  --cm-ink-55: rgba(16,20,0,0.55);
+  --cm-lime-45: rgba(210,255,0,0.45);
+  --cm-lime-40: rgba(210,255,0,0.4);
+  --cm-lime-78-ink: rgb(167,203,0);
+  --cm-lime-12: rgba(210,255,0,0.12);
+  --cm-ink-12: rgba(16,20,0,0.12);
+  --cm-ink-16: rgba(16,20,0,0.16);
+  --cm-ink-8: rgba(16,20,0,0.08);
+  --cm-lime-35: rgba(210,255,0,0.35);
+  --cm-ink-35: rgba(16,20,0,0.35);
+  --cm-ink-80: rgba(16,20,0,0.8);
+  --cm-ink-40: rgba(16,20,0,0.4);
+  --cm-lime-42: rgba(210,255,0,0.42);
+  --cm-ink-45: rgba(16,20,0,0.45);
+  --cm-lime-55: rgba(210,255,0,0.55);
+  --cm-ink-55: rgba(16,20,0,0.55);
+  --cm-lime-7: rgba(210,255,0,0.07);
+  --cm-ink-30: rgba(16,20,0,0.3);
+  --cm-lime-16: rgba(210,255,0,0.16);
+  --cm-ink-25: rgba(16,20,0,0.25);
+  --cm-lime-14: rgba(210,255,0,0.14);
+  --cm-ink-4: rgba(16,20,0,0.04);
+  --cm-ink-70: rgba(16,20,0,0.7);
+  --cm-lime-9: rgba(210,255,0,0.09);
+  --cm-ink-5: rgba(16,20,0,0.05);
+  --cm-paper-62: rgba(248,248,243,0.62);
+  --cm-paper-34: rgba(248,248,243,0.34);
+  --cm-ink-6: rgba(16,20,0,0.06);
+  --cm-ink-22: rgba(16,20,0,0.22);
+  --cm-paper-26: rgba(248,248,243,0.26);
+  --cm-paper-88: rgba(248,248,243,0.88);
+  --cm-paper-10: rgba(248,248,243,0.1);
+  --cm-paper-45: rgba(248,248,243,0.45);
+  --cm-ink-96-paper: rgb(25,29,10);
+  --cm-ink-88: rgba(16,20,0,0.88);
+  --cm-lime-30: rgba(210,255,0,0.3);
+  --cm-paper-72: rgba(248,248,243,0.72);
+  --cm-ink-62-lime: rgb(90,109,0);
+  --cm-ink-20: rgba(16,20,0,0.2);
+  --cm-ink-14: rgba(16,20,0,0.14);
+  --cm-lime-60: rgba(210,255,0,0.6);
+  --cm-lime-10: rgba(210,255,0,0.1);
 }
 
 * {
@@ -95,7 +141,7 @@ a {
 
 .nav.is-scrolled {
   padding-block: 0.9rem;
-  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  background: var(--cm-paper-86);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom-color: var(--ink);
@@ -626,7 +672,7 @@ a {
 
 @keyframes pulse {
   50% {
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--lime) 45%, transparent);
+    box-shadow: 0 0 0 5px var(--cm-lime-45);
   }
 }
 
@@ -829,7 +875,7 @@ a {
 }
 
 .todo {
-  background: color-mix(in srgb, var(--lime) 40%, transparent);
+  background: var(--cm-lime-40);
   border-radius: 0.25em;
   padding: 0 0.25em;
 }
@@ -885,7 +931,7 @@ a {
 /* 悬停瓷砖时均衡器加速，像音乐更嗨了 */
 .tile:hover .eq i {
   animation-duration: 0.45s;
-  background: color-mix(in srgb, var(--lime) 78%, var(--ink));
+  background: var(--cm-lime-78-ink);
 }
 
 @keyframes eq {
@@ -983,7 +1029,7 @@ a {
 .tile-room {
   grid-column: span 12;
   background:
-    radial-gradient(420px 240px at 90% 50%, color-mix(in srgb, var(--lime) 12%, transparent) 0%, transparent 70%),
+    radial-gradient(420px 240px at 90% 50%, var(--cm-lime-12) 0%, transparent 70%),
     var(--paper);
   border: 1.5px solid var(--ink);
   border-radius: 22px;
@@ -1731,6 +1777,52 @@ a {
   --art-blob: rgba(240, 240, 230, 0.07);
   --art-line: rgba(240, 240, 230, 0.09);
   --art-line-soft: rgba(240, 240, 230, 0.07);
+
+  /* color-mix 兼容令牌（暗色值） */
+  --cm-paper-86: rgba(18,20,14,0.86);
+  --cm-paper-94: rgba(18,20,14,0.94);
+  --cm-ink-55: rgba(240,240,230,0.55);
+  --cm-lime-45: rgba(163,230,53,0.45);
+  --cm-lime-40: rgba(163,230,53,0.4);
+  --cm-lime-78-ink: rgb(180,232,92);
+  --cm-lime-12: rgba(163,230,53,0.12);
+  --cm-ink-12: rgba(240,240,230,0.12);
+  --cm-ink-16: rgba(240,240,230,0.16);
+  --cm-ink-8: rgba(240,240,230,0.08);
+  --cm-lime-35: rgba(163,230,53,0.35);
+  --cm-ink-35: rgba(240,240,230,0.35);
+  --cm-ink-80: rgba(240,240,230,0.8);
+  --cm-ink-40: rgba(240,240,230,0.4);
+  --cm-lime-42: rgba(163,230,53,0.42);
+  --cm-ink-45: rgba(240,240,230,0.45);
+  --cm-lime-55: rgba(163,230,53,0.55);
+  --cm-ink-55: rgba(240,240,230,0.55);
+  --cm-lime-7: rgba(163,230,53,0.07);
+  --cm-ink-30: rgba(240,240,230,0.3);
+  --cm-lime-16: rgba(163,230,53,0.16);
+  --cm-ink-25: rgba(240,240,230,0.25);
+  --cm-lime-14: rgba(163,230,53,0.14);
+  --cm-ink-4: rgba(240,240,230,0.04);
+  --cm-ink-70: rgba(240,240,230,0.7);
+  --cm-lime-9: rgba(163,230,53,0.09);
+  --cm-ink-5: rgba(240,240,230,0.05);
+  --cm-paper-62: rgba(18,20,14,0.62);
+  --cm-paper-34: rgba(18,20,14,0.34);
+  --cm-ink-6: rgba(240,240,230,0.06);
+  --cm-ink-22: rgba(240,240,230,0.22);
+  --cm-paper-26: rgba(18,20,14,0.26);
+  --cm-paper-88: rgba(18,20,14,0.88);
+  --cm-paper-10: rgba(18,20,14,0.1);
+  --cm-paper-45: rgba(18,20,14,0.45);
+  --cm-ink-96-paper: rgb(231,231,221);
+  --cm-ink-88: rgba(240,240,230,0.88);
+  --cm-lime-30: rgba(163,230,53,0.3);
+  --cm-paper-72: rgba(18,20,14,0.72);
+  --cm-ink-62-lime: rgb(211,236,163);
+  --cm-ink-20: rgba(240,240,230,0.2);
+  --cm-ink-14: rgba(240,240,230,0.14);
+  --cm-lime-60: rgba(163,230,53,0.6);
+  --cm-lime-10: rgba(163,230,53,0.1);
 }
 
 [data-theme="dark"] .stage-label {
@@ -1800,8 +1892,8 @@ a {
     -45deg,
     var(--panel),
     var(--panel) 6px,
-    color-mix(in srgb, var(--ink) 12%, transparent) 6px,
-    color-mix(in srgb, var(--ink) 12%, transparent) 12px
+    var(--cm-ink-12) 6px,
+    var(--cm-ink-12) 12px
   );
 }
 
@@ -1810,8 +1902,8 @@ a {
     -45deg,
     var(--panel),
     var(--panel) 6px,
-    color-mix(in srgb, var(--ink) 16%, transparent) 6px,
-    color-mix(in srgb, var(--ink) 16%, transparent) 12px
+    var(--cm-ink-16) 6px,
+    var(--cm-ink-16) 12px
   );
 }
 
@@ -1878,6 +1970,14 @@ a {
 
   .nav.is-scrolled {
     padding-block: 0.75rem;
+    /* 移动端大字号内容多，86% 底仍透字——加浓到 94%。
+       注意：这里必须内联 rgba 而非 var()——压缩器会把只在
+       @media 内使用的 :root 自定义属性当未使用删除 */
+    background: rgba(248, 248, 243, 0.94);
+  }
+
+  [data-theme="dark"] .nav.is-scrolled {
+    background: rgba(18, 20, 14, 0.94);
   }
 
   .nav-links {
@@ -1973,7 +2073,7 @@ a {
 }
 
 .lang-toggle button:not(.is-active):hover {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  background: var(--cm-ink-8);
 }
 
 /* ================= ⌘K 命令面板 ================= */
@@ -2297,7 +2397,7 @@ a {
 
 .gh-placeholder code {
   font-size: 0.8em;
-  background: color-mix(in srgb, var(--lime) 35%, transparent);
+  background: var(--cm-lime-35);
   border-radius: 0.3em;
   padding: 0.1em 0.4em;
 }
@@ -2411,7 +2511,7 @@ a {
 }
 
 .post-row:hover {
-  background: color-mix(in srgb, var(--lime) 12%, transparent);
+  background: var(--cm-lime-12);
 }
 
 .post-date {
@@ -2495,7 +2595,7 @@ a {
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  border: 1px solid color-mix(in srgb, var(--ink) 35%, transparent);
+  border: 1px solid var(--cm-ink-35);
   border-radius: 999px;
   padding: 0.22em 0.75em;
   color: var(--grey);
@@ -2589,7 +2689,7 @@ a {
   line-height: 1.3;
   margin: 2.8rem 0 1.1rem;
   padding-bottom: 0.55rem;
-  border-bottom: 1.5px solid color-mix(in srgb, var(--ink) 80%, transparent);
+  border-bottom: 1.5px solid var(--cm-ink-80);
 }
 
 .prose h2 {
@@ -2609,7 +2709,7 @@ a {
   width: 0.32em;
   height: 0.95em;
   background: var(--lime);
-  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  outline: 1px solid var(--cm-ink-40);
   flex: none;
 }
 
@@ -2631,7 +2731,7 @@ a {
   width: 0.42em;
   height: 0.42em;
   background: var(--lime);
-  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  outline: 1px solid var(--cm-ink-40);
   transform: rotate(45deg);
 }
 
@@ -2647,7 +2747,7 @@ a {
   font-weight: 800;
   background: linear-gradient(
     to top,
-    color-mix(in srgb, var(--lime) 42%, transparent) 38%,
+    var(--cm-lime-42) 38%,
     transparent 38%
   );
   padding: 0 0.1em;
@@ -2658,12 +2758,12 @@ a {
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 0.22em;
-  text-decoration-color: color-mix(in srgb, var(--ink) 45%, transparent);
+  text-decoration-color: var(--cm-ink-45);
   transition: background var(--dur) var(--ease), text-decoration-color var(--dur) var(--ease);
 }
 
 .prose a:hover {
-  background: color-mix(in srgb, var(--lime) 55%, transparent);
+  background: var(--cm-lime-55);
   text-decoration-color: var(--ink);
 }
 
@@ -2717,9 +2817,9 @@ a {
   display: block;
   max-width: 100%;
   margin: 1.7rem auto;
-  border: 1px solid color-mix(in srgb, var(--ink) 55%, transparent);
+  border: 1px solid var(--cm-ink-55);
   border-radius: 14px;
-  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--ink) 45%, transparent);
+  box-shadow: 0 18px 40px -22px var(--cm-ink-45);
 }
 
 .prose video {
@@ -2727,9 +2827,9 @@ a {
   width: 100%;
   max-width: 100%;
   margin: 1.7rem auto;
-  border: 1px solid color-mix(in srgb, var(--ink) 55%, transparent);
+  border: 1px solid var(--cm-ink-55);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  background: var(--cm-ink-8);
 }
 
 .prose iframe {
@@ -2737,7 +2837,7 @@ a {
   width: 100%;
   aspect-ratio: 16 / 9;
   margin: 1.7rem auto;
-  border: 1px solid color-mix(in srgb, var(--ink) 55%, transparent);
+  border: 1px solid var(--cm-ink-55);
   border-radius: 14px;
 }
 
@@ -2756,7 +2856,7 @@ a {
   margin: 1.5rem 0;
   padding: 0.9rem 1.3rem;
   border-left: 4px solid var(--lime);
-  background: color-mix(in srgb, var(--lime) 7%, transparent);
+  background: var(--cm-lime-7);
   border-radius: 0 12px 12px 0;
 }
 
@@ -2768,7 +2868,7 @@ a {
 
 .prose hr {
   border: none;
-  border-top: 1px dashed color-mix(in srgb, var(--ink) 30%, transparent);
+  border-top: 1px dashed var(--cm-ink-30);
   margin: 2.8rem auto;
   width: 62%;
 }
@@ -2778,8 +2878,8 @@ a {
 .prose :not(pre) > code {
   font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
   font-size: 0.84em;
-  background: color-mix(in srgb, var(--lime) 16%, transparent);
-  outline: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  background: var(--cm-lime-16);
+  outline: 1px solid var(--cm-ink-25);
   border-radius: 6px;
   padding: 0.12em 0.42em;
 }
@@ -2813,24 +2913,24 @@ a {
 
 .prose th,
 .prose td {
-  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  border: 1px solid var(--cm-ink-30);
   padding: 0.55rem 0.85rem;
   text-align: left;
 }
 
 .prose th {
-  background: color-mix(in srgb, var(--lime) 14%, transparent);
+  background: var(--cm-lime-14);
   font-weight: 800;
 }
 
 .prose tr:nth-child(even) td {
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  background: var(--cm-ink-4);
 }
 
 .post-foot {
   margin-top: 3.2rem;
   padding-top: 1.4rem;
-  border-top: 1.5px solid color-mix(in srgb, var(--ink) 70%, transparent);
+  border-top: 1.5px solid var(--cm-ink-70);
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -2942,6 +3042,7 @@ a {
      在源码顺序上位于本块之后，同优先级会反过来覆盖这里的 span 12，
      导致 ≤1100px 时书架/旅行瓷砖被挤成半宽窄条 */
   .bento-grid .tile-about,
+  .bento-grid .tile-bench,
   .bento-grid .tile-now,
   .bento-grid .tile-term,
   .bento-grid .tile-books,
@@ -3208,19 +3309,19 @@ a {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(42rem 30rem at 62% 55%, color-mix(in srgb, var(--lime) 9%, transparent), transparent 70%),
-    radial-gradient(50rem 36rem at 18% 30%, color-mix(in srgb, var(--ink) 5%, transparent), transparent 70%);
+    radial-gradient(42rem 30rem at 62% 55%, var(--cm-lime-9), transparent 70%),
+    radial-gradient(50rem 36rem at 18% 30%, var(--cm-ink-5), transparent 70%);
 }
 
 /* 左下文案的纸面光晕保护：与描边大字/人像错位时仍可读 */
 .hero-copy,
 .hero-eyebrow {
-  text-shadow: 0 2px 26px color-mix(in srgb, var(--paper) 62%, transparent);
+  text-shadow: 0 2px 26px var(--cm-paper-62);
 }
 
 [data-theme="dark"] .hero-copy,
 [data-theme="dark"] .hero-eyebrow {
-  text-shadow: 0 2px 26px color-mix(in srgb, var(--paper) 34%, transparent);
+  text-shadow: 0 2px 26px var(--cm-paper-34);
 }
 
 /* ---- Projects 封面：仿浏览器窗口 + 掠过高光 ---- */
@@ -3236,20 +3337,20 @@ a {
   align-items: center;
   gap: 6px;
   padding: 0 14px;
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  background: var(--cm-ink-6);
+  border-bottom: 1px solid var(--cm-ink-30);
 }
 
 .cover-chrome i {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--ink) 22%, transparent);
+  background: var(--cm-ink-22);
 }
 
 .cover-chrome i:first-child {
   background: var(--lime);
-  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  outline: 1px solid var(--cm-ink-40);
 }
 
 .cover-url {
@@ -3258,7 +3359,7 @@ a {
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--grey);
-  border: 1px dashed color-mix(in srgb, var(--ink) 35%, transparent);
+  border: 1px dashed var(--cm-ink-35);
   border-radius: 999px;
   padding: 0.18em 0.8em;
   background: var(--paper);
@@ -3275,7 +3376,7 @@ a {
   background: linear-gradient(
     105deg,
     transparent 42%,
-    color-mix(in srgb, var(--paper) 26%, transparent) 50%,
+    var(--cm-paper-26) 50%,
     transparent 58%
   );
   transform: translateX(-130%);
@@ -3328,7 +3429,7 @@ a {
     padding: 0.5em 1.1em;
     border-radius: 999px;
     border: 1.5px solid var(--ink);
-    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    background: var(--cm-paper-88);
     color: var(--ink);
     backdrop-filter: blur(4px);
   }
@@ -3376,7 +3477,7 @@ a {
     top: 96px;
     max-height: calc(100vh - 140px);
     overflow: auto;
-    border-left: 1.5px solid color-mix(in srgb, var(--ink) 22%, transparent);
+    border-left: 1.5px solid var(--cm-ink-22);
     padding-left: 1.1rem;
     font-size: 0.8rem;
   }
@@ -3432,8 +3533,8 @@ a {
   font-family: var(--font);
   padding: 0.3em 0.9em;
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
-  background: color-mix(in srgb, var(--paper) 10%, transparent);
+  border: 1px solid var(--cm-ink-25);
+  background: var(--cm-paper-10);
   color: inherit;
   cursor: pointer;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
@@ -3460,7 +3561,7 @@ a {
 
 .hljs-comment,
 .hljs-quote {
-  color: color-mix(in srgb, var(--paper) 45%, transparent);
+  color: var(--cm-paper-45);
   font-style: italic;
 }
 
@@ -3483,7 +3584,7 @@ a {
 }
 
 [data-theme="dark"] .prose pre {
-  background: color-mix(in srgb, var(--ink) 96%, var(--paper));
+  background: var(--cm-ink-96-paper);
 }
 
 [data-theme="dark"] .hljs-keyword,
@@ -3499,7 +3600,7 @@ a {
 
 [data-theme="dark"] .hljs-comment,
 [data-theme="dark"] .hljs-quote {
-  color: color-mix(in srgb, var(--ink) 45%, transparent);
+  color: var(--cm-ink-45);
 }
 
 [data-theme="dark"] .hljs-number,
@@ -3527,7 +3628,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  background: var(--cm-ink-88);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s var(--ease);
@@ -3611,8 +3712,8 @@ a {
     90deg,
     transparent,
     transparent 39px,
-    color-mix(in srgb, var(--ink) 22%, transparent) 39px,
-    color-mix(in srgb, var(--ink) 22%, transparent) 40px
+    var(--cm-ink-22) 39px,
+    var(--cm-ink-22) 40px
   );
   opacity: 0.35;
 }
@@ -3628,8 +3729,8 @@ a {
     180deg,
     transparent,
     transparent 39px,
-    color-mix(in srgb, var(--ink) 22%, transparent) 39px,
-    color-mix(in srgb, var(--ink) 22%, transparent) 40px
+    var(--cm-ink-22) 39px,
+    var(--cm-ink-22) 40px
   );
   opacity: 0.35;
 }
@@ -3652,7 +3753,7 @@ a {
   border-radius: 14px;
   border: 1.5px solid var(--ink);
   background:
-    radial-gradient(120px 90px at 30% 20%, color-mix(in srgb, var(--lime) 30%, transparent), transparent 70%),
+    radial-gradient(120px 90px at 30% 20%, var(--cm-lime-30), transparent 70%),
     var(--panel);
   display: flex;
   align-items: center;
@@ -3683,7 +3784,7 @@ a {
   align-items: center;
   justify-content: center;
   transform: rotate(8deg);
-  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  background: var(--cm-paper-72);
   font-weight: 800;
   line-height: 1;
 }
@@ -3790,7 +3891,7 @@ a {
   background: var(--paper);
   border: 1.5px solid var(--ink);
   border-radius: 12px;
-  box-shadow: 6px 8px 20px -12px color-mix(in srgb, var(--ink) 55%, transparent);
+  box-shadow: 6px 8px 20px -12px var(--cm-ink-55);
   padding: 0.6rem 0.8rem;
   display: flex;
   flex-direction: column;
@@ -3820,7 +3921,7 @@ a {
 
 .book-note em {
   font-style: normal;
-  color: color-mix(in srgb, var(--ink) 62%, var(--lime));
+  color: var(--cm-ink-62-lime);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
 }
@@ -3847,7 +3948,7 @@ a {
   height: 8px;
   border-radius: 50%;
   background: var(--lime);
-  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  outline: 1px solid var(--cm-ink-40);
   animation: pulse 1.8s ease-in-out infinite;
 }
 
@@ -3864,8 +3965,8 @@ a {
   width: 118px;
   padding: 7px 7px 24px;
   background: var(--paper);
-  border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
-  box-shadow: 6px 10px 22px -12px color-mix(in srgb, var(--ink) 55%, transparent);
+  border: 1px solid var(--cm-ink-45);
+  box-shadow: 6px 10px 22px -12px var(--cm-ink-55);
   transform: rotate(4deg);
   transition: transform var(--dur) var(--ease);
   z-index: 2;
@@ -3888,9 +3989,9 @@ a {
   width: 64px;
   height: 20px;
   transform: translateX(-50%) rotate(-3deg);
-  background: color-mix(in srgb, var(--lime) 55%, transparent);
-  border-left: 1px dashed color-mix(in srgb, var(--ink) 20%, transparent);
-  border-right: 1px dashed color-mix(in srgb, var(--ink) 20%, transparent);
+  background: var(--cm-lime-55);
+  border-left: 1px dashed var(--cm-ink-20);
+  border-right: 1px dashed var(--cm-ink-20);
 }
 
 .polaroid-art {
@@ -3900,9 +4001,9 @@ a {
   aspect-ratio: 1;
   font-size: 2.6rem;
   background:
-    radial-gradient(90px 60px at 70% 25%, color-mix(in srgb, var(--lime) 30%, transparent), transparent 70%),
-    linear-gradient(160deg, color-mix(in srgb, var(--ink) 12%, transparent), color-mix(in srgb, var(--ink) 4%, transparent));
-  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+    radial-gradient(90px 60px at 70% 25%, var(--cm-lime-30), transparent 70%),
+    linear-gradient(160deg, var(--cm-ink-12), var(--cm-ink-4));
+  border: 1px solid var(--cm-ink-20);
 }
 
 .polaroid-cap {
@@ -3935,8 +4036,8 @@ a {
     circle at 50% 50%,
     transparent,
     transparent 3px,
-    color-mix(in srgb, var(--ink) 14%, transparent) 3px,
-    color-mix(in srgb, var(--ink) 14%, transparent) 4px
+    var(--cm-ink-14) 3px,
+    var(--cm-ink-14) 4px
   );
   pointer-events: none;
 }
@@ -3953,7 +4054,7 @@ a {
   background: var(--paper);
   transform: translate(-50%, -50%);
   z-index: 2;
-  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  outline: 1px solid var(--cm-ink-40);
 }
 
 .band-np.is-playing .np-cover {
@@ -3987,7 +4088,7 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.7rem;
-  background: color-mix(in srgb, var(--ink) 88%, transparent);
+  background: var(--cm-ink-88);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.45s var(--ease);
@@ -4019,10 +4120,10 @@ a {
   font-size: 0.74rem;
   font-weight: 700;
   color: var(--paper);
-  border: 1px solid color-mix(in srgb, var(--lime) 60%, transparent);
+  border: 1px solid var(--cm-lime-60);
   border-radius: 8px;
   padding: 0.25em 0.8em;
-  background: color-mix(in srgb, var(--lime) 10%, transparent);
+  background: var(--cm-lime-10);
 }
 
 .xray-btn {
@@ -4055,7 +4156,7 @@ a {
   flex-wrap: wrap;
   gap: 1.1rem 1.4rem;
   padding: 0.9rem 1.2rem;
-  border: 1.5px dashed color-mix(in srgb, var(--ink) 40%, transparent);
+  border: 1.5px dashed var(--cm-ink-40);
   border-radius: 16px;
 }
 
@@ -4075,7 +4176,7 @@ a {
   height: 9px;
   border-radius: 50%;
   background: var(--lime);
-  outline: 1px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  outline: 1px solid var(--cm-ink-40);
   animation: pulse 1.8s ease-in-out infinite;
 }
 
@@ -4948,11 +5049,25 @@ a {
     white-space: nowrap;
   }
 
-  /* 拍立得从绝对定位改为随文流动，不再压住正文 */
+  /* 拍立得从绝对定位改为随文流动，不再压住正文。
+     必须保留 position:relative：washi/杯子/cap 都是绝对定位子元素，
+     static 会让它们飞出卡片、叠到导航上。
+     边框和阴影加深一档：纸框和卡片同色，浅描边在移动端几乎不可见。
+     颜色内联 rgba（不走 :root 令牌）：压缩器会删掉只在 @media
+     内使用的自定义属性定义，导致 var() 落空 */
   .tile-about .polaroid {
-    position: static;
+    position: relative;
+    right: auto;
+    bottom: auto;
     display: inline-block;
     margin: 1.1rem 0 0.3rem;
+    border-color: rgba(16, 20, 0, 0.55);
+    box-shadow: 5px 8px 18px -10px rgba(16, 20, 0, 0.55);
+  }
+
+  [data-theme="dark"] .tile-about .polaroid {
+    border-color: rgba(240, 240, 230, 0.55);
+    box-shadow: 5px 8px 18px -10px rgba(0, 0, 0, 0.6);
   }
 }
 

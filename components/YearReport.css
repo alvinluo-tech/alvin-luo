@@ -1,6 +1,17 @@
 ﻿/* ============================================================
    /year 年度报告 样式 —— 从 globals.css 拆出，随组件按路由加载
    ============================================================ */
+/* 本文件用到的 --cm-* 令牌就地定义（压缩器跨文件不可见，见 BenchPressTile.css 注） */
+:root {
+  --cm-lime-18-paper: rgb(241, 249, 199);
+  --cm-ink-10: rgba(16, 20, 0, 0.1);
+  --cm-lime-65: rgba(210, 255, 0, 0.65);
+}
+[data-theme="dark"] {
+  --cm-lime-18-paper: rgb(44, 58, 21);
+  --cm-ink-10: rgba(240, 240, 230, 0.1);
+  --cm-lime-65: rgba(163, 230, 53, 0.65);
+}
 /* ============================================================
  * C · 个人年度报告 (/year) Spotify Wrapped 沉浸翻卡设计系统
  * ============================================================ */
@@ -232,7 +243,7 @@
   padding: 0.35em 0.9em;
   border-radius: 999px;
   border: 1.2px solid var(--ink);
-  background: color-mix(in srgb, var(--lime) 18%, var(--paper));
+  background: var(--cm-lime-18-paper);
 }
 
 .yr-scroll-hint {
@@ -306,7 +317,7 @@
 
 .yr-bar {
   height: 10px;
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  background: var(--cm-ink-10);
   border-radius: 999px;
   overflow: hidden;
   position: relative;
@@ -331,7 +342,7 @@
   font-size: 0.88rem;
   line-height: 1.65;
   color: var(--grey);
-  border-top: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+  border-top: 1px dashed var(--cm-ink-25);
   padding-top: 1rem;
 }
 
@@ -523,8 +534,8 @@
     45deg,
     var(--panel),
     var(--panel) 10px,
-    color-mix(in srgb, var(--ink) 5%, transparent) 10px,
-    color-mix(in srgb, var(--ink) 5%, transparent) 20px
+    var(--cm-ink-5) 10px,
+    var(--cm-ink-5) 20px
   );
 }
 
@@ -546,7 +557,7 @@
   transform: translateX(-50%) rotate(-3deg);
   width: 54px;
   height: 18px;
-  background: color-mix(in srgb, var(--lime) 65%, transparent);
+  background: var(--cm-lime-65);
   border-left: 1px dashed rgba(0, 0, 0, 0.2);
   border-right: 1px dashed rgba(0, 0, 0, 0.2);
 }
@@ -720,7 +731,7 @@
 }
 
 .yr-actions .btn-ghost:hover {
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  background: var(--cm-ink-8);
   transform: translateY(-2px);
 }
 

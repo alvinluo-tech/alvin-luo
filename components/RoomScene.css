@@ -388,7 +388,7 @@
 }
 
 .room-quilt-line {
-  stroke: color-mix(in srgb, var(--ink) 40%, transparent);
+  stroke: var(--cm-ink-40);
   stroke-width: 1.2px;
   stroke-dasharray: 4 3;
 }
