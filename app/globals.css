@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    全局样式
    布局：纪念碑式居中人像 × 破格巨型排版 × Bento 面板
    配色与质感参考 landonorris.com：米白纸面 + 墨色 + 荧光绿
@@ -4699,6 +4699,20 @@ a {
   color: var(--lime);
   border-top: 1px dashed rgba(255, 255, 255, 0.15);
   padding-top: 0.25rem;
+}
+
+/* 地图动态加载占位（WorldMap dynamic 引入时的骨架屏） */
+.worldmap-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  color: var(--grey);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border: 1.5px dashed var(--ink);
+  border-radius: 18px;
+  background: var(--panel);
 }
 
 /* ================= 协同滚轮手势提示 (Cooperative Gestures Hint) ================= */

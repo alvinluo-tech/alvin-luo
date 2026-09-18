@@ -18,7 +18,7 @@ import { feature } from "topojson-client";
 import type { Topology, Objects } from "topojson-specification";
 import type { FeatureCollection, Geometry } from "geojson";
 import worldTopology from "@/data/countries-110m.json";
-import { TRIPS, dateLabel } from "@/data/trips";
+import { TRIPS, dateLabel, hasTripPhoto } from "@/data/trips";
 import { useLocale } from "./i18n";
 
 /* GitHub Pages 子路径部署：构建时内联 */
@@ -173,11 +173,12 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
       ) as unknown as FeatureCollection<Geometry, { name?: string }>;
 
       // 生成国家路径
-      const cPaths = countriesGeo.features.map((f) => {
-        const id = String(f.id);
+      const cPaths = countriesGeo.features.map((f, i) => {
+        const id = f.id != null ? String(f.id) : `feat-${i}`;
         const visitedInfo = VISITED_COUNTRIES[id];
         return {
-          id,
+          id: `${id}-${i}`,
+          isoId: id,
           name: f.properties?.name ?? id,
           isVisited: Boolean(visitedInfo),
           visitedInfo,
@@ -473,21 +474,27 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                   <div className="stack-card card-front">
                     <span className="card-washi washi-center" />
                     <div className="card-inner">
-                      {/* 如果有实际照片则优先渲染，否则使用拟物符号 */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        loading="lazy"
-                        src={`${BASE_PATH}/travel/${city.img}.jpg`}
-                        alt={city.place}
-                        className="card-photo"
-                        onError={(e) => {
-                          // 图片 404 时优雅降级为拟物印章
-                          e.currentTarget.style.display = "none";
-                          const fallback = e.currentTarget.parentElement?.querySelector(".card-emoji-fallback");
-                          if (fallback) (fallback as HTMLElement).style.display = "flex";
-                        }}
-                      />
-                      <span className="card-emoji-fallback">{emojis[0]}</span>
+                      {/* 如果有实际照片则优先渲染，否则直接使用拟物符号，杜绝 404 */}
+                      {hasTripPhoto(city) ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          loading="lazy"
+                          src={`${BASE_PATH}/travel/${city.img}.jpg`}
+                          alt={city.place}
+                          className="card-photo"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            const fallback = e.currentTarget.parentElement?.querySelector(".card-emoji-fallback");
+                            if (fallback) (fallback as HTMLElement).style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      <span
+                        className="card-emoji-fallback"
+                        style={hasTripPhoto(city) ? { display: "none" } : { display: "flex" }}
+                      >
+                        {emojis[0]}
+                      </span>
                     </div>
 
                     {/* 拍立得底部白色手写标题栏 */}

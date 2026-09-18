@@ -20,7 +20,15 @@ export type Trip = {
   noteEn?: string;
   coord: [number, number]; // [lng, lat] —— 归档页地图脉冲点
   featured?: boolean; // 是否上首页胶片
+  hasPhoto?: boolean; // 照片文件是否已就位（缺省则自动查询 AVAILABLE_PHOTOS）
 };
+
+/** 现已存放在 public/travel/ 中的照片编号（新照片放入 public/travel/{img}.jpg 后在此登记，杜绝浏览器 404） */
+export const AVAILABLE_PHOTOS = new Set<string>(["05"]);
+
+export function hasTripPhoto(trip: Trip): boolean {
+  return trip.hasPhoto ?? AVAILABLE_PHOTOS.has(trip.img);
+}
 
 export const TRIPS: Trip[] = [
   /* ---------- 中国 ---------- */

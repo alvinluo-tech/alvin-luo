@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    BENCH PRESS 瓷砖 样式 —— 从 globals.css 拆出，随组件按路由加载
    ============================================================ */
 /* ================= BENCH PRESS 卧推破百俱乐部交互瓷砖 ================= */
@@ -358,19 +358,4 @@
 @keyframes pr-glow {
   0% { border-color: var(--cm-lime-40-ink); }
   100% { border-color: var(--lime); }
-}
-
-
-
-/* 地图动态加载占位 */
-.worldmap-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 320px;
-  color: var(--grey);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  border: 1.5px dashed var(--ink);
-  border-radius: 18px;
 }

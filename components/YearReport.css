@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    /year 年度报告 样式 —— 从 globals.css 拆出，随组件按路由加载
    ============================================================ */
 /* 本文件用到的 --cm-* 令牌就地定义（压缩器跨文件不可见，见 BenchPressTile.css 注） */
@@ -6,11 +6,19 @@
   --cm-lime-18-paper: rgb(241, 249, 199);
   --cm-ink-10: rgba(16, 20, 0, 0.1);
   --cm-lime-65: rgba(210, 255, 0, 0.65);
+  --cm-ink-25: rgba(16, 20, 0, 0.25);
+  --cm-ink-5: rgba(16, 20, 0, 0.05);
+  --cm-ink-8: rgba(16, 20, 0, 0.08);
+  --cm-ink-40: rgba(16, 20, 0, 0.4);
 }
 [data-theme="dark"] {
   --cm-lime-18-paper: rgb(44, 58, 21);
   --cm-ink-10: rgba(240, 240, 230, 0.1);
   --cm-lime-65: rgba(163, 230, 53, 0.65);
+  --cm-ink-25: rgba(240, 240, 230, 0.25);
+  --cm-ink-5: rgba(240, 240, 230, 0.05);
+  --cm-ink-8: rgba(240, 240, 230, 0.08);
+  --cm-ink-40: rgba(240, 240, 230, 0.4);
 }
 /* ============================================================
  * C · 个人年度报告 (/year) Spotify Wrapped 沉浸翻卡设计系统
@@ -809,5 +817,27 @@
   .yr-repeat li span {
     display: none;
   }
+}
+
+/* 优雅降级与世界卡片容器 */
+.yr-fallback {
+  font-size: 0.95rem;
+  color: var(--grey);
+  line-height: 1.65;
+  padding: 1.2rem 1.4rem;
+  border: 1.5px dashed var(--cm-ink-25);
+  border-radius: 12px;
+  background: var(--cm-ink-5);
+  margin-top: 1rem;
+}
+
+.yr-fallback a {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.yr-world {
+  position: relative;
 }
 

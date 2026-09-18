@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { TRIPS, type Trip, countryLabel, dateLabel } from "@/data/trips";
+import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
 
 /* d3 + 105KB topojson 只有地图用得到：动态加载，滚出 travel 主包 */
@@ -209,7 +209,7 @@ export default function TravelArchive() {
                 style={{ animationDelay: `${i * 70}ms` }}
               >
                 <div className="postcard-photo">
-                  {failed[t.img] ? (
+                  {failed[t.img] || !hasTripPhoto(t) ? (
                     <div className="photo-placeholder">
                       <span className="plane" aria-hidden="true">
                         ✈

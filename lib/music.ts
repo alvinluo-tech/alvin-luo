@@ -97,20 +97,36 @@ export function useMusic<T>(
   useEffect(() => {
     if (!isMusicConfigured()) return;
     let alive = true;
-    const load = async () => {
+    const load = async (force = false) => {
+      if (!force && typeof document !== "undefined" && document.hidden) return;
       const d = await getMusic<T>(endpoint);
       if (alive) setState({ data: d, settled: true });
     };
-    load();
-    if (refreshMs > 0 && Number.isFinite(refreshMs)) {
-      const id = setInterval(load, refreshMs);
-      return () => {
-        alive = false;
-        clearInterval(id);
-      };
+
+    // 首次载入
+    void load(true);
+
+    // 标签页重新可见时立即刷新
+    const onVisibilityChange = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        void load(true);
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibilityChange);
     }
+
+    let id: ReturnType<typeof setInterval> | null = null;
+    if (refreshMs > 0 && Number.isFinite(refreshMs)) {
+      id = setInterval(() => void load(false), refreshMs);
+    }
+
     return () => {
       alive = false;
+      if (id) clearInterval(id);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      }
     };
   }, [endpoint, refreshMs]);
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { TRIPS, type Trip, countryLabel, dateLabel } from "@/data/trips";
+import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
 
 /* GitHub Pages 子路径部署：构建时内联 */
@@ -235,7 +235,7 @@ export default function Travel() {
                 title={pick(locale, `Explore ${item.trip.place} on map & stories`, `在足迹地图与相册中查看 ${item.trip.place}`)}
               >
                 <div className="postcard-photo">
-                  {failed[item.trip.img] ? (
+                  {failed[item.trip.img] || !hasTripPhoto(item.trip) ? (
                     <div className="photo-placeholder">
                       <span className="plane" aria-hidden="true">
                         ✈
