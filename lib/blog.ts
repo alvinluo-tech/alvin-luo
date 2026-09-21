@@ -5,6 +5,7 @@ import matter from "gray-matter";
 import { marked, Marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import hljs from "highlight.js/lib/common";
+import { imageSize } from "./imageSize";
 
 export type PostMeta = {
   slug: string;
@@ -124,12 +125,31 @@ export function getPost(slug: string): Post | null {
   // 正文自带的一级标题与页面标题重复，去掉首个 h1
   const body = content.replace(/^\s*#\s+.+?\n/, "");
   const { md, toc } = makeMarkdown();
-  // 静态导出部署在子路径时，正文内的本地图片需要带上 basePath
-  // 正文图片一律懒加载 + 异步解码（文章配图可能很大，且都在首屏之下）
+  // 正文图片处理，顺序要紧：
+  //  1. 注入 width/height（构建期读文件头）—— 浏览器据此提前占位，消除长文 CLS
+  //  2. 注入 loading/decoding —— 正文配图都在首屏之下，一律懒加载 + 异步解码
+  //  3. 静态导出部署在子路径时，正文内的本地图片需要带上 basePath
   const html = md
     .parse(body, { async: false })
-    .replaceAll('src="/blog/', `src="${BASE_PATH}/blog/`)
-    .replaceAll("<img ", '<img loading="lazy" decoding="async" ');
+    .replace(/<img\s+([^>]*?)>/g, (_whole, attrs: string) => {
+      const src = /src="([^"]+)"/.exec(attrs)?.[1];
+      let size = "";
+      // 只处理站内本地图（外链图片取不到文件，跳过）
+      if (src?.startsWith("/blog/")) {
+        // marked 会把非 ASCII 文件名做百分号编码（中文配图很常见），
+        // 这里解码回真实文件名才能命中磁盘
+        let local = src;
+        try {
+          local = decodeURIComponent(src);
+        } catch {
+          /* 编码非法则按原样尝试 */
+        }
+        const dim = imageSize(path.join(process.cwd(), "public", local));
+        if (dim) size = ` width="${dim.width}" height="${dim.height}"`;
+      }
+      return `<img loading="lazy" decoding="async"${size} ${attrs}>`;
+    })
+    .replaceAll('src="/blog/', `src="${BASE_PATH}/blog/`);
   return { ...meta, toc, html };
 }
 

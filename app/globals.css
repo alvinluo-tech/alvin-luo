@@ -2816,6 +2816,9 @@ a {
 .prose img {
   display: block;
   max-width: 100%;
+  /* 构建期已注入 width/height：配 height:auto 让浏览器按固有宽高比
+     提前占位（消除 CLS），同时保证窄屏下等比缩放不拉伸 */
+  height: auto;
   margin: 1.7rem auto;
   border: 1px solid var(--cm-ink-55);
   border-radius: 14px;
