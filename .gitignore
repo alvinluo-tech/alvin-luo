@@ -31,5 +31,6 @@ next-env.d.ts
 # 旧版静态原型与本地分析产物
 /_analysis
   
-# 工具会话数据  
-/.superpowers/  
+# 工具会话数据
+/.superpowers/
+/.workbuddy-ai/
