@@ -6,7 +6,7 @@ updated: "2025-11-18"
 category: "life"
 tags: ["vlog", "晨间日常", "英国留学", "晨跑", "自律", "生活记录"]
 summary: "我在英国的第一支晨间 VLOG，记录从起床、出门晨跑，到回来做一顿元气早餐的全过程。这是我尝试坚持的第一件事，希望能用视频记录下来。愿坚持奔跑，热爱不减。"
-cover: "/blog/assets/website-pics/11.8vlog封面.jpg"
+cover: "/blog/assets/website-pics/11.8vlog封面.webp"
 pinned: true
 source: "https://alvinluo-tech.github.io/posts/myfirstvlog/"
 ---

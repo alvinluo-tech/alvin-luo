@@ -6,7 +6,7 @@ updated: "2025-11-18"
 category: "projects"
 tags: ["项目", "账单管理", "AI", "Web 应用", "实时同步", "教程"]
 summary: "一个基于 AI 的跨平台账单分摊 Web 应用，支持自动识别收据、智能分配费用、实时同步，让 AA 制变得简单准确。使用教程涵盖从注册到账单管理的完整流程。"
-cover: "/blog/assets/easy-split/index_page.png"
+cover: "/blog/assets/easy-split/index_page.webp"
 pinned: true
 source: "https://alvinluo-tech.github.io/posts/easy-split/"
 ---
@@ -80,7 +80,7 @@ Easy Split 的核心功能就是帮你：
 ### 1.1 注册新账号
 
 
-![注册页面](/blog/assets/easy-split/01-01-register-page.png)
+![注册页面](/blog/assets/easy-split/01-01-register-page.webp)
 
 *Easy Split 注册页面*
 
@@ -100,7 +100,7 @@ Easy Split 的核心功能就是帮你：
 注册成功后，你会看到验证提示：
 
 
-![验证提示](/blog/assets/easy-split/01-02-verification-prompt.png)
+![验证提示](/blog/assets/easy-split/01-02-verification-prompt.webp)
 
 *邮箱验证提示*
 
@@ -116,7 +116,7 @@ Easy Split 的核心功能就是帮你：
 ### 1.3 登录
 
 
-![登录页面](/blog/assets/easy-split/01-03-signin-page.png)
+![登录页面](/blog/assets/easy-split/01-03-signin-page.webp)
 
 *Easy Split 登录页面*
 
@@ -138,7 +138,7 @@ Easy Split 的核心功能就是帮你：
 ### 2.1 创建社区
 
 
-![创建社区](/blog/assets/easy-split/02-01-create-community-form.png)
+![创建社区](/blog/assets/easy-split/02-01-create-community-form.webp)
 
 *创建社区表单*
 
@@ -149,7 +149,7 @@ Easy Split 的核心功能就是帮你：
 4. 创建成功后，系统会自动生成一个**6位邀请码**
 
 
-![社区列表](/blog/assets/easy-split/02-01b-community-list.png)
+![社区列表](/blog/assets/easy-split/02-01b-community-list.webp)
 
 *社区列表展示*
 
@@ -160,7 +160,7 @@ Easy Split 的核心功能就是帮你：
 ### 2.2 加入社区
 
 
-![加入社区](/blog/assets/easy-split/02-02-join-community-form.png)
+![加入社区](/blog/assets/easy-split/02-02-join-community-form.webp)
 
 *通过邀请码加入社区*
 
@@ -189,7 +189,7 @@ Easy Split 的核心功能就是帮你：
 ### 3.1 进入社区
 
 
-![社区页面](/blog/assets/easy-split/03-01-community-dashboard.png)
+![社区页面](/blog/assets/easy-split/03-01-community-dashboard.webp)
 
 *社区管理页面*
 
@@ -205,7 +205,7 @@ Easy Split 的核心功能就是帮你：
 ### 3.2 上传收据
 
 
-![上传收据](/blog/assets/easy-split/03-02-upload-receipt-area.png)
+![上传收据](/blog/assets/easy-split/03-02-upload-receipt-area.webp)
 
 *上传收据功能区域*
 
@@ -220,7 +220,7 @@ Easy Split 的核心功能就是帮你：
    - 跳转到账单详情页面
 
 
-![上传进度](/blog/assets/easy-split/03-02b-upload-progress.png)
+![上传进度](/blog/assets/easy-split/03-02b-upload-progress.webp)
 
 *收据上传和识别进度*
 
@@ -234,7 +234,7 @@ Easy Split 的核心功能就是帮你：
 ### 3.3 查看识别结果
 
 
-![账单详情](/blog/assets/easy-split/03-03-bill-detail-page.png)
+![账单详情](/blog/assets/easy-split/03-03-bill-detail-page.webp)
 
 *账单详情页面*
 
@@ -257,7 +257,7 @@ Easy Split 的核心功能就是帮你：
 ### 4.1 设置账单名称
 
 
-![账单名称编辑](/blog/assets/easy-split/04-01-edit-bill-name.png)
+![账单名称编辑](/blog/assets/easy-split/04-01-edit-bill-name.webp)
 
 *编辑账单名称*
 
@@ -276,7 +276,7 @@ Easy Split 的核心功能就是帮你：
 ### 4.2 设置汇率
 
 
-![汇率设置](/blog/assets/easy-split/04-02-edit-exchange-rate.png)
+![汇率设置](/blog/assets/easy-split/04-02-edit-exchange-rate.webp)
 
 *设置货币汇率*
 
@@ -298,7 +298,7 @@ Easy Split 的核心功能就是帮你：
 ### 4.3 添加参与者
 
 
-![参与者选择](/blog/assets/easy-split/04-03-select-participants.png)
+![参与者选择](/blog/assets/easy-split/04-03-select-participants.webp)
 
 *选择账单参与者*
 
@@ -349,7 +349,7 @@ Easy Split 支持两种分配方式：
 ### 5.2 认领私人项目
 
 
-![认领项目](/blog/assets/easy-split/05-02-claim-item-button.png)
+![认领项目](/blog/assets/easy-split/05-02-claim-item-button.webp)
 
 *认领私人项目按钮*
 
@@ -363,7 +363,7 @@ Easy Split 支持两种分配方式：
 4. 费用会自动从共享费用中移除，只计入你的个人费用
 
 
-![已认领项目](/blog/assets/easy-split/05-02b-item-claimed-by-user.png)
+![已认领项目](/blog/assets/easy-split/05-02b-item-claimed-by-user.webp)
 
 *项目已被用户认领*
 
@@ -377,7 +377,7 @@ Easy Split 支持两种分配方式：
 ### 5.3 编辑项目价格
 
 
-![编辑价格](/blog/assets/easy-split/05-03-edit-item-price.png)
+![编辑价格](/blog/assets/easy-split/05-03-edit-item-price.webp)
 
 *编辑账单项目价格*
 
@@ -409,7 +409,7 @@ Easy Split 支持两种分配方式：
 ### 6.1 查看总账
 
 
-![总账显示](/blog/assets/easy-split/06-01-totals-summary.png)
+![总账显示](/blog/assets/easy-split/06-01-totals-summary.webp)
 
 *账单总账汇总*
 

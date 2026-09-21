@@ -16,7 +16,7 @@ export type Project = {
   repo?: string;
   /** 封面花纹样式：dots / lines / grid / waves（无图或加载中时的回退底纹） */
   art: "dots" | "lines" | "grid" | "waves";
-  /** 真实产品截图（public/ 下路径，如 "/projects/xxx.png"）；缺省则用花纹封面 */
+  /** 真实产品截图（public/ 下路径，如 "/projects/xxx.webp"）；缺省则用花纹封面 */
   image?: string;
   /** 架构 X-Ray：底层技术栈链路（UI → 逻辑 → 存储 → 平台） */
   arch?: string[];
@@ -34,7 +34,7 @@ export const PROJECTS: Project[] = [
     demo: "https://encounter.alvin-luo.me/",
     repo: "https://github.com/alvinluo-tech/intimacy-tracker",
     art: "waves",
-    image: "/projects/encounter.png",
+    image: "/projects/encounter.webp",
     arch: ["Next.js 16 UI", "Server Actions", "Supabase Postgres + RLS", "AES-256-GCM"],
   },
   {
@@ -48,7 +48,7 @@ export const PROJECTS: Project[] = [
     demo: "https://taskflow.luodo.app",
     repo: "https://github.com/alvinluo-tech/Taskflow",
     art: "grid",
-    image: "/projects/taskflow.png",
+    image: "/projects/taskflow.webp",
     // 技术栈未核实（仓库暂不可访问），X-Ray 架构链路留空，组件自动隐藏按钮
   },
   {
@@ -62,7 +62,7 @@ export const PROJECTS: Project[] = [
     demo: "https://corelayer.alvin-luo.me/",
     repo: "https://github.com/alvinluo-tech/CoreLayer",
     art: "lines",
-    image: "/projects/corelayer.png",
+    image: "/projects/corelayer.webp",
     arch: ["Tauri 2 (Rust)", "React 19 + Vite", "Node Daemon (Hono)", "SQLite + Drizzle"],
   },
 ];

@@ -95,7 +95,7 @@ export default function TravelArchive() {
   /* 占位框兜底：懒加载图片在水合前 404 时，onError 会错过 */
   useEffect(() => {
     const markFromSrc = (src: string) => {
-      const m = src.match(/travel\/(\d+)\.jpg/);
+      const m = src.match(/travel\/(\d+)\.webp/);
       if (m) setFailed((f) => (f[m[1]] ? f : { ...f, [m[1]]: true }));
     };
     const onErr = (e: Event) => {
@@ -220,14 +220,14 @@ export default function TravelArchive() {
                             <>
                               Drop your photo at
                               <br />
-                              public/travel/{t.img}.jpg
+                              public/travel/{t.img}.webp
                             </>
                           }
                           zh={
                             <>
                               把照片放进
                               <br />
-                              public/travel/{t.img}.jpg
+                              public/travel/{t.img}.webp
                             </>
                           }
                         />
@@ -237,7 +237,7 @@ export default function TravelArchive() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       loading="lazy"
-                      src={`${BASE_PATH}/travel/${t.img}.jpg`}
+                      src={`${BASE_PATH}/travel/${t.img}.webp`}
                       alt={pick(locale, `Travel photo of ${t.place}`, `${t.place} 的旅行照片`)}
                       onError={() => setFailed((f) => ({ ...f, [t.img]: true }))}
                     />

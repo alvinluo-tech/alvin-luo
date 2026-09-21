@@ -145,8 +145,8 @@ export default function HeroStage() {
 
     let cancelled = false;
     Promise.all([
-      loadImage(`${BASE_PATH}/photos/hero-clothed.png`),
-      loadImage(`${BASE_PATH}/photos/hero-training.png`),
+      loadImage(`${BASE_PATH}/photos/hero-clothed.webp`),
+      loadImage(`${BASE_PATH}/photos/hero-training.webp`),
     ])
       .then(([clothed, training]) => {
         if (cancelled) return;

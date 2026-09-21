@@ -538,7 +538,7 @@ export default function YearReport({ stats }: { stats: YearStats }) {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       loading="lazy"
-                      src={`${BASE_PATH}/travel/${stats.latestTrip.img}.jpg`}
+                      src={`${BASE_PATH}/travel/${stats.latestTrip.img}.webp`}
                       alt={pick(locale, stats.latestTrip.placeEn ?? stats.latestTrip.place, stats.latestTrip.place)}
                       onError={() => setTripImgFailed(true)}
                     />

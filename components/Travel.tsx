@@ -53,7 +53,7 @@ export default function Travel() {
      onError 会错过那次错误 —— 用捕获监听 + 延迟扫描双保险 */
   useEffect(() => {
     const markFromSrc = (src: string) => {
-      const m = src.match(/travel\/(\d+)\.jpg/);
+      const m = src.match(/travel\/(\d+)\.webp/);
       if (m) setFailed((f) => (f[m[1]] ? f : { ...f, [m[1]]: true }));
     };
     const onErr = (e: Event) => {
@@ -246,14 +246,14 @@ export default function Travel() {
                             <>
                               Drop your photo at
                               <br />
-                              public/travel/{item.trip.img}.jpg
+                              public/travel/{item.trip.img}.webp
                             </>
                           }
                           zh={
                             <>
                               把照片放进
                               <br />
-                              public/travel/{item.trip.img}.jpg
+                              public/travel/{item.trip.img}.webp
                             </>
                           }
                         />
@@ -262,7 +262,7 @@ export default function Travel() {
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
-                      src={`${BASE_PATH}/travel/${item.trip.img}.jpg`}
+                      src={`${BASE_PATH}/travel/${item.trip.img}.webp`}
                       alt={pick(
                         locale,
                         `Travel photo of ${item.trip.place}`,

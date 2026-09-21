@@ -6,11 +6,11 @@
  *
  * 2026-09 按实际到访清单重写（11 国 38 站）。
  * date/note 留空 = 待补（不编造）；照片缺失时卡片自动显示
- * 「Drop your photo at public/travel/{img}.jpg」占位。
+ * 「Drop your photo at public/travel/{img}.webp」占位。
  * ============================================================ */
 
 export type Trip = {
-  img: string; // public/travel/{img}.jpg
+  img: string; // public/travel/{img}.webp
   country: string;
   countryEn?: string;
   place: string;
@@ -23,7 +23,7 @@ export type Trip = {
   hasPhoto?: boolean; // 照片文件是否已就位（缺省则自动查询 AVAILABLE_PHOTOS）
 };
 
-/** 现已存放在 public/travel/ 中的照片编号（新照片放入 public/travel/{img}.jpg 后在此登记，杜绝浏览器 404） */
+/** 现已存放在 public/travel/ 中的照片编号（新照片放入 public/travel/{img}.webp 后在此登记，杜绝浏览器 404） */
 export const AVAILABLE_PHOTOS = new Set<string>(["05"]);
 
 export function hasTripPhoto(trip: Trip): boolean {

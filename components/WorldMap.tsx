@@ -479,7 +479,7 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           loading="lazy"
-                          src={`${BASE_PATH}/travel/${city.img}.jpg`}
+                          src={`${BASE_PATH}/travel/${city.img}.webp`}
                           alt={city.place}
                           className="card-photo"
                           onError={(e) => {

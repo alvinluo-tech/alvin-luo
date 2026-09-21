@@ -21,7 +21,7 @@ source: "https://alvinluo-tech.github.io/posts/halloweed/"
 
 
 首先，非常感谢L姐的倾情赞助如下：
-![化妆工具](/blog/halloweed/r2-化妆工具.JPG)
+![化妆工具](/blog/halloweed/r2-化妆工具.webp)
 
 *L姐的赞助✌*
 
@@ -29,7 +29,7 @@ source: "https://alvinluo-tech.github.io/posts/halloweed/"
 真是太感谢了！本来都没打算准备啥，因为当天 18:00 才下课，然后 formal 是在 19:30。想着找个地方待着，坐等开饭，但是刚好和L姐往 St John's 走；我在那念叨"好素啊"的感觉，L姐说"要不去我那画点万圣元素"，然后就有了下面的成果。
 
 
-![化妆过程](/blog/halloweed/r2-化妆_1.jpg)
+![化妆过程](/blog/halloweed/r2-化妆_1.webp)
 
 *化妆新手直接化成花猫✌*
 
@@ -37,7 +37,7 @@ source: "https://alvinluo-tech.github.io/posts/halloweed/"
 艰苦奋战、擦擦画画，few minutes later，finally。
 
 
-![化妆效果](/blog/halloweed/r2-化妆_2.jpg)
+![化妆效果](/blog/halloweed/r2-化妆_2.webp)
 
 *不知道在得瑟些啥*
 
@@ -46,7 +46,7 @@ source: "https://alvinluo-tech.github.io/posts/halloweed/"
 
 
 主食，当当当当：
-![正餐主食](/blog/halloweed/r2-formal主食.JPG)
+![正餐主食](/blog/halloweed/r2-formal主食.webp)
 
 *formal主食*
 
@@ -54,7 +54,7 @@ source: "https://alvinluo-tech.github.io/posts/halloweed/"
 还有我们的甜品。前菜太普通就不展示啦，虽然甜品也很一般。
 
 
-![正餐甜点](/blog/halloweed/r2-formal甜点.JPG)
+![正餐甜点](/blog/halloweed/r2-formal甜点.webp)
 
 *formal甜点*
 
@@ -93,7 +93,7 @@ woc，我说：是啊。
 
 
 说着说着，和小韩倒弄起了咱新买的骷髅头戒指，帅！顺便合照一张，如下：
-![万圣节合照](/blog/halloweed/r2-和hxy合照2.JPG)
+![万圣节合照](/blog/halloweed/r2-和hxy合照2.webp)
 
 *我和小韩的合照*
 
@@ -109,7 +109,7 @@ woc，我说：是啊。
 散会散会。
 
 
-![万圣节南瓜装饰](/blog/halloweed/r2-formal随手拍的南瓜.JPG)
+![万圣节南瓜装饰](/blog/halloweed/r2-formal随手拍的南瓜.webp)
 
 *想吃南瓜了…*
 
@@ -119,7 +119,7 @@ woc，我说：是啊。
 夜晚的 *catherdral*
 
 
-![夜晚的大教堂](/blog/halloweed/r2-去castle参加活动前的catherdral.JPG)
+![夜晚的大教堂](/blog/halloweed/r2-去castle参加活动前的catherdral.webp)
 
 *Catherdral*
 
@@ -128,12 +128,12 @@ woc，我说：是啊。
 trump哥还是挺逗的 哈哈哈哈哈  笑死我了  还有一群小黄人
 
 
-![Trump扮演者](/blog/halloweed/r2-随拍trump.jpg)
+![Trump扮演者](/blog/halloweed/r2-随拍trump.webp)
 
 *随便拍 trump*
 
 
-![与Trump合照](/blog/halloweed/r2-我与trump的合照.JPG)
+![与Trump合照](/blog/halloweed/r2-我与trump的合照.webp)
 
 *和 trump 合照一张✌*
 
@@ -141,15 +141,15 @@ trump哥还是挺逗的 哈哈哈哈哈  笑死我了  还有一群小黄人
 这群人也是很疯狂，老实排队是不可能的，一直再做 *squat*，自我介绍的话也不知道说了多少遍（嗓子就是这么坏的）
 
 
-![小黄人合照](/blog/halloweed/r2-castle小黄人合照.JPG)
+![小黄人合照](/blog/halloweed/r2-castle小黄人合照.webp)
 
 *小黄人集合 balababala*
 
 
-![Help海报](/blog/halloweed/r2-castle中的help海报.JPG)
+![Help海报](/blog/halloweed/r2-castle中的help海报.webp)
 
 
-![照相亭合照](/blog/halloweed/r2-photobooth合照.JPG)
+![照相亭合照](/blog/halloweed/r2-photobooth合照.webp)
 
 *最后的收获*
 
