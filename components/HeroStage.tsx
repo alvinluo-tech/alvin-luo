@@ -154,7 +154,8 @@ export default function HeroStage() {
         buildHitMap(training);
         resize();
         canvas.classList.add("is-loaded");
-        rafId = requestAnimationFrame(loop);
+        /* 循环是否启动交给 IntersectionObserver 决定（可见才跑） */
+        startLoop();
       })
       .catch((err) => console.warn("照片加载失败：", err));
 
@@ -373,37 +374,61 @@ export default function HeroStage() {
     }
 
     /* ---------- 主循环 ----------
-       注意：不要在 visibilitychange 里取消 rAF —— 后台标签页本来就会
-       被浏览器自动节流，手动取消后若“恢复可见”事件丢失，循环会永久停摆 */
+       可见性门控：hero 滚出视口即停 rAF（IO 重入时恢复），
+       页面其余部分的滚动/动画不再分摊透视循环的开销。
+       不用 visibilitychange——后台标签页浏览器本就节流，且事件
+       丢失会让循环永久停摆 */
+    let running = false;
+    function startLoop() {
+      if (running || !state.images) return;
+      running = true;
+      rafId = requestAnimationFrame(loop);
+    }
+    function stopLoop() {
+      running = false;
+      cancelAnimationFrame(rafId);
+    }
     function loop() {
+      if (!running) return;
       render();
       rafId = requestAnimationFrame(loop);
     }
 
-    /* 调试句柄：可在控制台手动驱动一帧，也方便自动化测试 */
-    window.__hero = {
-      get intensity() {
-        return intensity;
+    const vio = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) (e.isIntersecting ? startLoop : stopLoop)();
       },
-      get isSelf() {
-        return isSelf;
-      },
-      get images() {
-        return state.images;
-      },
-      get size() {
-        return { w: state.w, h: state.h };
-      },
-      bodyAlpha,
-      tick: render,
-    };
+      { rootMargin: "80px" },
+    );
+    vio.observe(stage);
+
+    /* 调试句柄：仅开发环境（生产构建里不存在） */
+    if (process.env.NODE_ENV !== "production") {
+      window.__hero = {
+        get intensity() {
+          return intensity;
+        },
+        get isSelf() {
+          return isSelf;
+        },
+        get images() {
+          return state.images;
+        },
+        get size() {
+          return { w: state.w, h: state.h };
+        },
+        bodyAlpha,
+        tick: render,
+      };
+    }
 
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
     return () => {
       cancelled = true;
-      cancelAnimationFrame(rafId);
+      stopLoop();
+      vio.disconnect();
       ro.disconnect();
       stage.removeEventListener("pointermove", onPointerMove);
       stage.removeEventListener("pointerleave", onPointerLeave);
@@ -413,7 +438,7 @@ export default function HeroStage() {
         heroSection.removeEventListener("pointermove", onHeroMove);
         heroSection.removeEventListener("pointerleave", onHeroLeave);
       }
-      delete window.__hero;
+      if (process.env.NODE_ENV !== "production") delete window.__hero;
     };
   }, []);
 

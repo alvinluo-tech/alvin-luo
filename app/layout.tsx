@@ -63,6 +63,8 @@ export default function RootLayout({
         </div>
         {/* 主题防闪烁：beforeInteractive 注入 head，先于首帧执行 */}
         <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: themeInit }} />
+        {/* GitHub 热力图外链图源：提前握手，瓷砖出现时少一个 TLS 往返 */}
+        <link rel="preconnect" href="https://ghchart.rshah.org" />
         {/* Umami 访问统计（隐私友好、无 cookie） */}
         <Script src="https://cloud.umami.is/script.js" data-website-id="e420f55f-cf8c-452d-8155-b21dedaee1bd" strategy="afterInteractive" />
         <LocaleProvider>

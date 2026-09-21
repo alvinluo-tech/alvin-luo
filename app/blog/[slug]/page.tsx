@@ -49,10 +49,7 @@ export default async function PostPage({
             <p className="post-head-meta">
               <time>{post.date}</time>
               {post.updated !== post.date && <span>· 更新于 {post.updated}</span>}
-              <span>
-                · {post.readingMinutes} min read · 约{" "}
-                {Math.max(1, Math.round(post.readingMinutes * 1.6))} 分钟
-              </span>
+              <span>· {post.readingMinutes} min read · 约 {post.readingMinutes} 分钟</span>
               <span className="post-cat">
                 {CATEGORY_LABELS[post.category] || post.category}
               </span>

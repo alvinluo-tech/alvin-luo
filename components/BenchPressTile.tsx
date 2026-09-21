@@ -8,10 +8,10 @@ import "./BenchPressTile.css";
 type PlateWeight = 20 | 15 | 10 | 5;
 
 const PRESETS = [
-  { label: "20KG", labelZh: "20KG 空杆", total: 20, plates: [] as PlateWeight[], desc: "Warmup / 空杆热身" },
-  { label: "60KG", labelZh: "60KG 热身", total: 60, plates: [20] as PlateWeight[], desc: "Working set 1 / 入门常规组" },
-  { label: "80KG", labelZh: "80KG 进阶", total: 80, plates: [20, 10] as PlateWeight[], desc: "Heavy / 力量冲刺" },
-  { label: "100KG", labelZh: "100KG 破百!", total: 100, plates: [20, 20] as PlateWeight[], desc: "🏆 PR Milestone / 卧推破百俱乐部" },
+  { label: "20KG", labelZh: "20KG 空杆", total: 20, plates: [] as PlateWeight[] },
+  { label: "60KG", labelZh: "60KG 热身", total: 60, plates: [20] as PlateWeight[] },
+  { label: "80KG", labelZh: "80KG 进阶", total: 80, plates: [20, 10] as PlateWeight[] },
+  { label: "100KG", labelZh: "100KG 破百!", total: 100, plates: [20, 20] as PlateWeight[] },
 ];
 
 export default function BenchPressTile() {

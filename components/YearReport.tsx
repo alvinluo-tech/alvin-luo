@@ -134,19 +134,26 @@ export default function YearReport({ stats }: { stats: YearStats }) {
     /* 当前卡 = 滚动容器中线所落的卡。不用 IntersectionObserver 逐 entry
        派发：平滑滚动会连续触发多张卡、最后写入的未必是落点，
        跳卡后常把 step 判到别的卡上（计数动画卡在 0 的根因） */
+    /* rAF 节流：scroll 每帧最多算一次（7 张卡 × getBoundingClientRect） */
+    let raf = 0;
     const onScroll = () => {
-      const rootTop = root.getBoundingClientRect().top;
-      let best = 0;
-      cards.forEach((c, i) => {
-        const r = c.getBoundingClientRect();
-        if (r.top - rootTop <= root.clientHeight * 0.5) best = i;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const rootTop = root.getBoundingClientRect().top;
+        let best = 0;
+        cards.forEach((c, i) => {
+          const r = c.getBoundingClientRect();
+          if (r.top - rootTop <= root.clientHeight * 0.5) best = i;
+        });
+        setStep(best);
       });
-      setStep(best);
     };
     onScroll();
     root.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
+      if (raf) cancelAnimationFrame(raf);
       root.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };

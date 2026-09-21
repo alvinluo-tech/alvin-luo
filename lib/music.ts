@@ -50,26 +50,38 @@ export function isMusicConfigured() {
 
 const TTL = 60_000;
 const cache = new Map<string, { ts: number; data: unknown }>();
+/* in-flight 去重：多个组件同时冷启动（ticker + MusicBand + RoomScene）
+   会在结果缓存写入前各发一次请求——共享同一个进行中的 Promise */
+const inflight = new Map<string, Promise<unknown>>();
 
 export async function getMusic<T = unknown>(endpoint: string): Promise<T | null> {
   if (!isMusicConfigured()) return null;
   const hit = cache.get(endpoint);
   if (hit && Date.now() - hit.ts < TTL) return hit.data as T;
 
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 8000);
-    const r = await fetch(`${NETEASE_API.base}${endpoint}?key=${NETEASE_API.key}`, {
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-    if (!r.ok) return null;
-    const data = (await r.json()) as T;
-    cache.set(endpoint, { ts: Date.now(), data });
-    return data;
-  } catch {
-    return null;
-  }
+  const pending = inflight.get(endpoint);
+  if (pending) return pending as Promise<T | null>;
+
+  const p = (async () => {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      const r = await fetch(`${NETEASE_API.base}${endpoint}?key=${NETEASE_API.key}`, {
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      if (!r.ok) return null;
+      const data = (await r.json()) as T;
+      cache.set(endpoint, { ts: Date.now(), data });
+      return data;
+    } catch {
+      return null;
+    } finally {
+      inflight.delete(endpoint);
+    }
+  })();
+  inflight.set(endpoint, p);
+  return p;
 }
 
 /* ---- 领域函数：调用方不再拼端点字符串 ---- */

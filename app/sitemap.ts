@@ -7,11 +7,12 @@ export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = SITE_URL.replace(/\/$/, "");
-  const staticPages = ["", "/blog", "/travel", "/now"].map((p) => ({
+  /* 静态页不写 lastModified：每次构建都填 new Date() 会让全部 URL
+     永远"刚更新"，搜索引擎的时间信号失真 */
+  const staticPages = ["", "/blog", "/travel", "/now", "/year", "/room"].map((p) => ({
     url: `${base}${p}`,
-    lastModified: new Date(),
     changeFrequency: "weekly" as const,
-    priority: p === "" ? 1 : 0.7,
+    priority: p === "" ? 1 : p === "/year" || p === "/room" ? 0.6 : 0.7,
   }));
   const posts = getAllPosts().map((p) => ({
     url: `${base}/blog/${p.slug}`,

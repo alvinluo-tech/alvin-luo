@@ -58,6 +58,9 @@ export default function RoomScene() {
     return () => clearInterval(id);
   }, []);
 
+  /* 撸猫气泡 2.4s 自动消失：卸载时一并清掉，避免对已卸载组件 setState */
+  useEffect(() => () => { if (meowTimer.current) window.clearTimeout(meowTimer.current); }, []);
+
   /* 鼠标视差（仅精确指针 + 未开启 reduced-motion） */
   const stageRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
