@@ -24,8 +24,10 @@ export const LIVE_STATUS = {
 };
 
 /** 网易云 NOW PLAYING 数据源（netease-now-playing 项目部署后的地址）
- *  base 和 key 都填上才启用；留空则音乐瓷砖整体隐藏 */
+ *  base 和 key 都填上才启用；留空则音乐瓷砖整体隐藏。
+ *  base 用自定义域名 netease-api.alvin-luo.me：*.vercel.app 后缀在国内
+ *  被 DNS 污染（解析到假 IP，全部超时），自定义域名走 Vercel 边缘不受影响 */
 export const NETEASE_API = {
-  base: "https://netease-api-ruby.vercel.app", // 如 "https://你的项目.vercel.app"（不带末尾斜杠）
+  base: "https://netease-api.alvin-luo.me", // 如 "https://你的项目.vercel.app"（不带末尾斜杠）
   key: "1722aaefad7e456c4091617bbd21f43e", // 服务端 API_KEY 环境变量的值
 };
