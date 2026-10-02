@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllPosts, CATEGORY_LABELS } from "@/lib/blog";
+import CoverImage from "@/components/CoverImage";
 
 export const metadata: Metadata = {
   title: "Writing — Alvin Luo",
   description: "写代码之余的思考、记录与笔记：项目复盘、留学生活、自我反思。",
 };
+
+/* 封面三级策略：frontmatter cover 真图 → 逐篇 satori OG 卡（自动兜底）。
+   OG 卡由构建期生成，零人工成本，新文章自动获得品牌化封面 */
+function coverSrc(slug: string, cover?: string) {
+  return cover || `/blog/${slug}/opengraph-image`;
+}
 
 export default function BlogPage() {
   const posts = getAllPosts();
@@ -25,8 +32,14 @@ export default function BlogPage() {
       <div className="post-list">
         {posts.map((p) => (
           <Link href={`/blog/${p.slug}`} className="post-row" key={p.slug}>
-            <span className="post-date">{p.date}</span>
-            <div>
+            <CoverImage
+              src={p.cover}
+              fallback={`/blog/${p.slug}/opengraph-image`}
+              alt={`${p.title} 封面`}
+              className="post-cover-thumb"
+            />
+            <div className="post-row-main">
+              <span className="post-date">{p.date}</span>
               <h2 className="post-title">
                 {p.pinned && <span className="post-pin">★ </span>}
                 {p.title}

@@ -3835,9 +3835,19 @@ a {
   grid-column: span 7;
 }
 
+.shelf-count {
+  margin-left: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--grey);
+  letter-spacing: 0.04em;
+}
+
+/* 顶部预留：悬停卡是向上弹出的，不预留就会盖到相邻瓷砖上。
+   数值 = 最高书脊(174px) + 卡片间距(10px) + 卡片高(~100px) - 一排高度(~181px) */
 .shelf-scene {
   perspective: 900px;
-  padding-top: 0.6rem;
+  padding-top: 6.5rem;
 }
 
 .shelf-row {
@@ -3845,88 +3855,207 @@ a {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  padding: 0 0.4rem 14px;
-  border-bottom: 3px solid var(--ink);
+  padding: 0 0.75rem 7px;
+  margin-bottom: 1.75rem;
 }
 
+.shelf-row:last-child {
+  margin-bottom: 0;
+}
+
+/* 搁板：一块有厚度的板 + 顶面高光。
+   原来只用 3px border-bottom，托不住书脊的 3D 倾斜 */
+.shelf-row::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 7px;
+  background: var(--ink);
+  border-radius: 2px;
+  box-shadow: 0 4px 10px -6px rgba(0, 0, 0, 0.55);
+}
+
+.shelf-row::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: 6px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.26);
+  z-index: 2;
+}
+
+/* 宽度由 --bw 决定而不是 flex:1 —— 否则增减一本书会让整排重新分配宽度 */
 .book {
   position: relative;
-  flex: 1;
-  max-width: 96px;
+  flex: 0 0 auto;
+  width: var(--bw, 34px);
+}
+
+.book-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
   cursor: pointer;
-  outline: none;
+}
+
+/* 键盘焦点必须有独立指示：动效降级后位移消失，不能只靠书脊动来提示焦点 */
+.book-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
 .book-spine {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 148px;
+  height: var(--bh, 160px);
   border-radius: 4px 8px 8px 4px;
   border: 1.5px solid var(--ink);
   box-shadow: inset -6px 0 10px -6px rgba(0, 0, 0, 0.45);
-  transform: rotateY(-24deg);
+  /* rotateY 给书脊朝向，rotate(--bl) 给每本一点手摆的倾角 */
+  transform: rotate(var(--bl, 0deg)) rotateY(-24deg);
   transform-origin: left center;
-  transition: transform var(--dur) var(--ease);
+  /* 局部覆盖 0.2s：全局 --dur 是 0.55s，对「抽出一本书」这种直接操作太拖 */
+  transition: transform 0.2s var(--ease);
 }
 
 .book:hover .book-spine,
-.book:focus-visible .book-spine {
-  transform: rotateY(-6deg) translateY(-12px) translateZ(26px);
+.book-btn:focus-visible .book-spine,
+.book.is-open .book-spine {
+  transform: rotate(var(--bl, 0deg)) rotateY(-6deg) translateY(-12px) translateZ(26px);
 }
 
+.book-reading {
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 0 1.5px rgba(16, 20, 0, 0.5);
+}
+
+/* 文字颜色由组件按对比度写进行内样式，这里不设 color */
 .book-title {
   writing-mode: vertical-rl;
-  color: var(--paper);
-  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-  max-height: 130px;
+  max-height: calc(var(--bh, 160px) - 22px);
   overflow: hidden;
+  /* 字号已按标题长度反推；万一仍超出，至少让截断可见而不是静默裁掉 */
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .book-note {
   position: absolute;
   left: 50%;
   bottom: calc(100% + 10px);
-  transform: translateX(-50%) translateY(6px);
-  width: 190px;
+  --tx: -50%;
+  width: 208px;
   background: var(--paper);
   border: 1.5px solid var(--ink);
   border-radius: 12px;
-  box-shadow: 6px 8px 20px -12px var(--cm-ink-55);
-  padding: 0.6rem 0.8rem;
+  box-shadow: 6px 10px 24px -14px var(--cm-ink-55);
+  padding: 0.6rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
-  z-index: 5;
+  transform: translateX(var(--tx)) translateY(6px);
+  transition: opacity 0.18s var(--ease), transform 0.18s var(--ease);
+  z-index: 6;
 }
 
+/* 首尾两本改为贴边对齐：208px 的卡片居中挂在最边上的书，
+   横向会溢出瓷砖 */
+.book:first-child .book-note {
+  left: 0;
+  --tx: 0%;
+}
+
+.book:last-child .book-note {
+  left: auto;
+  right: 0;
+  --tx: 0%;
+}
+
+/* hover 预览 / focus 展开 / 点击常驻 —— 三条路径都要能读到批注 */
 .book:hover .book-note,
-.book:focus-visible .book-note {
+.book-btn:focus-visible ~ .book-note,
+.book.is-open .book-note {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+  transform: translateX(var(--tx)) translateY(0);
 }
 
-.book-note b {
-  font-size: 0.8rem;
-}
-
-.book-note i {
-  font-style: normal;
-  font-size: 0.72rem;
-  line-height: 1.55;
+/* 三级层次：元数据（次）→ 批注（主）→ 星级（脚注） */
+.note-meta {
+  font-size: 0.68rem;
   color: var(--grey);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.book-note em {
-  font-style: normal;
+.note-body {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.note-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--cm-ink-55);
+}
+
+.note-stars {
+  font-size: 0.68rem;
   color: var(--cm-ink-62-lime);
-  font-size: 0.72rem;
   letter-spacing: 0.1em;
+}
+
+.stars-dim {
+  opacity: 0.3;
+}
+
+.note-link {
+  font-size: 0.68rem;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-spine,
+  .book-note {
+    transition: none;
+  }
+
+  /* 只关掉位移，保留「抽出来」的静态姿态与卡片出现作为反馈 */
+  .book:hover .book-spine,
+  .book-btn:focus-visible .book-spine,
+  .book.is-open .book-spine {
+    transform: rotate(var(--bl, 0deg)) rotateY(-6deg);
+  }
 }
 
 /* ---- ABOUT：伦敦时钟 + 拍立得 ---- */
@@ -5085,6 +5214,66 @@ a {
   [data-theme="dark"] .tile-about .polaroid {
     border-color: rgba(240, 240, 230, 0.55);
     box-shadow: 5px 8px 18px -10px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ============================================================
+   博客封面（三级策略：frontmatter 真图 → satori OG 卡自动回退）
+   ============================================================ */
+
+.post-row {
+  grid-template-columns: 176px minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.post-cover-thumb {
+  display: block;
+  width: 176px;
+  aspect-ratio: 5 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--cm-ink-25);
+  background: var(--panel);
+}
+
+.post-row-main {
+  min-width: 0;
+}
+
+.post-row .post-date {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+/* 文章详情页封面横幅（仅 frontmatter 有真实照片封面的文章渲染，
+   无 cover 的不放 satori 标题卡——避免与紧邻的 h1 视觉重复） */
+.post-cover-banner {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid var(--cm-ink-25);
+  background: var(--panel);
+  margin: 0 0 2.2rem;
+}
+
+@media (max-width: 700px) {
+  .post-row {
+    grid-template-columns: 108px minmax(0, 1fr);
+    gap: 0.9rem;
+  }
+  .post-cover-thumb {
+    width: 108px;
+    border-radius: 9px;
+  }
+  .post-arrow {
+    display: none;
+  }
+  .post-cover-banner {
+    aspect-ratio: 3 / 2;
+    border-radius: 12px;
+    margin-bottom: 1.4rem;
   }
 }
 

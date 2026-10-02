@@ -5,6 +5,7 @@ import { getPost, getPostSlugs, CATEGORY_LABELS } from "@/lib/blog";
 import Toc from "@/components/Toc";
 import CodeCopy from "@/components/CodeCopy";
 import Lightbox from "@/components/Lightbox";
+import CoverImage from "@/components/CoverImage";
 
 /* 静态导出：为每篇文章生成一个页面 */
 export function generateStaticParams() {
@@ -60,6 +61,17 @@ export default async function PostPage({
               ))}
             </p>
           </header>
+
+          {/* 封面横幅：仅有真实照片封面的文章显示（无 cover 的文章
+              不放 satori 标题卡——会与紧邻的 h1 标题视觉重复） */}
+          {post.cover && (
+            <CoverImage
+              src={post.cover}
+              fallback={`/blog/${slug}/opengraph-image`}
+              alt={`${post.title} 封面`}
+              className="post-cover-banner"
+            />
+          )}
 
           {/* 正文由构建时 Markdown 渲染（含旧站迁来的 HTML 块） */}
           <div className="prose" dangerouslySetInnerHTML={{ __html: post.html }} />

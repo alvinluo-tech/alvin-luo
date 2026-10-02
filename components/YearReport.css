@@ -648,6 +648,17 @@
   width: fit-content;
 }
 
+/* 作者：夹在标题与星级之间的次级信息，弱化处理 */
+.yr-book-author {
+  font-size: 0.7rem;
+  color: var(--grey);
+  letter-spacing: 0.02em;
+  margin-top: -0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .yr-note {
   font-size: 0.88rem;
   color: var(--grey);

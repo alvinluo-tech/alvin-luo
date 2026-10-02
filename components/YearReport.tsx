@@ -591,9 +591,10 @@ export default function YearReport({ stats }: { stats: YearStats }) {
             </div>
             <div className="yr-shelf yr-anim" style={{ "--i": 2 } as React.CSSProperties}>
               {BOOKS.map((b, i) => (
-                <div className="yr-book" key={b.title} style={{ "--d": `${i * 90}ms` } as React.CSSProperties}>
+                <div className="yr-book" key={`${b.title}-${i}`} style={{ "--d": `${i * 90}ms` } as React.CSSProperties}>
                   <i style={{ background: b.color }} aria-hidden="true" />
                   <b>{b.title}</b>
+                  <span className="yr-book-author">{b.author}</span>
                   <em aria-label={`${b.stars} 星`}>
                     {"★".repeat(b.stars)}
                     {"☆".repeat(5 - b.stars)}
