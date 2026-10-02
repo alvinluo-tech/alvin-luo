@@ -168,9 +168,11 @@ export default function BookshelfTile() {
                     <p className="note-foot">
                       <span className="note-stars" aria-label={`${b.stars} 星推荐`}>
                         {"★".repeat(b.stars)}
-                        <span className="stars-dim" aria-hidden="true">
-                          {"☆".repeat(5 - b.stars)}
-                        </span>
+                        {b.stars < 5 && (
+                          <span className="stars-dim" aria-hidden="true">
+                            {"☆".repeat(5 - b.stars)}
+                          </span>
+                        )}
                       </span>
                       {b.link && (
                         <a

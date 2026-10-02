@@ -54,6 +54,30 @@ const cache = new Map<string, { ts: number; data: unknown }>();
    会在结果缓存写入前各发一次请求——共享同一个进行中的 Promise */
 const inflight = new Map<string, Promise<unknown>>();
 
+/* 上游（netease-api / Vercel）冷启动实测要 20s+，热态只要 ~100ms。
+   8s 就 abort 会让首次访问静默失败、settled 落到「没在听歌」，
+   且要等满 60s 轮询才恢复。这里放宽超时并加一次重试。 */
+const FETCH_TIMEOUT = 12_000;
+const RETRY_DELAY = 1_200;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchOnce<T>(endpoint: string): Promise<T | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
+  try {
+    const r = await fetch(`${NETEASE_API.base}${endpoint}?key=${NETEASE_API.key}`, {
+      signal: ctrl.signal,
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as T;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function getMusic<T = unknown>(endpoint: string): Promise<T | null> {
   if (!isMusicConfigured()) return null;
   const hit = cache.get(endpoint);
@@ -64,18 +88,14 @@ export async function getMusic<T = unknown>(endpoint: string): Promise<T | null>
 
   const p = (async () => {
     try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 8000);
-      const r = await fetch(`${NETEASE_API.base}${endpoint}?key=${NETEASE_API.key}`, {
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-      if (!r.ok) return null;
-      const data = (await r.json()) as T;
-      cache.set(endpoint, { ts: Date.now(), data });
+      /* 冷启动时首次请求常常超时；退避一次再试，避免整个 TTL 窗口都空着 */
+      let data = await fetchOnce<T>(endpoint);
+      if (data === null) {
+        await sleep(RETRY_DELAY);
+        data = await fetchOnce<T>(endpoint);
+      }
+      if (data !== null) cache.set(endpoint, { ts: Date.now(), data });
       return data;
-    } catch {
-      return null;
     } finally {
       inflight.delete(endpoint);
     }

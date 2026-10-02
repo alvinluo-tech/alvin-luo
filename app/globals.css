@@ -2032,13 +2032,15 @@ a {
     padding: 0.45rem 0.8rem;
     gap: 0.45rem;
   }
+}
 
-  /* iOS Safari：输入框字号 <16px 聚焦时会强制放大页面。
-     用 .bento 提高特异度：终端基础样式已拆到 TerminalTile.css，
-     加载顺序晚于本文件，同特异度会被 0.95rem 反超 */
-  .bento .term-input input {
-    font-size: 16px;
-  }
+/* iOS Safari：输入框字号 <16px 聚焦时会强制放大整页。
+   必须放在媒体查询之外 —— 之前只在 max-width:700px 里生效，
+   导致 iPad（768~1180px）仍是 0.95rem/15.2px，聚焦就整页缩放。
+   用 .bento 提高特异度：终端基础样式拆在 TerminalTile.css，
+   加载顺序晚于本文件，同特异度会被 0.95rem 反超 */
+.bento .term-input input {
+  font-size: 16px;
 }
 
 /* 语言切换：EN / 中 分段控件 */
@@ -3843,11 +3845,13 @@ a {
   letter-spacing: 0.04em;
 }
 
-/* 顶部预留：悬停卡是向上弹出的，不预留就会盖到相邻瓷砖上。
-   数值 = 最高书脊(174px) + 卡片间距(10px) + 卡片高(~100px) - 一排高度(~181px) */
+/* 顶部预留：悬停卡是向上弹出的，不预留就会盖到瓷砖标题上。
+   实测最高书脊 183px + 卡片高 117px + 卡片间距 10px，卡片顶距书脊顶 127px，
+   而一排自身高度约 197px —— 需要额外 8.25rem(132px) 才能完全容下最高那本。
+   （原来写 6.5rem/104px，差 23px，第 2、5 本会压到标题行） */
 .shelf-scene {
   perspective: 900px;
-  padding-top: 6.5rem;
+  padding-top: 8.25rem;
 }
 
 .shelf-row {
@@ -4002,8 +4006,10 @@ a {
   transform: translateX(var(--tx)) translateY(0);
 }
 
-/* 三级层次：元数据（次）→ 批注（主）→ 星级（脚注） */
-.note-meta {
+/* 三级层次：元数据（次）→ 批注（主）→ 星级（脚注）
+   选择器必须带 .book-note 前缀：全局有 `.tile p { font-size: 0.98rem }`（0,1,1），
+   单类名（0,1,0）压不过它，三级字号会被统一成 15.68px，层次就没了 */
+.book-note .note-meta {
   font-size: 0.68rem;
   color: var(--grey);
   letter-spacing: 0.02em;
@@ -4012,7 +4018,7 @@ a {
   white-space: nowrap;
 }
 
-.note-body {
+.book-note .note-body {
   font-size: 0.8rem;
   line-height: 1.6;
   color: var(--ink);

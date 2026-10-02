@@ -6,7 +6,9 @@ updated: "2025-10-31"
 category: "projects"
 tags: ["项目", "tauri", "react", "rust", "效率工具", "开源"]
 summary: "一个基于 Tauri、React 和 Rust 开发的跨平台专注计时应用，帮助你高效管理时间，提升生产力。"
-cover: "https://i.ibb.co/FbmmdH2k/3292708-D-6920-4-B9-C-8-BFD-6-ECAB5-F1-AACE.png"
+# cover 留空：原 i.ibb.co 图床在国内稳定 ECONNRESET（实测 3/3 失败），
+# 与其挂一个永远加载不出、要靠 onError 兜底的死链，不如走自动生成的 OG 卡。
+# 想换真封面：压成 WebP 放 public/blog/assets/ 再写 /blog/assets/xxx.webp
 pinned: true
 source: "https://alvinluo-tech.github.io/posts/introducing-focus-timer-zh/"
 ---
