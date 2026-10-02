@@ -23,8 +23,10 @@ export type Book = {
   note: string;
   /** 推荐指数 1-5 */
   stars: number;
-  /** 标记「正在读」：书脊顶部出现荧光绿圆点 */
+  /** 标记「正在读」：书脊拉出主位 + 荧光绿标识，确保视觉有落点 */
   reading?: boolean;
+  /** 在读进度 0-100（可选，仅 reading 时有意义）：悬停卡显示进度条 */
+  progress?: number;
   /** 可选外链（豆瓣 / 出版社页）。有值时悬停卡出现「查看详情 ↗」 */
   link?: string;
 };
@@ -77,5 +79,9 @@ export const BOOKS: Book[] = [
     color: "#dcdcc8",
     note: "Care about your craft。每年学一门新语言。",
     stars: 5,
+    /* 唯一「正在读」：书架需要一个视觉落点，否则五本等重没有入口。
+       这类字段应始终只有一本为 true —— 多于一本就失去「主位」的意义 */
+    reading: true,
+    progress: 62,
   },
 ];

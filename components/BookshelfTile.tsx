@@ -7,14 +7,17 @@
  *
  * 设计要点：
  * · 书脊有高低 / 宽窄 / 倾角差异 —— 等高同宽会读成柱状图，不像实物
+ * · 「在读」那本固定在第一个位置：五本等重时视线没有落点，主位就是入口
  * · 悬停卡分三级：作者元数据（次）→ 批注（主）→ 星级（脚注）
  * · 悬停预览 + 点击常驻：触屏没有 hover，只靠 :hover 会让批注永远读不到
  * · 书脊文字颜色按对比度自动择优，中调色书脊不再低于 WCAG AA
  * · 字号按标题长度反推，长标题不会被 overflow 静默裁掉
+ * · 触屏有「点一下」提示：光有 tap 能力不够，得让人知道能点
  * ============================================================ */
 
 import { useState } from "react";
 import { BOOKS } from "@/data/books";
+import { T } from "./i18n";
 
 /* 每排最多几本，超出换到下一层搁板（而不是把书挤细） */
 const ROW_SIZE = 6;
@@ -92,22 +95,37 @@ export default function BookshelfTile() {
   /* 点击常驻的那一本（触屏 / 键盘用；鼠标仍可纯靠 hover 预览） */
   const [open, setOpen] = useState<string | null>(null);
 
+  /* 「在读」固定在第一位：这是全排唯一的视觉落点。
+     排序必须稳定 —— 只把第一本 reading 的挪到前面，其余保持数据顺序，
+     否则每次改数据书架都会重排，读者记住的位置就失效了。 */
+  const ordered = (() => {
+    const i = BOOKS.findIndex((b) => b.reading);
+    if (i <= 0) return BOOKS;
+    return [BOOKS[i], ...BOOKS.slice(0, i), ...BOOKS.slice(i + 1)];
+  })();
+
   /* 按标题长度分配轮廓：最长的标题配最高最宽的书脊。
      这样既保证字号不会小到看不清，也符合「厚书更大」的直觉，
      而不是让长标题随机落到一本矮书上被截断。 */
   const profileOf: (typeof PROFILES)[number][] = [];
-  BOOKS.map((b, i) => ({ i, u: unitsOf(b.title) }))
+  ordered
+    .map((b, i) => ({ i, u: unitsOf(b.title) }))
     .sort((a, b) => b.u - a.u)
     .forEach(({ i }, rank) => {
       profileOf[i] = PROFILES[rank % PROFILES.length];
     });
 
   /* 超过 ROW_SIZE 本就换到下一层搁板，而不是把每本挤细 */
-  const items = BOOKS.map((b, i) => ({ b, idx: i, p: profileOf[i] }));
+  const items = ordered.map((b, i) => ({ b, idx: i, p: profileOf[i] }));
   const rows: (typeof items)[] = [];
   for (let i = 0; i < items.length; i += ROW_SIZE) {
     rows.push(items.slice(i, i + ROW_SIZE));
   }
+
+  /* 排数传给 CSS：.shelf-scene 的 min-height 按 --rows 递增。
+     卡片净空只在第一排需要（其余排的卡片向上落在上一排的空隙里），
+     但整块高度必须随排数涨，否则第二排会被压出瓷砖。 */
+  const sceneStyle = { "--rows": rows.length } as React.CSSProperties;
 
   return (
     <article className="tile tile-books">
@@ -116,7 +134,13 @@ export default function BookshelfTile() {
         <span className="shelf-count">{BOOKS.length} 本</span>
       </h3>
 
-      <div className="shelf-scene" aria-label="推荐书架">
+      {/* 触屏没有 hover，能力有了但没人知道能点 —— 给一句明确提示。
+         桌面隐藏（鼠标悬停自然会展开，多这句是噪音） */}
+      <p className="shelf-hint">
+        <T en="Tap a spine to read my note" zh="点书脊看批注" />
+      </p>
+
+      <div className="shelf-scene" aria-label="推荐书架" style={sceneStyle}>
         {rows.map((row, ri) => (
           <div className="shelf-row" key={ri}>
             {row.map(({ b, idx, p }) => {
@@ -127,7 +151,7 @@ export default function BookshelfTile() {
 
               return (
                 <div
-                  className={`book${isOpen ? " is-open" : ""}`}
+                  className={`book${isOpen ? " is-open" : ""}${b.reading ? " is-reading" : ""}`}
                   key={id}
                   style={
                     {
@@ -142,7 +166,7 @@ export default function BookshelfTile() {
                     className="book-btn"
                     aria-expanded={isOpen}
                     aria-controls={noteId}
-                    title={b.title}
+                    title={b.reading ? `${b.title}（在读）` : b.title}
                     onClick={() => setOpen(isOpen ? null : id)}
                   >
                     <span
@@ -165,6 +189,25 @@ export default function BookshelfTile() {
                       {b.year ? ` · ${b.year}` : ""}
                     </p>
                     <p className="note-body">{b.note}</p>
+                    {/* 在读进度：把「在读」从装饰变成一个可读的信号 */}
+                    {b.reading && typeof b.progress === "number" && (
+                      <p className="note-progress">
+                        <span className="np-label">
+                          <T en="Reading" zh="在读" />
+                        </span>
+                        <span
+                          className="np-track"
+                          role="progressbar"
+                          aria-valuenow={b.progress}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`${b.progress}%`}
+                        >
+                          <span className="np-fill" style={{ width: `${b.progress}%` }} />
+                        </span>
+                        <b>{b.progress}%</b>
+                      </p>
+                    )}
                     <p className="note-foot">
                       <span className="note-stars" aria-label={`${b.stars} 星推荐`}>
                         {"★".repeat(b.stars)}

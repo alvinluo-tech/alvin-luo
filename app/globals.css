@@ -3845,13 +3845,47 @@ a {
   letter-spacing: 0.04em;
 }
 
+/* 触屏提示：桌面不需要（悬停即展开），只在没有 hover 的设备上出现 */
+.shelf-hint {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .shelf-hint {
+    display: block;
+    margin: 0.2rem 0 0;
+    font-size: 0.68rem;
+    color: var(--grey);
+    letter-spacing: 0.02em;
+  }
+
+  .shelf-hint::before {
+    content: "☞ ";
+    color: var(--cm-ink-62-lime);
+  }
+
+  /* 触屏上放大命中区：实测书脊只有 40px 宽，低于 44px 最小触控目标。
+     书脊本身窄是设计（像真书），所以横向补一块透明热区而不是加宽书脊。 */
+  .book-btn::after {
+    content: "";
+    position: absolute;
+    inset: 0 -6px;
+  }
+}
+
 /* 顶部预留：悬停卡是向上弹出的，不预留就会盖到瓷砖标题上。
-   实测最高书脊 183px + 卡片高 117px + 卡片间距 10px，卡片顶距书脊顶 127px，
-   而一排自身高度约 197px —— 需要额外 8.25rem(132px) 才能完全容下最高那本。
-   （原来写 6.5rem/104px，差 23px，第 2、5 本会压到标题行） */
+   实测最高书脊 183px + 卡片高 + 卡片间距 10px。卡片高度有两档：
+   · 普通卡 117px
+   · 「在读」卡 142px（多一行进度条，+25px）
+   最紧的一本是 183 书脊配 142 卡：卡片底会比书脊顶再低 ~7px，
+   140px 时仍差 2px 压到标题，取 9.5rem(152px) 留 6px 余量防字体差异。
+   改书脊 PROFILES 高度、给卡片加行、或调整 bottom 偏移后，必须重量这个值。
+   排数由组件通过 --rows 传入；第一排的卡片向上越出，后续排只需自身高度。 */
 .shelf-scene {
   perspective: 900px;
-  padding-top: 8.25rem;
+  padding-top: 9.5rem;
+  /* 一排占位高度 = 最高书脊 183 + 搁板 7 + 行距 7 ≈ 197px = 12.3rem */
+  min-height: calc(var(--rows, 1) * 12.3rem);
 }
 
 .shelf-row {
@@ -3900,6 +3934,8 @@ a {
 }
 
 .book-btn {
+  /* 触屏热区 ::after 以此为定位参照 */
+  position: relative;
   display: block;
   width: 100%;
   padding: 0;
@@ -3949,6 +3985,56 @@ a {
   border-radius: 50%;
   background: var(--lime);
   box-shadow: 0 0 0 1.5px rgba(16, 20, 0, 0.5);
+}
+
+/* 「在读」是全排唯一的视觉落点：稍微抽出来一点，像一本抽了一半的书。
+   始终保持在第一排第一本（组件侧排序），读者扫一眼就有入口。 */
+.book.is-reading .book-spine {
+  transform: rotate(var(--bl, 0deg)) rotateY(-24deg) translateY(-9px);
+  box-shadow: inset -6px 0 10px -6px rgba(0, 0, 0, 0.45), 0 6px 14px -8px rgba(0, 0, 0, 0.6);
+}
+
+/* 悬停/展开时仍要能压过上面这条静态位移，否则「在读」那本抽不出来 */
+.book.is-reading:hover .book-spine,
+.book.is-reading .book-btn:focus-visible .book-spine,
+.book.is-reading.is-open .book-spine {
+  transform: rotate(var(--bl, 0deg)) rotateY(-6deg) translateY(-14px) translateZ(26px);
+}
+
+/* 在读进度条：把「在读」从装饰变成可读信号 */
+.book-note .note-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.62rem;
+  color: var(--grey);
+  padding-top: 0.15rem;
+}
+
+.note-progress .np-label {
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.note-progress .np-track {
+  flex: 1 1 auto;
+  height: 4px;
+  min-width: 0;
+  border-radius: 999px;
+  background: var(--cm-ink-16);
+  overflow: hidden;
+}
+
+.note-progress .np-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--lime);
+}
+
+.note-progress b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 /* 文字颜色由组件按对比度写进行内样式，这里不设 color */
