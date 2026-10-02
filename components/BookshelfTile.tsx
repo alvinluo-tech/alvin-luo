@@ -50,10 +50,11 @@ function unitsOf(title: string) {
   return units;
 }
 
-/** 由可用高度与标题长度反推字号 */
+/** 由可用高度与标题长度反推字号（保留两位，避免行内样式出现 17 位小数） */
 function fitFontSize(title: string, spineHeight: number) {
   const avail = spineHeight - TITLE_INSET;
-  return Math.min(Math.max((avail * SAFETY) / Math.max(unitsOf(title), 1), FS_MIN), FS_MAX);
+  const raw = Math.min(Math.max((avail * SAFETY) / Math.max(unitsOf(title), 1), FS_MIN), FS_MAX);
+  return Math.round(raw * 100) / 100;
 }
 
 /* ---- 对比度自动选色 ---- */
