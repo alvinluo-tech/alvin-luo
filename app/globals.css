@@ -3845,6 +3845,18 @@ a {
   letter-spacing: 0.04em;
 }
 
+/* 批注卡是覆盖式 popover：打开时会盖住标题行。若只盖住标题文字而右侧
+   「5 本」还孤零零露着，看着像排版坏了。所以卡片打开时整行标题淡出，
+   让弹层完整接管这条带状区域，关闭后恢复。
+   用 opacity 而非 display：避免标题高度塌陷导致书架整块跳动。 */
+.tile-books .tile-title {
+  transition: opacity 0.18s var(--ease);
+}
+
+.tile-books.has-open .tile-title {
+  opacity: 0.25;
+}
+
 /* 触屏提示：桌面不需要（悬停即展开），只在没有 hover 的设备上出现 */
 .shelf-hint {
   display: none;

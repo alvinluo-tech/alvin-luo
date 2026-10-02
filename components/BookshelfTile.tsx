@@ -157,7 +157,7 @@ export default function BookshelfTile() {
   const sceneStyle = { "--rows": rows.length } as React.CSSProperties;
 
   return (
-    <article className="tile tile-books">
+    <article className={`tile tile-books${open ? " has-open" : ""}`}>
       <h3 className="tile-title">
         BOOKSHELF — 精神食粮
         <span className="shelf-count">{BOOKS.length} 本</span>
