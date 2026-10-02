@@ -13,9 +13,11 @@
  * · 书脊文字颜色按对比度自动择优，中调色书脊不再低于 WCAG AA
  * · 字号按标题长度反推，长标题不会被 overflow 静默裁掉
  * · 触屏有「点一下」提示：光有 tap 能力不够，得让人知道能点
+ * · 点击是「抽出一本看看」的预览，不是导航：卡片要能随手关掉
+ *   （点外部 / Esc / 再点同一本），否则会一直挂在屏幕上
  * ============================================================ */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BOOKS } from "@/data/books";
 import { T } from "./i18n";
 
@@ -94,6 +96,33 @@ function spineText(hex: string) {
 export default function BookshelfTile() {
   /* 点击常驻的那一本（触屏 / 键盘用；鼠标仍可纯靠 hover 预览） */
   const [open, setOpen] = useState<string | null>(null);
+
+  /* 抽出来的卡片要能随手关掉 —— 只靠「再点同一本」太隐蔽，
+     读者会以为它卡住了。三条关闭路径：
+     1) 点这一本以外的任何地方   2) 按 Esc   3) 再点同一本（onClick 里的 toggle）
+     用 pointerdown 而不是 click：触屏上 click 有 ~300ms 延迟 */
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      /* 落在「当前展开的这一本」之内的都不关闭 ——
+         书脊按钮自己处理 toggle，卡片内部的批注文字/星级/外链要能正常选中与点击，
+         否则读者想选一句批注就会把卡片点没了 */
+      if ((target as HTMLElement | null)?.closest?.(".book.is-open")) return;
+      setOpen(null);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(null);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   /* 「在读」固定在第一位：这是全排唯一的视觉落点。
      排序必须稳定 —— 只把第一本 reading 的挪到前面，其余保持数据顺序，
