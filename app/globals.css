@@ -3851,10 +3851,13 @@ a {
 }
 
 @media (pointer: coarse) {
-  .shelf-hint {
+  /* 必须用 .tile 前缀提权：全局 .tile p（0,1,1）会压掉单类名的
+     font-size/color，提示会变成 0.98rem 墨色大字 */
+  .tile .shelf-hint {
     display: block;
     margin: 0.2rem 0 0;
     font-size: 0.68rem;
+    line-height: 1.4;
     color: var(--grey);
     letter-spacing: 0.02em;
   }
@@ -3873,17 +3876,16 @@ a {
   }
 }
 
-/* 顶部预留：悬停卡是向上弹出的，不预留就会盖到瓷砖标题上。
-   实测最高书脊 183px + 卡片高 + 卡片间距 10px。卡片高度有两档：
-   · 普通卡 117px
-   · 「在读」卡 142px（多一行进度条，+25px）
-   最紧的一本是 183 书脊配 142 卡：卡片底会比书脊顶再低 ~7px，
-   140px 时仍差 2px 压到标题，取 9.5rem(152px) 留 6px 余量防字体差异。
-   改书脊 PROFILES 高度、给卡片加行、或调整 bottom 偏移后，必须重量这个值。
+/* 顶部预留：悬停卡向上弹出，只需保证它不出瓷砖 —— 打开时允许临时盖住
+   瓷砖标题（卡片不透明、带边框阴影，标准 popover 行为）。
+   若按「连标题都不盖」预留，瓷砖要常驻 ~152px 空腔，书被压到底部、
+   相邻 travel 瓷砖被拉高 48px，整个 bento 比例都会被撑坏 —— 实测后果。
+   实测最高卡 = 「在读」卡 142px（普通卡 117px），卡底比书脊顶低 ~7px、间距 10px：
+   6.5rem(104px) 时卡顶仍在瓷砖内 ~11px。改 PROFILES / 卡片行数后须重量此值。
    排数由组件通过 --rows 传入；第一排的卡片向上越出，后续排只需自身高度。 */
 .shelf-scene {
   perspective: 900px;
-  padding-top: 9.5rem;
+  padding-top: 6.5rem;
   /* 一排占位高度 = 最高书脊 183 + 搁板 7 + 行距 7 ≈ 197px = 12.3rem */
   min-height: calc(var(--rows, 1) * 12.3rem);
 }
