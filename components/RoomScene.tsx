@@ -51,6 +51,14 @@ export default function RoomScene() {
   const [meow, setMeow] = useState(false);
   const meowTimer = useRef<number | null>(null);
 
+  /* 季节（客户端判定后才渲染：构建时刻与访问时刻可能跨月/跨季，
+     SSR 若按构建日渲染会造成水合不一致。装饰元素晚一帧出现无妨） */
+  const [season, setSeason] = useState<{ winter: boolean; birthday: boolean } | null>(null);
+  useEffect(() => {
+    const m = new Date().getMonth() + 1;
+    setSeason({ winter: m === 12 || m <= 2, birthday: m === 11 });
+  }, []);
+
   useEffect(() => {
     const tick = () => setNow(new Date());
     tick();
@@ -107,6 +115,39 @@ export default function RoomScene() {
   const sky: Sky = skyOverride ?? autoSky;
   const isNight = sky === "night";
   const playing = Boolean(np?.playing);
+
+  /* 猫瞳孔跟光标：深夜睁眼时眼球朝指针轻转（半径钳制 1.8px）。
+     依赖 [isNight, meow] —— 眼睛是条件渲染的，睁眼那一刻 ref 才存在。
+     （此 effect 必须放在 isNight 声明之后：deps 数组是立即求值的） */
+  const gazeRef = useRef<SVGGElement>(null);
+  useEffect(() => {
+    const eyes = gazeRef.current;
+    const el = stageRef.current;
+    if (!eyes || !el) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    let tx = 0, ty = 0;
+    const apply = () => {
+      raf = 0;
+      eyes.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px)`;
+    };
+    const onMove = (e: PointerEvent) => {
+      const r = eyes.getBoundingClientRect();
+      const dx = e.clientX - (r.left + r.width / 2);
+      const dy = e.clientY - (r.top + r.height / 2);
+      const len = Math.hypot(dx, dy) || 1;
+      const k = Math.min(1.8, len) / len;
+      tx = dx * k;
+      ty = dy * k;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    el.addEventListener("pointermove", onMove);
+    return () => {
+      el.removeEventListener("pointermove", onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [isNight, meow]);
 
   const hourDeg = ((hour % 12) + minute / 60) * 30;
   const minDeg = minute * 6;
@@ -274,6 +315,27 @@ export default function RoomScene() {
                         );
                       })}
                     </g>
+                    {/* 冬季（12–2 月）：窗外飘雪 —— 房间不只跟时间走，也跟季节走。
+                        雪片被外层 roomWindowClip 裁剪，不会飘出窗框 */}
+                    {season?.winter && (
+                      <g className="room-win-snow" aria-hidden="true">
+                        {[
+                          [0.06, 7.5, 0, 1.6], [0.18, 9.2, 1.4, 2.2], [0.31, 8.1, 0.6, 1.4],
+                          [0.44, 10.4, 2.2, 1.9], [0.57, 7.8, 0.9, 1.3], [0.68, 9.6, 1.8, 2.1],
+                          [0.8, 8.6, 0.3, 1.5], [0.92, 10.8, 2.6, 1.7], [0.12, 11.2, 3.4, 1.2],
+                          [0.52, 11.8, 4.1, 1.8], [0.76, 12.6, 3.1, 1.4], [0.28, 13.4, 4.8, 1.6],
+                        ].map(([fx, dur, delay, rr], i) => (
+                          <circle
+                            key={i}
+                            className="room-flake"
+                            cx={w1[0] + fx * (w0[0] - w1[0])}
+                            cy={w1[1] - 14 + (i % 3) * 7}
+                            r={rr}
+                            style={{ animationDuration: `${dur}s`, animationDelay: `${delay}s` } as React.CSSProperties}
+                          />
+                        ))}
+                      </g>
+                    )}
                   </g>
                   <polygon className="room-win-frame" points={poly(w0, w1, w2, w3)} />
                   <line
@@ -708,6 +770,13 @@ export default function RoomScene() {
                 <circle className="room-cat-head" cx={630} cy={552} r={15} />
                 <polygon className="room-cat-ear" points="620,540 626,526 632,539" />
                 <polygon className="room-cat-ear" points="634,538 642,526 644,540" />
+                {/* 11 月生日月：猫戴派对帽（生日 2004.11，月份来自简历） */}
+                {season?.birthday && (
+                  <g className="room-party-hat" aria-hidden="true">
+                    <polygon className="room-party-hat-cone" points="624,539 638,539 632,522" />
+                    <circle className="room-party-hat-pom" cx={632} cy={521} r={2.2} />
+                  </g>
+                )}
                 {/* 粉红小鼻头 */}
                 <polygon points="629,554 632,554 630.5,556" fill="#f43f5e" />
                 {/* 猫咪表情状态机：撸猫时闭眼享受微笑脸、深夜精神睁眼、白天安静睡觉 */}
@@ -719,10 +788,13 @@ export default function RoomScene() {
                   </g>
                 ) : isNight ? (
                   <g className="room-cat-eyes-open">
-                    <ellipse cx={625} cy={551} rx={2.2} ry={2.5} />
-                    <circle cx={625.8} cy={550.2} r={0.8} fill="#ffffff" />
-                    <ellipse cx={635} cy={551} rx={2.2} ry={2.5} />
-                    <circle cx={635.8} cy={550.2} r={0.8} fill="#ffffff" />
+                    {/* gaze 组：深夜里这双眼睛会追着你的光标看 */}
+                    <g ref={gazeRef} className="room-cat-gaze">
+                      <ellipse cx={625} cy={551} rx={2.2} ry={2.5} />
+                      <circle cx={625.8} cy={550.2} r={0.8} fill="#ffffff" />
+                      <ellipse cx={635} cy={551} rx={2.2} ry={2.5} />
+                      <circle cx={635.8} cy={550.2} r={0.8} fill="#ffffff" />
+                    </g>
                   </g>
                 ) : (
                   <g className="room-cat-eyes-closed">

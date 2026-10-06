@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { T } from "@/components/i18n";
+import NowLive from "@/components/NowLive";
 
 export const metadata: Metadata = {
   title: "Now — 此刻",
@@ -74,6 +75,9 @@ export default function NowPage() {
           />
         </p>
       </header>
+
+      {/* 实时条：在读 / 音乐 / 代码 —— 自动同步，永不手更 */}
+      <NowLive />
 
       {SECTIONS.map((s) => (
         <section className="archive-group" key={s.title}>

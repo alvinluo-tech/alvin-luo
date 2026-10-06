@@ -6004,3 +6004,85 @@ a {
   flex-wrap: wrap;
   justify-content: center;
 }
+
+/* ================= /now 实时数据条（NowLive） ================= */
+/* 注意：在文件末尾（坑 #10） */
+
+.now-live {
+  margin: 1.8rem 0 0.6rem;
+}
+
+.now-live-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  color: var(--grey);
+  margin-bottom: 0.75rem;
+}
+
+.now-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  outline: 1px solid rgba(16, 20, 0, 0.35);
+  animation: pulse 1.8s ease-in-out infinite;
+  flex: 0 0 auto;
+}
+
+.now-live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.7rem;
+}
+
+.now-live-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  background: var(--panel);
+  text-decoration: none;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.now-live-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.now-live-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--grey);
+}
+
+.now-live-body {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.now-live-body b {
+  color: var(--cm-ink-62-lime);
+  font-variant-numeric: tabular-nums;
+}
+
+.now-live-loading {
+  font-style: normal;
+  font-weight: 500;
+  color: var(--grey);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .now-live-dot {
+    animation: none;
+  }
+}

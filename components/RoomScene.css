@@ -984,3 +984,58 @@
     transform: none;
   }
 }
+
+/* ---- 季节：冬季窗内飘雪（12–2 月） ---- */
+.room-flake {
+  fill: #ffffff;
+  opacity: 0.92;
+  /* 白雪在白天的浅色天空上会隐身，细描边保住轮廓 */
+  stroke: rgba(16, 20, 0, 0.22);
+  stroke-width: 0.5;
+  animation: room-snow-fall linear infinite;
+}
+
+@keyframes room-snow-fall {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.92;
+  }
+  88% {
+    opacity: 0.92;
+  }
+  100% {
+    /* 窗高约 200px：落到窗底淡出，循环由 delay 错开 */
+    transform: translateY(206px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-flake {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* ---- 季节：11 月生日猫帽 ---- */
+.room-party-hat-cone {
+  fill: var(--lime);
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.room-party-hat-pom {
+  fill: #f43f5e;
+  stroke: var(--ink);
+  stroke-width: 0.8;
+}
+
+/* ---- 猫瞳孔跟光标（深夜睁眼时，transform 由 JS 写入） ---- */
+.room-cat-gaze {
+  /* 只用 translate，不用 transform-box 相关属性，避免影响布局盒 */
+  will-change: transform;
+}

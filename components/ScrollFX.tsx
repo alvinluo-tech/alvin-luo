@@ -34,6 +34,9 @@ export default function ScrollFX() {
     const cleanups: Array<() => void> = [];
     if (matchMedia("(pointer: fine)").matches) {
       for (const tile of Array.from(document.querySelectorAll<HTMLElement>(".tile"))) {
+        /* 终端瓷砖是打字面：输入时光标频繁移动，跟着晃会烦人。
+           装饰让位于可用性 —— 输入面保持稳定 */
+        if (tile.classList.contains("tile-term")) continue;
         const move = (e: PointerEvent) => {
           const r = tile.getBoundingClientRect();
           const rx = ((e.clientY - r.top) / r.height - 0.5) * -3.5;
