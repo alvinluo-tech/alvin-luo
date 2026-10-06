@@ -175,7 +175,7 @@ export default function TerminalTile() {
         });
         out.push({
           kind: "out",
-          text: "  help                Show this command guide\n  matrix              Launch iconic Matrix digital green code rain\n  ai ask <query>      Chat with Alvin's client-side AI agent\n  bench               Check 100KG bench press & leg day status\n  room                Visit /room (Alvin's 2.5D isometric room)\n  year                Open /year (${REPORT_YEAR} Annual Report Wrapped)\n  cat xray-hero-effect Read the flagship post summary\n  skills              Inspect technical skill matrix\n  cat bio.txt         Read personal background & philosophy\n  ls                  List files and directories in workspace\n  whoami              Current identity, location & role\n  workout             Get a randomized daily training menu\n  contact             Show email and GitHub links\n  date                Print live local time in Durham, UK\n  sudo hire-alvin     Attempt special hiring protocol\n  clear               Clear terminal output buffer",
+          text: "  help                Show this command guide\n  matrix              Launch iconic Matrix digital green code rain\n  ai ask <query>      Chat with Alvin's client-side AI agent\n  bench               Check 100KG bench press & leg day status\n  room                Visit /room (Alvin's 2.5D isometric room)\n  year                Open /year (${REPORT_YEAR} Annual Report Wrapped)\n  resume              Open /resume (CV — printable + PDF download)\n  cat xray-hero-effect Read the flagship post summary\n  skills              Inspect technical skill matrix\n  cat bio.txt         Read personal background & philosophy\n  ls                  List files and directories in workspace\n  whoami              Current identity, location & role\n  workout             Get a randomized daily training menu\n  contact             Show email and GitHub links\n  date                Print live local time in Durham, UK\n  sudo hire-alvin     Attempt special hiring protocol\n  clear               Clear terminal output buffer",
         });
         break;
 
@@ -200,6 +200,18 @@ export default function TerminalTile() {
         out.push({ kind: "ok", text: `Opening ${REPORT_YEAR} Annual Report: /year ...` });
         if (typeof window !== "undefined") {
           setTimeout(() => { router.push("/year"); }, 400);
+        }
+        break;
+
+      case "resume":
+      case "cv":
+        out.push({ kind: "ok", text: "🖨 Printing résumé: /resume ..." });
+        out.push({
+          kind: "out",
+          text: "骆耀升 Alvin Luo — 杜伦大学 CS 硕士 (QS 85) · GPA 3.9 · CoreLayer 500+ commits\n每条主张都有站内实证链接，PDF 可直接下载。跳转中 …",
+        });
+        if (typeof window !== "undefined") {
+          setTimeout(() => { router.push("/resume"); }, 700);
         }
         break;
 
@@ -233,7 +245,7 @@ export default function TerminalTile() {
       case "dir":
         out.push({
           kind: "out",
-          text: "drwxr-xr-x  projects/\ndrwxr-xr-x  room/\ndrwxr-xr-x  year/\ndrwxr-xr-x  travel/\n-rw-r--r--  bio.txt\n-rw-r--r--  xray-hero-effect.md\n-rwxr-xr-x  skills.sh\n-rw-r--r--  contact.json",
+          text: "drwxr-xr-x  projects/\ndrwxr-xr-x  room/\ndrwxr-xr-x  year/\ndrwxr-xr-x  travel/\n-rw-r--r--  bio.txt\n-rw-r--r--  resume.pdf\n-rw-r--r--  xray-hero-effect.md\n-rwxr-xr-x  skills.sh\n-rw-r--r--  contact.json",
         });
         break;
 
@@ -359,7 +371,7 @@ export default function TerminalTile() {
     inputRef.current?.focus();
   };
 
-  const QUICK_COMMANDS = ["help", "matrix", "ai ask", "bench", "workout", "skills", "room", "clear"];
+  const QUICK_COMMANDS = ["help", "matrix", "ai ask", "bench", "resume", "skills", "room", "clear"];
 
   return (
     <article className="tile tile-term" onClick={focusInput} aria-label="Interactive developer terminal">

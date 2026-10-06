@@ -1990,29 +1990,16 @@ a {
     order: 3;
     flex: 1 1 100%;
     justify-content: space-between;
-    /* 6 个链接（WORK ROOM YEAR TRAVEL WRITING GITHUB）在 390px
-       单行放不下：min-content 418px 会撑破 350px 行宽把 GITHUB 裁出视口 */
-    gap: 0.7rem;
+    /* 现在只有 4 个链接（WORK CV YEAR WRITING），390px 单行从容放下。
+      曾经 6 个链接时 0.72rem 都挤不下（min-content 418px > 350px 行宽），
+      Room/Travel/GitHub 移回 bento 瓷砖入口后字号可以放回正常档 */
+    gap: 1rem;
     min-width: 0;
   }
 
   .nav-links a {
-    font-size: 0.72rem;
-    letter-spacing: 0.02em;
-  }
-
-  /* 360px 级小屏：min-content 仍比行宽多 ~5px，再收一档 */
-  @media (max-width: 380px) {
-    .nav {
-      padding-inline: 1rem;
-    }
-    .nav-links {
-      gap: 0.5rem;
-    }
-    .nav-links a {
-      font-size: 0.68rem;
-      letter-spacing: 0;
-    }
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
   }
 
   .nav-tools {
@@ -5389,3 +5376,440 @@ a {
   }
 }
 
+
+/* ================= 简历纸面 /resume（ResumeSheet） ================= */
+/* 注意：本块在文件末尾——追加式文件里靠后才能赢同特异性（坑 #10） */
+
+.rs-page {
+  min-height: 100vh;
+  padding: 6.5rem 1.2rem 4rem;
+  display: flex;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(210, 255, 0, 0.05), transparent 42%),
+    var(--paper);
+}
+
+.rs {
+  width: min(880px, 100%);
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 8px 12px 32px -18px var(--cm-ink-55);
+  padding: clamp(1.4rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 2.1rem;
+  position: relative;
+}
+
+/* 左上角版本标签：呼应站点工程制图语言 */
+.rs::before {
+  content: "CV · " attr(data-ver);
+  position: absolute;
+  top: -1px;
+  left: 18px;
+  transform: translateY(-100%);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--grey);
+  padding-bottom: 0.4rem;
+}
+
+/* ---- 抬头 ---- */
+.rs-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem 2rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.6rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.rs-id h1 {
+  font-size: clamp(1.9rem, 4.6vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.rs-name-en {
+  margin-left: 0.7rem;
+  font-size: 0.42em;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--grey);
+  vertical-align: 0.5em;
+}
+
+.rs-meta {
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  color: var(--grey);
+  letter-spacing: 0.05em;
+}
+
+.rs-contacts {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  margin-top: 0.8rem;
+  font-size: 0.82rem;
+}
+
+.rs-contacts a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--cm-ink-30);
+  text-underline-offset: 3px;
+}
+
+.rs-contacts a:hover {
+  background: var(--lime);
+  text-decoration: none;
+}
+
+.rs-contact-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  color: var(--grey);
+  margin-right: 0.45rem;
+}
+
+.rs-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.rs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.62rem 1.05rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+.rs-btn:hover {
+  transform: translateY(-2px);
+}
+
+.rs-btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.rs-btn-primary:hover {
+  background: var(--lime);
+  color: var(--ink);
+}
+
+.rs-btn-sub {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  font-weight: 400;
+  opacity: 0.72;
+}
+
+.rs-updated {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  color: var(--grey);
+  letter-spacing: 0.08em;
+}
+
+/* ---- 分节 ---- */
+.rs-h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin-bottom: 1.05rem;
+  font-size: 0.86rem;
+  letter-spacing: 0.22em;
+  color: var(--grey);
+}
+
+.rs-h2::before {
+  content: "";
+  width: 1.6em;
+  height: 2px;
+  background: var(--lime);
+  outline: 1px solid rgba(16, 20, 0, 0.25);
+  align-self: center;
+}
+
+.rs-h2-zh {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.rs-h2-en {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+}
+
+.rs-item {
+  padding: 0.9rem 0 0.35rem;
+  border-top: 1px dashed var(--cm-ink-22);
+}
+
+.rs-item:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.rs-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.3rem 1rem;
+}
+
+.rs-item-head h3 {
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.rs-item-sub {
+  margin-left: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--grey);
+  letter-spacing: 0.06em;
+}
+
+.rs-item-mid {
+  margin-left: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--grey);
+}
+
+.rs-period {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--grey);
+  white-space: nowrap;
+}
+
+.rs-note {
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+
+.rs-majors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.rs-majors span {
+  font-size: 0.7rem;
+  padding: 0.18rem 0.6rem;
+  border: 1px solid var(--cm-ink-30);
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--panel);
+}
+
+.rs-proj-meta {
+  margin-top: 0.15rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.66rem;
+  color: var(--grey);
+  letter-spacing: 0.04em;
+}
+
+.rs-bullets {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  margin-top: 0.5rem;
+  font-size: 0.84rem;
+  line-height: 1.72;
+  color: var(--ink);
+}
+
+.rs-bullets li {
+  position: relative;
+  padding-left: 1.05rem;
+}
+
+.rs-bullets li::before {
+  content: "▪";
+  position: absolute;
+  left: 0;
+  color: var(--cm-ink-62-lime);
+  font-size: 0.7em;
+  top: 0.34em;
+}
+
+/* 证据链接：简历的核心差异点 */
+.rs-verify {
+  display: inline-block;
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--lime);
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.rs-verify:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.rs-campus {
+  margin-top: 0;
+}
+
+/* ---- 技能表 ---- */
+.rs-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.rs-skill-row {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-top: 1px dashed var(--cm-ink-22);
+}
+
+.rs-skill-row:first-child {
+  border-top: 0;
+}
+
+.rs-skill-row dt {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.rs-skill-row dd {
+  font-size: 0.8rem;
+  line-height: 1.66;
+  color: var(--ink);
+}
+
+/* ---- 荣誉 ---- */
+.rs-honors {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.42rem 1.4rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.rs-honors li {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.rs-honors li::before {
+  content: "★";
+  position: absolute;
+  left: 0;
+  font-size: 0.66em;
+  color: var(--cm-ink-62-lime);
+  top: 0.28em;
+}
+
+.rs-langs {
+  margin-top: 0.85rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  border: 1px solid var(--cm-ink-30);
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  display: inline-block;
+}
+
+.rs-foot {
+  margin-top: 0.4rem;
+  padding-top: 1.2rem;
+  border-top: 2px solid var(--ink);
+  font-size: 0.72rem;
+  color: var(--grey);
+  line-height: 1.7;
+}
+
+/* ---- 响应式 ---- */
+@media (max-width: 700px) {
+  .rs-page {
+    padding: 5.5rem 0.8rem 2.5rem;
+  }
+
+  .rs-head {
+    flex-direction: column;
+  }
+
+  .rs-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .rs-skill-row {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}
+
+/* ---- 打印：Ctrl+P 直接出干净的纸面 ---- */
+@media print {
+  .nav,
+  .footer,
+  .blueprint,
+  .rs-actions,
+  .rs-verify {
+    display: none !important;
+  }
+
+  .rs-page {
+    padding: 0;
+    background: #fff;
+  }
+
+  .rs {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    width: 100%;
+  }
+
+  .rs section {
+    break-inside: avoid;
+  }
+}

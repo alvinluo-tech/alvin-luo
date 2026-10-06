@@ -635,6 +635,57 @@ export default function RoomScene() {
               <path className="room-plant-leaf" d="M 922 454 q -26 -34 -6 -62 q 8 30 14 44 q 2 -36 16 -48 q 2 30 -4 52 Z" />
               <polygon className="room-plant-pot" points="912,452 946,452 941,482 917,482" />
             </g>
+
+            {/* 简历纸（前台灯下地板，平铺 A4）→ /resume */}
+            <g
+              role="link"
+              tabIndex={0}
+              className="room-hot"
+              aria-label={pick(locale, "Résumé — printable CV with PDF download", "简历——可打印，可下载 PDF")}
+              onClick={() => {
+                playClick();
+                router.push("/resume");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && router.push("/resume")}
+            >
+              <g className="room-pop" style={{ "--d": "0.95s" } as React.CSSProperties}>
+                {(() => {
+                  /* 平铺的 A4：iso 平面上 a×b 张成的平行四边形 */
+                  const o: P = [218, 606];
+                  const A = 58, B = 42;
+                  return (
+                    <>
+                      <g className="room-paper">
+                        <polygon
+                          className="room-paper-face"
+                          points={poly(pt(o, 0, 0), pt(o, A, 0), pt(o, A, B), pt(o, 0, B))}
+                        />
+                        {/* 打印内容：几行灰线 + 一个 lime 高亮块（数字/实证） */}
+                        {[6, 12, 18, 24, 30].map((b, i) => (
+                          <line
+                            key={b}
+                            className="room-paper-line"
+                            x1={pt(o, 7, b)[0]}
+                            y1={pt(o, 7, b)[1]}
+                            x2={pt(o, i === 1 ? 40 : 50, b)[0]}
+                            y2={pt(o, i === 1 ? 40 : 50, b)[1]}
+                          />
+                        ))}
+                        <polygon
+                          className="room-paper-hl"
+                          points={poly(pt(o, 12, 21), pt(o, 22, 21), pt(o, 22, 24.5), pt(o, 12, 24.5))}
+                        />
+                        {/* 回形针 */}
+                        <circle className="room-paper-clip" cx={pt(o, A - 5, 4)[0]} cy={pt(o, A - 5, 4)[1]} r={3} />
+                      </g>
+                    </>
+                  );
+                })()}
+                <g className="room-tag" transform="translate(150,672)">
+                  <text>{pick(locale, "resume · hire me →", "简历 · 求职中 →")}</text>
+                </g>
+              </g>
+            </g>
           </g>
 
           {/* ============ 前层：猫 ============ */}
@@ -704,6 +755,7 @@ export default function RoomScene() {
         <Link href="/travel">📮 <T en="Postcards · Travel" zh="明信片 · 旅行" /></Link>
         <Link href="/blog/xray-hero-effect">🩻 <T en="Poster · X-Ray" zh="海报 · X 光" /></Link>
         <Link href="/year">🗓 <T en="Poster · 2026 Report" zh="海报 · 2026 报告" /></Link>
+        <Link href="/resume">📄 <T en="Paper · Résumé" zh="简历纸 · CV" /></Link>
       </nav>
 
       <p className="room-footnote">

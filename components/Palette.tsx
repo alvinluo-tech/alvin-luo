@@ -26,6 +26,7 @@ export default function Palette({ posts = [] }: { posts?: Item[] }) {
   const ITEMS: Item[] = [
     { label: "首页 — Home", href: "/", hint: "page" },
     { label: "作品 — Projects", href: "/#projects", hint: "section" },
+    { label: "简历 — CV", href: "/resume", hint: "page", keywords: "cv resume 简历 履历 求职" },
     { label: "房间 — The Room", href: "/room", hint: "page", keywords: "room 房间 等距 3d 空间 cat desk shelf" },
     { label: "2026 年度报告 — Wrapped", href: "/year", hint: "page", keywords: "year 年度 报告 wrapped report 总结 2026" },
     { label: "旅行 — Travel", href: "/travel", hint: "page" },

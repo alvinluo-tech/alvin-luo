@@ -7,7 +7,7 @@ import ScrollFX from "@/components/ScrollFX";
 import SmoothScroll from "@/components/SmoothScroll";
 import Palette from "@/components/Palette";
 import { LocaleProvider } from "@/components/i18n";
-import { SITE_URL } from "@/config/site";
+import { SITE_URL, GITHUB_URL } from "@/config/site";
 import { getAllPosts, CATEGORY_LABELS } from "@/lib/blog";
 import "./globals.css";
 
@@ -84,6 +84,13 @@ export default function RootLayout({
           <SmoothScroll />
           <footer className="footer">
             <span>© {new Date().getFullYear()} ALVIN LUO</span>
+            {/* 从导航撤下的 GitHub 在这兜底；简历 PDF 是求职直达口 */}
+            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+              GITHUB ↗
+            </a>
+            <a href="/resume/alvin-luo-resume.pdf" download="Alvin-Luo-Resume.pdf">
+              RÉSUMÉ ↧
+            </a>
             <a href="#top">BACK TO TOP ↑</a>
           </footer>
         </LocaleProvider>

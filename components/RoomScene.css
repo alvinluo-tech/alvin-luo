@@ -935,3 +935,52 @@
   line-height: 1.6;
 }
 
+
+/* ---- 简历纸（前台灯下地板）：平铺 A4 → /resume ---- */
+.room-paper {
+  transition: transform 0.2s var(--ease, ease);
+}
+
+.room-hot:hover .room-paper,
+.room-hot:focus-visible .room-paper {
+  /* 悬停把纸"拿起来"一点：只有 y 位移，保持平面投影 */
+  transform: translateY(-7px);
+}
+
+.room-paper-face {
+  fill: #fbfbf4;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  /* 落地阴影：向下偏移的软影，营造"躺在地板上" */
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.35));
+}
+
+.room-paper-line {
+  stroke: rgba(16, 20, 0, 0.34);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.room-paper-hl {
+  fill: var(--lime);
+  stroke: rgba(16, 20, 0, 0.4);
+  stroke-width: 0.6;
+}
+
+.room-paper-clip {
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 2;
+  /* 回形针的金属感：细描边圆环即可，别喧宾夺主 */
+  filter: drop-shadow(0 1px 0 rgba(16, 20, 0, 0.45));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-paper {
+    transition: none;
+  }
+  .room-hot:hover .room-paper,
+  .room-hot:focus-visible .room-paper {
+    transform: none;
+  }
+}
