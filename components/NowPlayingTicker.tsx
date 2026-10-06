@@ -45,6 +45,11 @@ export default function NowPlayingTicker() {
       aria-label={`正在播放 ${text}，点击跳到音乐区`}
     >
       <span className="nav-np-dot" aria-hidden="true" />
+      <span className="nav-np-eq" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
       <span className="nav-np-clip" ref={clipRef}>
         {overflowing ? (
           <span className="nav-np-scroll">

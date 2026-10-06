@@ -175,7 +175,7 @@ export default function TerminalTile() {
         });
         out.push({
           kind: "out",
-          text: "  help                Show this command guide\n  matrix              Launch iconic Matrix digital green code rain\n  ai ask <query>      Chat with Alvin's client-side AI agent\n  bench               Check 100KG bench press & leg day status\n  room                Visit /room (Alvin's 2.5D isometric room)\n  year                Open /year (${REPORT_YEAR} Annual Report Wrapped)\n  resume              Open /resume (CV — printable + PDF download)\n  cat xray-hero-effect Read the flagship post summary\n  skills              Inspect technical skill matrix\n  cat bio.txt         Read personal background & philosophy\n  ls                  List files and directories in workspace\n  whoami              Current identity, location & role\n  workout             Get a randomized daily training menu\n  contact             Show email and GitHub links\n  date                Print live local time in Durham, UK\n  sudo hire-alvin     Attempt special hiring protocol\n  clear               Clear terminal output buffer",
+          text: "  help                Show this command guide\n  matrix              Launch iconic Matrix digital green code rain\n  ai ask <query>      Chat with Alvin's client-side AI agent\n  bench               Check 100KG bench press & leg day status\n  room                Visit /room (Alvin's 2.5D isometric room)\n  year                Open /year (${REPORT_YEAR} Annual Report Wrapped)\n  resume              Open /resume (CV — printable + PDF download)\n  cat xray-hero-effect Read the flagship post summary\n  vim                 A rite of passage for every engineer\n  meow                …try it\n  credits             Who built this place\n  skills              Inspect technical skill matrix\n  cat bio.txt         Read personal background & philosophy\n  ls                  List files and directories in workspace\n  whoami              Current identity, location & role\n  workout             Get a randomized daily training menu\n  contact             Show email and GitHub links\n  date                Print live local time in Durham, UK\n  sudo hire-alvin     Attempt special hiring protocol\n  clear               Clear terminal output buffer",
         });
         break;
 
@@ -238,6 +238,42 @@ export default function TerminalTile() {
         out.push({
           kind: "out",
           text: `Thank you for your interest. Let's craft refined software and build bold products together.\nReach out directly: ${EMAIL}`,
+        });
+        break;
+
+      case "vim":
+      case "vi":
+        out.push({
+          kind: "ok",
+          text: "E387: 欢迎来到 vim。你现在的处境和 90% 的工程师一样。\n提示：输入 :q! 可以离开（真实的 vim 没这么仁慈）。",
+        });
+        break;
+
+      case ":q!":
+      case ":q":
+      case ":wq":
+        out.push({
+          kind: "ok",
+          text: "已退出 —— 其实你刚才根本没进去。（在真正的 vim 里，此刻你正忙着查 Stack Overflow）",
+        });
+        break;
+
+      case "meow":
+      case "cat":
+        out.push({
+          kind: "ok",
+          text: "喵 ～ 🐾\n（猫在 /room 里睡得正香，别吵醒它。深夜来访它会睁眼。）",
+        });
+        break;
+
+      case "credits":
+        out.push({
+          kind: "ok",
+          text: "ALVIN.LUO v2.0 — CREDITS",
+        });
+        out.push({
+          kind: "out",
+          text: "站长 / 猫奴 / 卧推教练 …… Alvin Luo\n等距房间与猫 ………… 手绘 SVG，无游戏引擎\n音乐数据 ………………… 网易云（他真的在听）\n年度报告 ………………… 本站真实数据，非编造\n咖啡摄入 ………………… 过量\nSpecial thanks …… 深夜写代码的所有时刻",
         });
         break;
 

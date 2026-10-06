@@ -5,6 +5,7 @@ import Nav from "@/components/Nav";
 import ScrollReveal from "@/components/ScrollReveal";
 import ScrollFX from "@/components/ScrollFX";
 import SmoothScroll from "@/components/SmoothScroll";
+import Konami from "@/components/Konami";
 import Palette from "@/components/Palette";
 import { LocaleProvider } from "@/components/i18n";
 import { SITE_URL, GITHUB_URL } from "@/config/site";
@@ -82,6 +83,7 @@ export default function RootLayout({
           <ScrollReveal />
           <ScrollFX />
           <SmoothScroll />
+          <Konami />
           <footer className="footer">
             <span>© {new Date().getFullYear()} ALVIN LUO</span>
             {/* 从导航撤下的 GitHub 在这兜底；简历 PDF 是求职直达口 */}
