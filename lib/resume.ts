@@ -1,7 +1,7 @@
 /* ============================================================
  * 简历数据 —— 唯一数据源
  *
- * 来源：用户提供的 resume_luo_v6_3 PDF（2026-09 版），经 pdf.js 提取。
+ * 来源：用户提供的 resume_luo_v6_4 PDF（2026-10 版），经 pdf.js 提取。
  * 修改简历的正确流程：改 PDF → 替换 public/resume/alvin-luo-resume.pdf
  * → 同步更新本文件。两边不一致时以 PDF 为准（招聘方拿到的是 PDF）。
  *
@@ -18,13 +18,13 @@ export const RESUME = {
   meta: "2004.11 · 男 · 江西吉安",
   /** 站内展示的联系方式（无手机号——只留 PDF） */
   contacts: [
-    { label: "Email", value: "alvinluo68@163.com", href: "mailto:alvinluo68@163.com" },
+    { label: "Email", value: "alvin290@163.com", href: "mailto:alvin290@163.com" },
     { label: "Blog", value: "alvin-luo.me", href: "/" },
     { label: "GitHub", value: "alvinluo-tech", href: "https://github.com/alvinluo-tech" },
   ],
   pdf: "/resume/alvin-luo-resume.pdf",
-  pdfSize: "909 KB",
-  updated: "2026-09",
+  pdfSize: "956 KB",
+  updated: "2026-10",
 
   education: [
     {
@@ -32,7 +32,7 @@ export const RESUME = {
       schoolEn: "Durham University",
       degree: "计算机科学硕士",
       period: "2025.09 – 2027.01（预计）",
-      note: "QS 2027 世界排名第 85；已完成课程，预计 2027 年 1 月获学位。",
+      note: "QS 2027 世界大学排名前 100 · 第 85 名；已完成课程，预计 2027 年 1 月获学位。",
       majors: ["自然语言处理", "机器学习与深度学习", "强化学习", "人工智能交互框架与实践"],
       verify: { label: "杜伦在哪，看看我的英国足迹", href: "/travel?country=英国" },
     },
@@ -52,10 +52,10 @@ export const RESUME = {
       role: "爬虫实习工程师 · 技术部",
       period: "2025.02 – 2025.05",
       bullets: [
-        { text: "主导爬虫框架重构：基于 scrapy-redis 与 RabbitMQ 解耦爬取接口与任务调度，支持分布式爬取，框架性能提升 200%。" },
-        { text: "应用 Nginx + FastAPI 设计爬虫接口负载均衡策略，爬取效率提升 200%、系统稳定性提升 130%。" },
-        { text: "开发维护 IP 代理池：定时心跳检测机制，代理可用性 95%+，IP 采购成本降低 30%。" },
-        { text: "参与辉瑞制药技术团队商务谈判，全英文沟通技术细节，推动技术服务签约，为公司创收 80 万元。" },
+        { text: "主导爬虫框架重构：基于 scrapy-redis 与 RabbitMQ 解耦爬取接口与任务调度，五节点分布式爬取，合规限速下采集吞吐量提升至原来的 2 倍。" },
+        { text: "应用 Nginx + FastAPI 设计爬虫接口负载均衡与故障转移策略，多节点分流采集请求，消除单点瓶颈，保障采集服务持续稳定运行。" },
+        { text: "设计基于池内有效 IP 数量的动态调频心跳机制——有效 IP 充足时降频检测，不足时升频快速剔除失效 IP；代理可用性维持 95%+，无效重试率从 25% 降至 8%。" },
+        { text: "参与辉瑞制药技术团队商务谈判，负责技术方案英文讲解与需求对接，支持签约 80 万元技术服务项目。" },
       ] as ResumeBullet[],
     },
   ],
@@ -81,7 +81,7 @@ export const RESUME = {
       period: "2025.10 – 2025.11",
       type: "个人项目",
       bullets: [
-        { text: "独立开发并部署 OCR 收据分账应用：识别收据项目与金额并结构化解析、自动完成多人分账；FastAPI 后端 + Docker 部署，独立完成引擎接入、业务逻辑到服务器部署全流程。" },
+        { text: "独立开发并部署 OCR 收据分账应用：覆盖 Tesco / Sainsbury's 等 3 类英超收据模板，关键字段识别准确率约 90%，识别结果结构化解析后自动完成多人分账；FastAPI 后端 + Docker 部署，独立完成引擎接入、业务逻辑到服务器部署全流程。" },
       ] as ResumeBullet[],
       verify: { label: "开发复盘文章", href: "/blog/easy-split" },
     },
@@ -92,7 +92,7 @@ export const RESUME = {
       period: "2024.05 – 2024.06",
       type: "个人项目",
       bullets: [
-        { text: "全栈开发：Vue3 / Vite / Pinia + Flask + Scrapy / Scrapyd + MySQL / Redis，Docker 部署华为云；多维检索与 Redis 进度可视化，数据获取效率 +50%、问题响应 +30%、资源利用率 +25%。" },
+        { text: "全栈开发：Vue3 / Vite / Pinia + Flask + Scrapy / Scrapyd + MySQL / Redis，Docker 部署华为云；多维检索与 Redis 进度可视化，单位时间采集条数 800 → 1,200 条/小时（+50%），故障定位时间 10 → 3 分钟（-70%），CPU 利用率 40% → 50%、任务排队时间 4 → 3 分钟（-25%）。" },
       ] as ResumeBullet[],
       verify: { label: "源码", href: "https://gitee.com/alvin_GDUT/crawler-hub" },
     },
