@@ -143,17 +143,23 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
     };
   }, []);
 
-  // 协同滚轮手势监听（防页面滚动劫持）：普通滚动不缩放地图，显示 Ctrl 提示
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (!e.ctrlKey && !e.metaKey) {
-      setShowWheelHint(true);
-      if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
-      hintTimerRef.current = setTimeout(() => {
+  // 协同滚轮手势监听（防页面滚动劫持）：在 SVG 原生层捕获滚轮事件，确保在普通滚动时准时浮现快捷键提示
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) {
+        setShowWheelHint(true);
+        if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+        hintTimerRef.current = setTimeout(() => {
+          setShowWheelHint(false);
+        }, 1500);
+      } else {
         setShowWheelHint(false);
-      }, 1500);
-    } else {
-      setShowWheelHint(false);
-    }
+      }
+    };
+    el.addEventListener("wheel", onWheel, { passive: true });
+    return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
   // 投影系统：EqualEarth，全球视角但优雅平衡
@@ -349,7 +355,7 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
       </div>
 
       {/* 缩放/平移视口包装器（支持协同滚轮监听，绝不劫持页面滑动） */}
-      <div className="worldmap-canvas-wrap" onWheel={handleWheel}>
+      <div className="worldmap-canvas-wrap">
         {/* SVG 底图图层（通过 D3-Zoom 进行平移和缩放） */}
         <svg
           ref={svgRef}

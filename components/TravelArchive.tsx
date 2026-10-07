@@ -172,12 +172,7 @@ export default function TravelArchive() {
               className={filter === ALL || filter === t.country ? "city is-lit" : "city"}
               title={`${t.place} · ${t.date}`}
               onClick={() => {
-                setFilter(ALL);
-                requestAnimationFrame(() => {
-                  document
-                    .getElementById(`group-${t.country}`)
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                });
+                focusCity(t.img);
               }}
             >
               <span className="city-dot" aria-hidden="true" />
