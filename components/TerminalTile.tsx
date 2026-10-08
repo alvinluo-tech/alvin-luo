@@ -27,30 +27,39 @@ const SKILLS: [string, number][] = [
 function getAiResponse(query: string): string {
   const q = query.toLowerCase();
   if (!q || q === "ai" || q === "ask") {
-    return "🤖 [Alvin AI]: Ask me anything! Try:\n  • ai ask what is your bench press PR?\n  • ai ask tell me about your projects\n  • ai ask what tech stack do you use?\n  • ai ask why Durham, UK?";
+    return "🤖 [Alvin AI]: Ask me anything! Try:\n  • ai ask what is CoreLayer & MCP?\n  • ai ask how did you hit 100KG bench press?\n  • ai ask tell me about your projects\n  • ai ask why Durham, UK?";
   }
-  if (q.includes("bench") || q.includes("gym") || q.includes("lift") || q.includes("squat") || q.includes("deadlift") || q.includes("workout") || q.includes("leg")) {
-    return "🏋️ [Alvin AI]: Alvin is officially in the 100KG Bench Press Club (PR achieved)! But please don't mention squats or deadlifts—his leg day attendance record is currently '404 Not Found'. True software engineers only optimize the pressing muscles so keyboards don't stand a chance.";
+  if (q.includes("mcp") || q.includes("agent") || q.includes("corelayer") || q.includes("llm")) {
+    return "🤖 [Alvin AI]: CoreLayer is Alvin's 500+ commit flagship project — a local-first desktop control plane for governed AI agents. It wraps Claude Code / Codex / OpenCode as permission-guarded workers, unifies tool execution over stdio/HTTP/SSE with Model Context Protocol (MCP), and routes tasks dynamically across DeepSeek, MiMo and OpenAI endpoints. Check the exploded 3D system deck in the #projects section!";
+  }
+  if (q.includes("bench") || q.includes("gym") || q.includes("lift") || q.includes("squat") || q.includes("deadlift") || q.includes("workout") || q.includes("leg") || q.includes("100kg")) {
+    return "🏋️ [Alvin AI]: Alvin is officially in the 100KG Bench Press Club (PR achieved)! Program: progressive overload with strict pauses at the chest. But please don't mention squats or deadlifts—his leg day attendance record is currently '404 Not Found'. True software engineers only optimize the pressing muscles so keyboards don't stand a chance.";
+  }
+  if (q.includes("resume") || q.includes("cv") || q.includes("hire") || q.includes("job") || q.includes("degree") || q.includes("master") || q.includes("gpa")) {
+    return `📄 [Alvin AI]: Alvin Luo (骆耀升) — CS MSc @ Durham University (QS 85, 2027 grad), GDUT BS (GPA 3.9). Experienced in AI Agent systems, full-stack, and high-performance crawling. Printable CV with proof-of-work badges is live at /resume. Contact: ${EMAIL}`;
+  }
+  if (q.includes("travel") || q.includes("passport") || q.includes("country") || q.includes("trip")) {
+    return "📮 [Alvin AI]: Alvin has explored 11 countries and 38 stops across Asia, Europe and Africa — from Durham castle and Icelandic glaciers to Bangkok street markets and Sahara dunes. Check out the interactive D3 Equal Earth map and vintage consular visa stamps at /travel!";
   }
   if (q.includes("project") || q.includes("built") || q.includes("work") || q.includes("app") || q.includes("portfolio")) {
-    return "🚀 [Alvin AI]: Flagship projects shipped by Alvin:\n  1. Encounter — End-to-end encrypted intimacy tracker for couples with AES-256-GCM & zero-knowledge PIN lock.\n  2. TaskFlow — Productivity OS managing cognitive energy instead of time, with AI task decomposition.\n  3. CoreLayer — Local-first AI agent desktop control plane built with Tauri 2 & Rust.\nCheck them out in the #projects section above!";
+    return "🚀 [Alvin AI]: Flagship projects shipped by Alvin:\n  1. CoreLayer — Local-first AI agent control plane (500+ commits, Tauri 2 + Rust + MCP).\n  2. Encounter — End-to-end encrypted intimacy tracker for couples (AES-256-GCM + Supabase).\n  3. TaskFlow — Productivity OS managing cognitive energy instead of time.\n  4. EasySplit — 90% accuracy OCR grocery receipt splitter with FastAPI + Docker.\nCheck them out in the #projects section!";
   }
   if (q.includes("stack") || q.includes("tech") || q.includes("language") || q.includes("react") || q.includes("tailwind") || q.includes("css") || q.includes("rust")) {
-    return "⚡ [Alvin AI]: Core stack: Next.js 16 (App Router), React 19, TypeScript, Rust/Tauri 2, and Node.js. Alvin adheres to zero-runtime Vanilla CSS architecture—mastering fundamental web APIs for 60fps performance without framework bloat.";
+    return "⚡ [Alvin AI]: Core stack: Next.js 16 (App Router), React 19, TypeScript, Rust/Tauri 2, Node.js (Hono), and Python. Alvin adheres to zero-runtime Vanilla CSS architecture—mastering fundamental web APIs for 60fps performance without framework bloat.";
   }
   if (q.includes("durham") || q.includes("uk") || q.includes("school") || q.includes("university") || q.includes("where")) {
-    return "🏰 [Alvin AI]: Alvin is studying & engineering in Durham, United Kingdom. Historic castle surroundings, classic rainy afternoons, deep code focus, and heavy bench sessions.";
+    return "🏰 [Alvin AI]: Alvin is studying & engineering in Durham, United Kingdom. Historic castle surroundings, classic rainy afternoons, deep code focus, and heavy bench sessions. Watch the live Durham weather and clock in /room!";
   }
   if (q.includes("who") || q.includes("about") || q.includes("bio") || q.includes("alvin")) {
     return "👨‍💻 [Alvin AI]: Alvin Luo — Software Engineer who lifts. Building products by day, building myself after hours. Passionate about thoughtful design engineering, weightless spatial interfaces, and progressive overload in code & gym.";
   }
-  if (q.includes("hire") || q.includes("contact") || q.includes("job") || q.includes("email") || q.includes("reach")) {
+  if (q.includes("contact") || q.includes("email") || q.includes("reach")) {
     return `📫 [Alvin AI]: Open to engineering opportunities and high-leverage products. Reach Alvin directly at ${EMAIL} or connect via GitHub @${GITHUB_USER}!`;
   }
   if (q.includes("music") || q.includes("song") || q.includes("listen")) {
     return "🎵 [Alvin AI]: Music fuels every build session. See the live NetEase Music band on the home page or head over to /room to watch the vinyl player spin in real-time!";
   }
-  return `🤖 [Alvin AI]: Query received: "${query}". Alvin is either in the flow state refactoring code, writing in /now, or pushing 100KG on the bench. Try asking about 'projects', 'stack', 'bench press', or type 'matrix'!`;
+  return `🤖 [Alvin AI]: Query received: "${query}". Alvin is either in the flow state refactoring code, writing in /now, or pushing 100KG on the bench. Try asking about 'corelayer', 'mcp', 'stack', 'bench press', or type 'matrix'!`;
 }
 
 export default function TerminalTile() {
@@ -64,6 +73,14 @@ export default function TerminalTile() {
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const matrixCanvasRef = useRef<HTMLCanvasElement>(null);
+  const typeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 卸载时清除可能正在进行的打字机定时器
+  useEffect(() => {
+    return () => {
+      if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+    };
+  }, []);
 
   // Matrix 代码雨画布渲染逻辑
   useEffect(() => {
@@ -141,6 +158,11 @@ export default function TerminalTile() {
     const trimmed = raw.trim();
     if (!trimmed) return;
 
+    if (typeTimerRef.current) {
+      clearInterval(typeTimerRef.current);
+      typeTimerRef.current = null;
+    }
+
     const cmd = trimmed.toLowerCase();
     const out: Line[] = [{ kind: "in", text: `$ ${trimmed}` }];
 
@@ -161,9 +183,55 @@ export default function TerminalTile() {
 
     if (cmd.startsWith("ai ") || cmd.startsWith("ask ") || cmd === "ai" || cmd === "ask") {
       const q = trimmed.replace(/^(ai\s+ask|ai|ask)\s*/i, "").trim();
-      out.push({ kind: "ok", text: getAiResponse(q) });
-      setLines((l) => [...l, ...out].slice(-80));
+      const fullAnswer = getAiResponse(q);
+      const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      // 清除可能残留的上一次打字机定时器
+      if (typeTimerRef.current) {
+        clearInterval(typeTimerRef.current);
+        typeTimerRef.current = null;
+      }
+
+      // prefers-reduced-motion 开启时：直接完整输出，不播放流式打字
+      if (reduced) {
+        out.push({ kind: "ok", text: fullAnswer });
+        setLines((l) => [...l, ...out].slice(-80));
+        setValue("");
+        return;
+      }
+
+      // 实时流式打字机动效：16ms 步进流式推入 + 机械键盘轻微敲击声 + 闪烁光标 ▍
+      setLines((l) => [...l, { kind: "in" as const, text: `$ ${trimmed}` }, { kind: "ok" as const, text: "▍" }].slice(-80));
       setValue("");
+
+      let charIdx = 0;
+      let soundCounter = 0;
+      typeTimerRef.current = setInterval(() => {
+        charIdx += Math.min(3, fullAnswer.length - charIdx);
+        const currentSlice = fullAnswer.slice(0, charIdx);
+        soundCounter++;
+        if (soundCounter % 4 === 0) {
+          playKeyThock();
+        }
+
+        if (charIdx >= fullAnswer.length) {
+          if (typeTimerRef.current) {
+            clearInterval(typeTimerRef.current);
+            typeTimerRef.current = null;
+          }
+          setLines((l) => {
+            const next = [...l];
+            next[next.length - 1] = { kind: "ok" as const, text: fullAnswer };
+            return next.slice(-80);
+          });
+        } else {
+          setLines((l) => {
+            const next = [...l];
+            next[next.length - 1] = { kind: "ok" as const, text: currentSlice + "▍" };
+            return next.slice(-80);
+          });
+        }
+      }, 16);
       return;
     }
 
