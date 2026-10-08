@@ -1002,33 +1002,147 @@ a {
   top: 0.35em;
 }
 
-/* ---- SAY HELLO ---- */
-
+/* ---- SAY HELLO 数字明信片投递盒 ---- */
 .tile-contact {
-  justify-content: flex-end;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.8rem;
+  position: relative;
+  overflow: hidden;
 }
 
-.contact-link {
-  font-size: clamp(1rem, 1.5vw, 1.3rem);
-  font-weight: 800;
-  letter-spacing: -0.01em;
+.contact-head-bar {
   display: flex;
   align-items: center;
-  gap: 0.5em;
-  word-break: break-all;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.contact-link .arrow {
-  transition: transform var(--dur) var(--ease);
+.postbox-seal {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--lime);
+  background: var(--ink);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  user-select: none;
 }
 
-.contact-link:hover .arrow {
-  transform: translateX(6px);
+.contact-topic-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
-.contact-link:hover {
-  color: transparent;
-  -webkit-text-stroke: 1.2px var(--ink);
+.topic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--cm-ink-30);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.topic-chip:hover {
+  transform: translateY(-2px);
+  border-color: var(--ink);
+}
+
+.topic-chip.is-active {
+  background: var(--lime);
+  color: #101400;
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.topic-icon {
+  font-size: 0.85em;
+}
+
+.contact-action-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 0.45rem 0.65rem;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.contact-main-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.contact-main-link:hover .email-addr {
+  text-decoration: underline;
+}
+
+.email-addr {
+  font-size: clamp(0.74rem, 1.1vw, 0.92rem);
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-send-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--lime);
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid var(--ink);
+  white-space: nowrap;
+  flex: none;
+  transition: transform 0.15s var(--ease);
+}
+
+.contact-main-link:hover .contact-send-badge {
+  transform: translateX(2px);
+}
+
+.contact-copy-btn {
+  padding: 0.28rem 0.6rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--ink);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), transform 0.15s var(--ease);
+  white-space: nowrap;
+  flex: none;
+}
+
+.contact-copy-btn:hover {
+  transform: translateY(-1px);
+}
+
+.contact-copy-btn.is-copied {
+  background: var(--lime);
+  color: #101400;
 }
 
 /* ---- BENTO: ROOM 入口瓷砖 ---- */

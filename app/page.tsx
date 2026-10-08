@@ -8,6 +8,7 @@ import LondonClock from "@/components/LondonClock";
 import TerminalTile from "@/components/TerminalTile";
 import BookshelfTile from "@/components/BookshelfTile";
 import BenchPressTile from "@/components/BenchPressTile";
+import ContactTile from "@/components/ContactTile";
 import Travel from "@/components/Travel";
 import { T } from "@/components/i18n";
 import { EMAIL, GITHUB_URL, GITHUB_USER } from "@/config/site";
@@ -205,14 +206,8 @@ export default function Home() {
             <span className="tile-more">MORE →</span>
           </Link>
 
-          {/* 联系 */}
-          <article className="tile tile-contact">
-            <h3 className="tile-title">SAY HELLO</h3>
-            <a className="contact-link" href={`mailto:${EMAIL}`}>
-              {EMAIL}
-              <span className="arrow">→</span>
-            </a>
-          </article>
+          {/* 联系：数字明信片投递盒 */}
+          <ContactTile />
 
           {/* 精神食粮书架 */}
           <BookshelfTile />
