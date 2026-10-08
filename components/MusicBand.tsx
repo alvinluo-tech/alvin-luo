@@ -19,6 +19,7 @@ import {
   type Playlist,
   type Song,
 } from "@/lib/music";
+import { playVinylNeedle } from "@/lib/sfx";
 import { T } from "./i18n";
 
 export default function MusicBand() {
@@ -59,16 +60,31 @@ export default function MusicBand() {
       </h3>
 
       <div className="band-top">
-        {/* ---- NOW PLAYING ---- */}
+        {/* ---- NOW PLAYING 拟真黑胶转盘与物理唱臂 ---- */}
         <div className={np.playing ? "band-np is-playing" : "band-np"}>
-          {np.playing && np.cover ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img className="np-cover" src={np.cover} alt={`${np.name} 专辑封面`} />
-          ) : (
-            <span className="np-cover np-cover-empty" aria-hidden="true">
-              ♪
-            </span>
-          )}
+          <div
+            className="vinyl-deck"
+            onClick={() => playVinylNeedle()}
+            title={np.playing ? "黑胶正在播放 · 点击挑针音效" : "唱机待机 · 点击挑针音效"}
+          >
+            <div className={np.playing ? "np-vinyl-disc is-spinning" : "np-vinyl-disc"}>
+              {np.playing && np.cover ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img className="np-cover" src={np.cover} alt={`${np.name} 专辑封面`} />
+              ) : (
+                <span className="np-cover np-cover-empty" aria-hidden="true">
+                  ♪
+                </span>
+              )}
+            </div>
+
+            {/* 实体金属唱臂 (Tonearm)：播放时搭上黑胶，停止时停泊靠右 */}
+            <div className={`vinyl-tonearm ${np.playing ? "is-playing" : "is-parked"}`} aria-hidden="true">
+              <span className="tonearm-pivot" />
+              <span className="tonearm-arm" />
+              <span className="tonearm-head" />
+            </div>
+          </div>
           <div className="np-meta">
             {np.playing ? (
               <>

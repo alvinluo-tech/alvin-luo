@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
+import PassportStamp from "./PassportStamp";
 
 /* d3 + 105KB topojson 只有地图用得到：动态加载，滚出 travel 主包 */
 const WorldMap = dynamic(() => import("./WorldMap"), {
@@ -205,29 +206,7 @@ export default function TravelArchive() {
               >
                 <div className="postcard-photo">
                   {failed[t.img] || !hasTripPhoto(t) ? (
-                    <div className="photo-placeholder">
-                      <span className="plane" aria-hidden="true">
-                        ✈
-                      </span>
-                      <p>
-                        <T
-                          en={
-                            <>
-                              Drop your photo at
-                              <br />
-                              public/travel/{t.img}.webp
-                            </>
-                          }
-                          zh={
-                            <>
-                              把照片放进
-                              <br />
-                              public/travel/{t.img}.webp
-                            </>
-                          }
-                        />
-                      </p>
-                    </div>
+                    <PassportStamp trip={t} />
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img

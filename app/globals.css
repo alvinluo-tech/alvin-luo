@@ -4273,23 +4273,126 @@ a {
   pointer-events: none;
 }
 
-.np-cover::before {
-  /* 主轴孔 */
+/* ---- 黑胶唱盘与物理唱臂 (Turntable Deck & Tonearm) ---- */
+.vinyl-deck {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  user-select: none;
+  cursor: pointer;
+}
+
+.np-vinyl-disc {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+.np-vinyl-disc.is-spinning {
+  animation: vinyl 3.6s linear infinite;
+}
+
+.np-cover {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.np-cover-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: var(--grey);
+  background: var(--panel);
+}
+
+/* 黑胶中心主轴孔 */
+.np-vinyl-disc::before {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--paper);
   transform: translate(-50%, -50%);
-  z-index: 2;
-  outline: 1px solid var(--cm-ink-40);
+  z-index: 3;
+  outline: 1.5px solid var(--ink);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
-.band-np.is-playing .np-cover {
-  animation: vinyl 3.2s linear infinite;
+/* 拟物物理唱臂 (Tonearm) */
+.vinyl-tonearm {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  width: 24px;
+  height: 72px;
+  z-index: 5;
+  pointer-events: none;
+  transform-origin: 17px 7px;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.vinyl-tonearm.is-parked {
+  transform: rotate(-12deg);
+}
+
+.vinyl-tonearm.is-playing {
+  transform: rotate(18deg);
+  animation: needle-hum 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes needle-hum {
+  0% { transform: rotate(17.6deg); }
+  100% { transform: rotate(18.4deg); }
+}
+
+.tonearm-pivot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e4e4e7 0%, #71717a 100%);
+  border: 1.5px solid #18181b;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.tonearm-arm {
+  position: absolute;
+  top: 11px;
+  right: 6px;
+  width: 2.5px;
+  height: 48px;
+  background: linear-gradient(90deg, #d4d4d8 0%, #71717a 100%);
+  border-radius: 1px;
+  box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tonearm-head {
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  width: 7px;
+  height: 15px;
+  border-radius: 2px;
+  background: #18181b;
+  border: 1px solid var(--lime);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes vinyl {
@@ -4299,8 +4402,12 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .band-np.is-playing .np-cover {
+  .np-vinyl-disc.is-spinning {
     animation: none;
+  }
+  .vinyl-tonearm.is-playing {
+    animation: none;
+    transform: rotate(18deg);
   }
 }
 
@@ -6088,4 +6195,201 @@ a {
   .now-live-dot {
     animation: none;
   }
+}
+
+/* ================= 11国复古海关出入境印章系统 (Passport Visa Stamp) ================= */
+/* 解决 37 站照片空档：将无照片卡片物化为逼真收藏级签证纸与海关查验印泥章 */
+
+.passport-visa-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  background: #faf8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+}
+
+[data-theme="dark"] .passport-visa-page {
+  background: #141712;
+}
+
+/* 护照防伪安全网底纹 (Guilloche Watermark) */
+.passport-security-pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(16, 20, 0, 0.035) 0, rgba(16, 20, 0, 0.035) 1px, transparent 1px, transparent 7px),
+    repeating-linear-gradient(-45deg, rgba(16, 20, 0, 0.035) 0, rgba(16, 20, 0, 0.035) 1px, transparent 1px, transparent 7px);
+  pointer-events: none;
+}
+
+[data-theme="dark"] .passport-security-pattern {
+  background-image:
+    repeating-linear-gradient(45deg, rgba(240, 240, 230, 0.04) 0, rgba(240, 240, 230, 0.04) 1px, transparent 1px, transparent 7px),
+    repeating-linear-gradient(-45deg, rgba(240, 240, 230, 0.04) 0, rgba(240, 240, 230, 0.04) 1px, transparent 1px, transparent 7px);
+}
+
+/* 实体印章容器 */
+.passport-stamp {
+  position: relative;
+  z-index: 2;
+  padding: 0.45rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.25s var(--ease), filter 0.25s var(--ease);
+}
+
+.postcard:hover .passport-stamp {
+  transform: rotate(0deg) scale(1.06);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
+}
+
+.stamp-inner-border {
+  border: 1px dashed currentColor;
+  border-radius: inherit;
+  padding: 0.35rem 0.55rem;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+/* 4 种官方印章形制 */
+.passport-stamp.rect {
+  border: 2px solid currentColor;
+  border-radius: 8px;
+}
+
+.passport-stamp.circle {
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  width: 124px;
+  height: 124px;
+}
+
+.passport-stamp.oval {
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+}
+
+.passport-stamp.octagon {
+  border: 2px solid currentColor;
+  border-radius: 14px;
+  padding: 0.5rem 0.75rem;
+}
+
+/* 4 种复古印泥色泽 (墨印仿真) */
+.stamp-red {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+[data-theme="dark"] .stamp-red {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.stamp-blue {
+  color: #2563eb;
+  border-color: #2563eb;
+}
+[data-theme="dark"] .stamp-blue {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.stamp-green {
+  color: #0d9488;
+  border-color: #0d9488;
+}
+[data-theme="dark"] .stamp-green {
+  color: #14b8a6;
+  border-color: #14b8a6;
+}
+
+.stamp-purple {
+  color: #7c3aed;
+  border-color: #7c3aed;
+}
+[data-theme="dark"] .stamp-purple {
+  color: #8b5cf6;
+  border-color: #8b5cf6;
+}
+
+/* 印章文字排版细节 */
+.stamp-header {
+  line-height: 1;
+}
+
+.stamp-authority {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.stamp-center {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.1;
+  margin: 0.15rem 0;
+}
+
+.stamp-plane {
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.stamp-city {
+  font-size: 0.88rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.stamp-type {
+  font-size: 0.5rem;
+  font-weight: 800;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 0 0.22rem;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+}
+
+.stamp-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.passport-page-num {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52rem;
+  font-weight: 700;
+  color: var(--grey);
+  opacity: 0.65;
+  letter-spacing: 0.12em;
+  z-index: 1;
 }

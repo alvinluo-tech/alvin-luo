@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
+import PassportStamp from "./PassportStamp";
 
 /* GitHub Pages 子路径部署：构建时内联 */
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -236,29 +237,7 @@ export default function Travel() {
               >
                 <div className="postcard-photo">
                   {failed[item.trip.img] || !hasTripPhoto(item.trip) ? (
-                    <div className="photo-placeholder">
-                      <span className="plane" aria-hidden="true">
-                        ✈
-                      </span>
-                      <p>
-                        <T
-                          en={
-                            <>
-                              Drop your photo at
-                              <br />
-                              public/travel/{item.trip.img}.webp
-                            </>
-                          }
-                          zh={
-                            <>
-                              把照片放进
-                              <br />
-                              public/travel/{item.trip.img}.webp
-                            </>
-                          }
-                        />
-                      </p>
-                    </div>
+                    <PassportStamp trip={item.trip} />
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
