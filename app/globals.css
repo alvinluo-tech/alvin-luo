@@ -4423,12 +4423,12 @@ a {
   z-index: 4;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 0.7rem;
+  padding: 1.25rem 1.4rem;
+  gap: 0.65rem;
   /* 透视底片在亮暗主题下均应保持深色光学负片底色（rgba(10,14,6,0.92)），
      不能用会随主题反转为浅白色的 --cm-ink-88，否则暗色主题下荧光绿字对浅底对比度仅 1.3:1 */
-  background: rgba(10, 14, 6, 0.92);
+  background: rgba(10, 14, 6, 0.94);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.45s var(--ease);
@@ -4438,33 +4438,83 @@ a {
   opacity: 1;
 }
 
+.xray-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px dashed rgba(210, 255, 0, 0.35);
+}
+
 .xray-label {
   font-size: 0.6rem;
   font-weight: 800;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.25em;
   color: var(--lime);
 }
 
-.xray-node {
+.xray-meta {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: rgba(248, 248, 243, 0.6);
+}
+
+.xray-deck {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.35rem;
+}
+
+.xray-tier {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: 7px;
+  border: 1px solid rgba(210, 255, 0, 0.22);
+  background: rgba(210, 255, 0, 0.05);
+  transition: transform 0.18s var(--ease), background 0.18s var(--ease), border-color 0.18s var(--ease);
+}
+
+.xray-tier:hover {
+  transform: translateX(4px);
+  background: rgba(210, 255, 0, 0.14);
+  border-color: var(--lime);
+}
+
+.xray-tier-top {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
 }
 
-.xray-arrow {
-  color: var(--lime);
+.xray-tier-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.52rem;
   font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--lime);
+  flex: none;
 }
 
 .xray-chip {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  /* 芯片文字在深色负片背景上固定为纸白高对比（对比度 >15:1），避免在暗色模式下随 --paper 反转为深墨色 */
   color: #f8f8f3;
-  border: 1px solid var(--cm-lime-60);
-  border-radius: 8px;
-  padding: 0.25em 0.8em;
-  background: var(--cm-lime-10);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.xray-tier-desc {
+  font-size: 0.6rem;
+  color: rgba(248, 248, 243, 0.72);
+  line-height: 1.35;
+  letter-spacing: 0.02em;
 }
 
 .xray-btn {

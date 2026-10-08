@@ -1039,3 +1039,39 @@
   /* 只用 translate，不用 transform-box 相关属性，避免影响布局盒 */
   will-change: transform;
 }
+
+/* ---- 实时天气：窗玻璃雨滴滑落 (Durham Live Rain) ---- */
+.room-raindrop {
+  stroke: rgba(186, 230, 253, 0.7);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  animation: room-rain-fall linear infinite;
+}
+
+[data-theme="dark"] .room-raindrop {
+  stroke: rgba(125, 211, 252, 0.65);
+}
+
+@keyframes room-rain-fall {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(210px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-raindrop {
+    animation: none;
+    opacity: 0.5;
+  }
+}

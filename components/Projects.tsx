@@ -73,13 +73,28 @@ export default function Projects() {
 
                   {/* 架构 X-Ray 层：与 Hero 的透视哲学呼应——表面是产品，底层是架构 */}
                   <span className={isXray ? "cover-xray is-open" : "cover-xray"} aria-hidden="true">
-                    <span className="xray-label">ARCHITECTURE</span>
-                    {p.arch?.map((node, k) => (
-                      <span className="xray-node" key={node}>
-                        {k > 0 && <span className="xray-arrow">→</span>}
-                        <span className="xray-chip">{node}</span>
-                      </span>
-                    ))}
+                    <span className="xray-header-bar">
+                      <span className="xray-label">SYSTEM ARCHITECTURE</span>
+                      <span className="xray-meta">EXPLODED DECK</span>
+                    </span>
+                    <span className="xray-deck">
+                      {p.arch?.map((item, k) => {
+                        const isTierObj = typeof item !== "string" && item && "tier" in item;
+                        const tierLabel = isTierObj ? item.tier : `TIER 0${k + 1}`;
+                        const tierName = isTierObj ? item.name : item;
+                        const tierDesc = isTierObj ? item.desc : null;
+                        return (
+                          <span className="xray-tier" key={tierName}>
+                            <span className="xray-tier-top">
+                              <span className="xray-tier-tag">{tierLabel}</span>
+                              <span className="xray-chip">{tierName}</span>
+                            </span>
+                            {tierDesc && <span className="xray-tier-desc">{tierDesc}</span>}
+                            {k < (p.arch?.length ?? 0) - 1 && <span className="xray-tier-connector" />}
+                          </span>
+                        );
+                      })}
+                    </span>
                   </span>
                 </a>
                 {p.arch && p.arch.length > 0 && (

@@ -21,6 +21,7 @@ import { T, pick, useLocale } from "./i18n";
 import { useMusic, type NowPlaying } from "@/lib/music";
 import { playClick, playVinylNeedle } from "@/lib/sfx";
 import { pt, poly, boxIso, boxIsoRaised, type P } from "@/lib/iso";
+import { fetchDurhamWeather, type DurhamWeather } from "@/lib/weather";
 import "./RoomScene.css";
 
 /* 房间骨架 */
@@ -57,6 +58,18 @@ export default function RoomScene() {
   useEffect(() => {
     const m = new Date().getMonth() + 1;
     setSeason({ winter: m === 12 || m <= 2, birthday: m === 11 });
+  }, []);
+
+  /* 杜伦实时气象系统（Open-Meteo 免费气象接口，零 Key 依赖，15分钟缓存） */
+  const [weather, setWeather] = useState<DurhamWeather | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetchDurhamWeather().then((w) => {
+      if (alive && w) setWeather(w);
+    });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -315,9 +328,37 @@ export default function RoomScene() {
                         );
                       })}
                     </g>
-                    {/* 冬季（12–2 月）：窗外飘雪 —— 房间不只跟时间走，也跟季节走。
+                    {/* 杜伦实时下雨（51–67, 80–82）：窗玻璃雨滴滑落效果 */}
+                    {weather?.isRain && (
+                      <g className="room-win-rain" aria-hidden="true">
+                        {[
+                          [0.1, 1.4, 0.2, 14],
+                          [0.22, 1.8, 0.6, 20],
+                          [0.35, 1.5, 0.1, 16],
+                          [0.48, 1.9, 0.8, 22],
+                          [0.6, 1.3, 0.4, 15],
+                          [0.72, 1.7, 0.9, 18],
+                          [0.85, 1.6, 0.3, 21],
+                          [0.15, 2.1, 1.1, 17],
+                          [0.4, 2.0, 1.3, 19],
+                          [0.68, 1.5, 0.5, 16],
+                        ].map(([fx, dur, delay, len], i) => (
+                          <line
+                            key={`rain-${i}`}
+                            className="room-raindrop"
+                            x1={w1[0] + fx * (w0[0] - w1[0])}
+                            y1={w1[1] - 10}
+                            x2={w1[0] + fx * (w0[0] - w1[0]) - 3}
+                            y2={w1[1] - 10 + len}
+                            style={{ animationDuration: `${dur}s`, animationDelay: `${delay}s` } as React.CSSProperties}
+                          />
+                        ))}
+                      </g>
+                    )}
+
+                    {/* 冬季（12–2 月）或实时飘雪：窗外飘雪 —— 房间不仅随时间走，也随物理世界气象联动。
                         雪片被外层 roomWindowClip 裁剪，不会飘出窗框 */}
-                    {season?.winter && (
+                    {(season?.winter || weather?.isSnow) && (
                       <g className="room-win-snow" aria-hidden="true">
                         {[
                           [0.06, 7.5, 0, 1.6], [0.18, 9.2, 1.4, 2.2], [0.31, 8.1, 0.6, 1.4],
@@ -354,7 +395,15 @@ export default function RoomScene() {
                   />
                   <polygon className="room-hit" points={poly(w0, w1, w2, w3)} />
                   <g className="room-tag" transform={`translate(${(w0[0] + w3[0]) / 2 - 14}, ${w3[1] + 16})`}>
-                    <text>{pick(locale, `now: ${SKY_NAME[sky].en} (click)`, `现在：${SKY_NAME[sky].zh}（点我）`)}</text>
+                    <text>
+                      {weather
+                        ? pick(
+                            locale,
+                            `Durham: ${weather.temp}°C · ${weather.descEn} (click)`,
+                            `杜伦实时：${weather.temp}°C · ${weather.descZh}（点我切换）`,
+                          )
+                        : pick(locale, `now: ${SKY_NAME[sky].en} (click)`, `现在：${SKY_NAME[sky].zh}（点我）`)}
+                    </text>
                   </g>
                 </g>
               );

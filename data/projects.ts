@@ -5,6 +5,12 @@
  * title/desc 默认英文（站点默认语言），titleZh/descZh 为中文翻译
  * ============================================================ */
 
+export type ArchTier = {
+  tier: string;
+  name: string;
+  desc?: string;
+};
+
 export type Project = {
   id: string;
   title: string;
@@ -18,8 +24,8 @@ export type Project = {
   art: "dots" | "lines" | "grid" | "waves";
   /** 真实产品截图（public/ 下路径，如 "/projects/xxx.webp"）；缺省则用花纹封面 */
   image?: string;
-  /** 架构 X-Ray：底层技术栈链路（UI → 逻辑 → 存储 → 平台） */
-  arch?: string[];
+  /** 架构 X-Ray：底层技术栈链路（支持字符串或分层走查结构） */
+  arch?: (string | ArchTier)[];
 };
 
 export const PROJECTS: Project[] = [
@@ -35,7 +41,12 @@ export const PROJECTS: Project[] = [
     repo: "https://github.com/alvinluo-tech/intimacy-tracker",
     art: "waves",
     image: "/projects/encounter.webp",
-    arch: ["Next.js 16 UI", "Server Actions", "Supabase Postgres + RLS", "AES-256-GCM"],
+    arch: [
+      { tier: "01 · UI", name: "Next.js 16 PWA", desc: "移动优先 · 离线缓存" },
+      { tier: "02 · COMPUTE", name: "Server Actions", desc: "零 API 样板 · 服务端校验" },
+      { tier: "03 · DATA", name: "Supabase + RLS", desc: "行级安全 · 跨租户绝对隔离" },
+      { tier: "04 · CRYPTO", name: "AES-256-GCM E2EE", desc: "本地密钥 · 服务端零知识" },
+    ],
   },
   {
     id: "taskflow",
@@ -63,6 +74,11 @@ export const PROJECTS: Project[] = [
     repo: "https://github.com/alvinluo-tech/CoreLayer",
     art: "lines",
     image: "/projects/corelayer.webp",
-    arch: ["Tauri 2 (Rust)", "React 19 + Vite", "Node Daemon (Hono)", "SQLite + Drizzle"],
+    arch: [
+      { tier: "01 · CLIENT", name: "Tauri 2 (Rust) + React 19", desc: "桌面宿主 · 本地极低内存占用" },
+      { tier: "02 · PROTOCOL", name: "MCP-first 工具体系", desc: "stdio / HTTP / SSE 多协议统一路由" },
+      { tier: "03 · GATEWAY", name: "Node.js (Hono) 网关", desc: "多供应商模型路由 (DeepSeek / MiMo)" },
+      { tier: "04 · STORAGE", name: "SQLite (Drizzle) + Supabase", desc: "本地优先 · 云端增量同步" },
+    ],
   },
 ];
