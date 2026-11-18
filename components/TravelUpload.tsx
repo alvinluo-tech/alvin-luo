@@ -14,6 +14,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TRIPS } from "@/data/trips";
 import { distanceKm, formatTakenAt, isHeic, readPhotoMeta, suggestTrip, toOptimizedImage } from "@/lib/client-photo";
+import {
+  clearDraft,
+  loadDraft,
+  putDraftFile,
+  removeDraftFile,
+  saveDraftMeta,
+  type DraftMeta,
+} from "@/lib/upload-draft";
 import "./TravelUpload.css";
 
 const API = (process.env.NEXT_PUBLIC_UPLOAD_API || "https://upload.alvin-luo.me").replace(/\/+$/, "");
@@ -100,6 +108,24 @@ function statusText(s: Status): string {
   return { processing: "处理中", ready: "待上传", uploading: "上传中", done: "已上传", error: "失败" }[s];
 }
 
+/** 只把可重建状态写进 IndexedDB；Blob 单独按 id 存，避免每次改行程都重写大文件 */
+function toDraftMeta(items: Item[]): DraftMeta[] {
+  return items
+    .filter((i) => i.status !== "processing")
+    .map((i, order) => ({
+      id: i.id,
+      order,
+      trip: i.trip,
+      status: i.status as DraftMeta["status"],
+      url: i.url,
+      error: i.error,
+      cover: i.cover,
+      candidate: i.candidate,
+      nearest: i.nearest,
+      distanceKm: i.distanceKm,
+    }));
+}
+
 export default function TravelUpload() {
   const [token, setToken] = useState("");
   const [tokenDraft, setTokenDraft] = useState("");
@@ -120,6 +146,8 @@ export default function TravelUpload() {
     error: "",
   });
   const fileRef = useRef<HTMLInputElement>(null);
+  const restoredRef = useRef(false);
+  const itemsRef = useRef<Item[]>([]);
 
   useEffect(() => {
     setToken(localStorage.getItem(TOKEN_KEY) || "");
@@ -160,6 +188,104 @@ export default function TravelUpload() {
         /* 离线时忽略 */
       });
   }, []);
+
+  /* 刷新 / 误关页面后恢复草稿：文件在 IndexedDB，状态在 meta */
+  useEffect(() => {
+    let alive = true;
+    loadDraft()
+      .then(({ files, meta }) => {
+        if (!alive) return;
+        if (!files.length) {
+          restoredRef.current = true;
+          return;
+        }
+        const metaById = new Map(meta.map((m) => [m.id, m]));
+        const restored: Item[] = files
+          .flatMap((f) => {
+            const m = metaById.get(f.id);
+            if (!m) return [];
+            const status: Status = m.status === "uploading" ? "ready" : m.status;
+            return [
+              {
+                id: f.id,
+                name: f.name,
+                size: f.size,
+                blob: f.blob,
+                preview: URL.createObjectURL(f.blob),
+                gps: f.gps,
+                trip: m.trip,
+                candidate: m.candidate,
+                nearest: m.nearest,
+                distanceKm: m.distanceKm,
+                takenAt: f.takenAt,
+                width: f.width,
+                height: f.height,
+                status,
+                url: m.url,
+                error: m.error,
+                cover: m.cover,
+              },
+            ];
+          })
+          .sort((a, b) => (metaById.get(a.id)?.order ?? 0) - (metaById.get(b.id)?.order ?? 0));
+
+        if (restored.length) {
+          setItems(restored);
+          const interrupted = meta.filter((m) => m.status === "uploading").length;
+          setNotice(
+            interrupted
+              ? `已恢复 ${interrupted} 张上次中断的上传，状态改回待上传，请确认后重试`
+              : `已恢复 ${restored.length} 张未完成的草稿`
+          );
+        }
+        restoredRef.current = true;
+      })
+      .catch(() => {
+        restoredRef.current = true;
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  /* 元数据变动后轻量落盘（Blob 不在这里重写） */
+  useEffect(() => {
+    itemsRef.current = items;
+    if (!restoredRef.current) return;
+    const timer = setTimeout(() => {
+      void saveDraftMeta(toDraftMeta(items)).catch(() => {});
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [items]);
+
+  /* 手机切后台 / 页面卸载时立刻补一次 */
+  useEffect(() => {
+    const flush = () => {
+      if (!restoredRef.current) return;
+      void saveDraftMeta(toDraftMeta(itemsRef.current)).catch(() => {});
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  /* 还有没传完的照片时，桌面端刷新/关闭给一次确认 */
+  useEffect(() => {
+    const pending = items.some((i) => i.status === "ready" || i.status === "uploading");
+    if (!pending) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [items]);
 
   const allTrips = useMemo(() => [...MANUAL_TRIPS, ...extraTrips], [extraTrips]);
   const groups = useMemo(() => groupTrips(allTrips), [allTrips]);
@@ -244,6 +370,18 @@ export default function TravelUpload() {
       try {
         const conv = await toOptimizedImage(file);
         const preview = URL.createObjectURL(conv.blob);
+        void putDraftFile({
+          id,
+          name: file.name,
+          size: file.size,
+          blob: conv.blob,
+          width: conv.width,
+          height: conv.height,
+          takenAt: meta.takenAt,
+          gps: meta.gps,
+        }).catch(() => {
+          /* 存储空间不足时仍可继续上传 */
+        });
         setItems((prev) =>
           prev.map((it) =>
             it.id === id
@@ -269,11 +407,22 @@ export default function TravelUpload() {
   }
 
   function remove(id: string) {
+    void removeDraftFile(id).catch(() => {});
     setItems((prev) => {
       const target = prev.find((it) => it.id === id);
       if (target?.preview) URL.revokeObjectURL(target.preview);
       return prev.filter((it) => it.id !== id);
     });
+  }
+
+  function clearList() {
+    if (!window.confirm("清空当前列表？已上传的照片不会被删除。")) return;
+    for (const it of items) {
+      if (it.preview) URL.revokeObjectURL(it.preview);
+    }
+    setItems([]);
+    void clearDraft().catch(() => {});
+    setNotice("列表已清空，草稿已移除");
   }
 
   function setCover(id: string) {
@@ -705,16 +854,26 @@ export default function TravelUpload() {
         </section>
       ) : null}
 
-      <button
-        type="button"
-        className="upload-token-reset"
-        onClick={() => {
-          localStorage.removeItem(TOKEN_KEY);
-          setToken("");
-        }}
-      >
-        清除本机 token
-      </button>
+      <div className="upload-foot-actions">
+        <button
+          type="button"
+          className="upload-token-reset"
+          onClick={() => {
+            localStorage.removeItem(TOKEN_KEY);
+            setToken("");
+          }}
+        >
+          清除本机 token
+        </button>
+        <button
+          type="button"
+          className="upload-token-reset"
+          onClick={clearList}
+          disabled={!items.length}
+        >
+          清空列表
+        </button>
+      </div>
 
       {dialog.open ? (
         <div className="upload-modal" role="dialog" aria-modal="true" aria-label="新建行程">

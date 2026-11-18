@@ -360,6 +360,22 @@
   cursor: pointer;
 }
 
+.upload-foot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin-top: 2rem;
+}
+
+.upload-foot-actions .upload-token-reset {
+  margin-top: 0;
+}
+
+.upload-token-reset:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ---------- token 门 ---------- */
 
 .upload-gate {
