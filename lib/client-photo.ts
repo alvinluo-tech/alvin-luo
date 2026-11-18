@@ -31,6 +31,8 @@ export const MAX_EDGE = 2000;
 export const WEBP_QUALITY = 0.82;
 /** 超过这个体积就改 JPEG：Safari 的 WebP 编码器可能忽略质量参数，输出接近无损 */
 export const MAX_UPLOAD_BYTES = 1_300_000;
+/** 已经足够小的 JPEG/WebP 直接原样上传，避免二次压缩反而变大 */
+export const PASSTHROUGH_MAX = 1_000_000;
 
 const EXIF_PICK = [
   "DateTimeOriginal",
@@ -157,6 +159,13 @@ export async function toOptimizedImage(file: File): Promise<ConvertedPhoto> {
   const sh = "height" in source ? source.height : 0;
   if (!sw || !sh) throw new Error("图片尺寸读取失败");
 
+  // 已经是浏览器原生格式、体积也够小：原样上传，避免「压缩后反而更大」
+  const webSafe = file.type === "image/jpeg" || file.type === "image/webp";
+  if (webSafe && file.size <= PASSTHROUGH_MAX) {
+    if ("close" in source && typeof source.close === "function") source.close();
+    return { blob: file, width: sw, height: sh };
+  }
+
   const scale = Math.min(1, MAX_EDGE / Math.max(sw, sh));
   const width = Math.max(1, Math.round(sw * scale));
   const height = Math.max(1, Math.round(sh * scale));
@@ -177,7 +186,11 @@ export async function toOptimizedImage(file: File): Promise<ConvertedPhoto> {
 
   let blob = webp;
   if (webp.size > MAX_UPLOAD_BYTES) {
-    const jpeg = await encode("image/jpeg", 0.86);
+    let jpeg = await encode("image/jpeg", 0.82);
+    if (jpeg && jpeg.size > 2_000_000) {
+      const smaller = await encode("image/jpeg", 0.72);
+      if (smaller && smaller.size < jpeg.size) jpeg = smaller;
+    }
     if (jpeg && jpeg.size < webp.size) blob = jpeg;
   }
   return { blob, width, height };

@@ -562,7 +562,8 @@ export default function TravelUpload() {
                   <b title={item.name}>{item.name}</b>
                   <span>
                     {formatTakenAt(item.takenAt)}
-                    {item.width ? ` · ${item.width}×${item.height}` : ""} · {mb(item.size)}
+                    {item.width ? ` · ${item.width}×${item.height}` : ""} · 原始 {mb(item.size)}
+                    {item.blob ? ` → 上传 ${mb(item.blob.size)}` : ""}
                   </span>
 
                   {unmatched ? (
