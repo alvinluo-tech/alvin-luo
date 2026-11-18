@@ -13,7 +13,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TRIPS } from "@/data/trips";
-import { distanceKm, formatTakenAt, isHeic, readPhotoMeta, suggestTrip, toWebp } from "@/lib/client-photo";
+import { distanceKm, formatTakenAt, isHeic, readPhotoMeta, suggestTrip, toOptimizedImage } from "@/lib/client-photo";
 import "./TravelUpload.css";
 
 const API = (process.env.NEXT_PUBLIC_UPLOAD_API || "https://upload.alvin-luo.me").replace(/\/+$/, "");
@@ -242,7 +242,7 @@ export default function TravelUpload() {
       ]);
 
       try {
-        const conv = await toWebp(file);
+        const conv = await toOptimizedImage(file);
         const preview = URL.createObjectURL(conv.blob);
         setItems((prev) =>
           prev.map((it) =>
@@ -352,7 +352,8 @@ export default function TravelUpload() {
     if (!item.blob) throw new Error("文件还没准备好");
     if (!item.trip) throw new Error("还没选行程");
     const fd = new FormData();
-    fd.append("file", new File([item.blob], `${item.trip}.webp`, { type: "image/webp" }));
+    const ext = item.blob.type === "image/jpeg" ? "jpg" : item.blob.type === "image/png" ? "png" : "webp";
+    fd.append("file", new File([item.blob], `${item.trip}.${ext}`, { type: item.blob.type || "image/webp" }));
     fd.append("trip", item.trip);
     fd.append("takenAt", item.takenAt);
     fd.append("w", String(item.width));

@@ -29,6 +29,8 @@ export type TripSuggestion = {
 
 export const MAX_EDGE = 2000;
 export const WEBP_QUALITY = 0.82;
+/** 超过这个体积就改 JPEG：Safari 的 WebP 编码器可能忽略质量参数，输出接近无损 */
+export const MAX_UPLOAD_BYTES = 1_300_000;
 
 const EXIF_PICK = [
   "DateTimeOriginal",
@@ -148,8 +150,8 @@ async function decode(file: File): Promise<ImageBitmap | HTMLImageElement> {
   throw new Error("这个格式浏览器解不了，请换一张或把 iPhone 相机格式设为「兼容性最佳」");
 }
 
-/** 解码 → 等比缩到长边 2000 → WebP。方向在解码时已经落进像素。 */
-export async function toWebp(file: File): Promise<ConvertedPhoto> {
+/** 解码 → 等比缩到长边 2000 → WebP；Safari 的 WebP 编码可能忽略质量、体积过大，超阈值就改 JPEG */
+export async function toOptimizedImage(file: File): Promise<ConvertedPhoto> {
   const source = await decode(file);
   const sw = "width" in source ? source.width : 0;
   const sh = "height" in source ? source.height : 0;
@@ -167,10 +169,17 @@ export async function toWebp(file: File): Promise<ConvertedPhoto> {
   ctx.drawImage(source as CanvasImageSource, 0, 0, width, height);
   if ("close" in source && typeof source.close === "function") source.close();
 
-  const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, "image/webp", WEBP_QUALITY)
-  );
-  if (!blob) throw new Error("WebP 编码失败");
+  const encode = (type: string, quality: number) =>
+    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
+
+  const webp = await encode("image/webp", WEBP_QUALITY);
+  if (!webp) throw new Error("图片编码失败");
+
+  let blob = webp;
+  if (webp.size > MAX_UPLOAD_BYTES) {
+    const jpeg = await encode("image/jpeg", 0.86);
+    if (jpeg && jpeg.size < webp.size) blob = jpeg;
+  }
   return { blob, width, height };
 }
 

@@ -96,12 +96,15 @@ function randomSuffix(): string {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function keyFor(trip: string, takenAt: string): string {
+function keyFor(trip: string, takenAt: string, ext = "webp"): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(takenAt);
   const d = Number.isFinite(Date.parse(takenAt)) ? new Date(takenAt) : new Date();
-  const date = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(
-    d.getUTCDate()
-  ).padStart(2, "0")}`;
-  return `${PHOTO_PREFIX}${trip}-${date}-${randomSuffix()}.webp`;
+  const date = m
+    ? `${m[1]}${m[2]}${m[3]}`
+    : `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(
+        d.getUTCDate()
+      ).padStart(2, "0")}`;
+  return `${PHOTO_PREFIX}${trip}-${date}-${randomSuffix()}.${ext}`;
 }
 
 function metaKeyFor(key: string): string {
@@ -157,7 +160,11 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
       ? takenAtRaw
       : new Date().toISOString();
 
-  const key = keyFor(trip, takenAt);
+  const key = keyFor(
+    trip,
+    takenAt,
+    file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : "webp"
+  );
   await env.PHOTOS.put(key, file.stream(), {
     httpMetadata: { contentType: file.type, cacheControl: CACHE_IMMUTABLE },
   });
