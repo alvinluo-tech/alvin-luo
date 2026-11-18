@@ -52,7 +52,8 @@ jobs:
       # 变量没配且生成文件不存在时，写空表兜底。
       - name: Sync trip photos
         env:
-          PHOTO_MANIFEST_URL: ${{ vars.PHOTO_MANIFEST_URL }}
+          # 默认就用线上 Worker；想换地址再在仓库变量里覆盖
+          PHOTO_MANIFEST_URL: ${{ vars.PHOTO_MANIFEST_URL || 'https://upload.alvin-luo.me/manifest' }}
         run: |
           if [ -n "$PHOTO_MANIFEST_URL" ]; then
             node scripts/gen-trip-photos.mjs --remote "$PHOTO_MANIFEST_URL"
