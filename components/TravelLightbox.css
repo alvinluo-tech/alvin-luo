@@ -11,6 +11,7 @@
   padding-bottom: max(0.6rem, env(safe-area-inset-bottom));
   background: rgba(8, 10, 4, 0.78);
   backdrop-filter: blur(10px);
+  overscroll-behavior: contain;
   animation: tl-fade 0.25s var(--ease);
 }
 

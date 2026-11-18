@@ -334,6 +334,7 @@ export default function TravelLightbox({ photos, startIndex, title, subtitle, on
   return (
     <div
       className="tl-backdrop"
+      data-lenis-prevent
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
