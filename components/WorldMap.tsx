@@ -18,7 +18,7 @@ import { feature } from "topojson-client";
 import type { Topology, Objects } from "topojson-specification";
 import type { FeatureCollection, Geometry } from "geojson";
 import worldTopology from "@/data/countries-110m.json";
-import { TRIPS, dateLabel, hasTripPhoto } from "@/data/trips";
+import { TRIPS, dateLabel, hasTripPhoto, tripPhotoSrc, tripPhotos } from "@/data/trips";
 import { useLocale } from "./i18n";
 
 /* GitHub Pages 子路径部署：构建时内联 */
@@ -441,6 +441,7 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
             const screenY = ((city.y * currentTransform.k + currentTransform.y) / 480) * 100;
             const isHovered = activeStack === city.img;
             const emojis = CITY_EMOJIS[city.img] ?? ["📷", "✨", "🧭"];
+            const photoCount = tripPhotos(city).length;
 
             return (
               <div
@@ -485,7 +486,7 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           loading="lazy"
-                          src={`${BASE_PATH}/travel/${city.img}.webp`}
+                          src={tripPhotoSrc(city, BASE_PATH) ?? ""}
                           alt={city.place}
                           className="card-photo"
                           onError={(e) => {
@@ -506,7 +507,9 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                     {/* 拍立得底部白色手写标题栏 */}
                     <div className="card-caption">
                       <span className="card-city-name">{city.place.split(" ")[0]}</span>
-                      <span className="card-count-badge">3</span>
+                      {photoCount > 0 ? (
+                        <span className="card-count-badge">{photoCount}</span>
+                      ) : null}
                     </div>
                   </div>
 

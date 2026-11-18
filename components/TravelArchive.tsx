@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto } from "@/data/trips";
+import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto, tripPhotoSrc, tripPhotos } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
 import PassportStamp from "./PassportStamp";
 
@@ -211,13 +211,23 @@ export default function TravelArchive() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       loading="lazy"
-                      src={`${BASE_PATH}/travel/${t.img}.webp`}
+                      src={tripPhotoSrc(t, BASE_PATH) ?? ""}
                       alt={pick(locale, `Travel photo of ${t.place}`, `${t.place} 的旅行照片`)}
                       onError={() => setFailed((f) => ({ ...f, [t.img]: true }))}
                     />
                   )}
                   <span className="country-chip">{countryLabel(t, locale)}</span>
                 </div>
+                {tripPhotos(t).length > 1 ? (
+                  <div className="acard-strip" aria-hidden="true">
+                    {tripPhotos(t)
+                      .slice(0, 4)
+                      .map((p) => (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img key={p.url} src={p.url} alt="" loading="lazy" />
+                      ))}
+                  </div>
+                ) : null}
                 <figcaption>
                   <b>{t.place}</b>
                   <span>

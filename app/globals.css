@@ -6769,3 +6769,104 @@ a {
     animation: none;
   }
 }
+
+/* ================= 简历双语（2026-11 追加） ================= */
+/* 中英文各一套数据，跟随界面语言切换；本块只补两版共用的细节。
+   技能标签列必须放在 min-width 媒体块里：否则特异性/顺序会压掉
+   700px 以下的单列布局（坑 #10）。 */
+
+@media (min-width: 701px) {
+  .rs-skill-row {
+    grid-template-columns: minmax(0, 176px) minmax(0, 1fr);
+  }
+
+  .rs-skill-row dt {
+    white-space: normal;
+    line-height: 1.45;
+  }
+}
+
+/* PDF 里的粗体在纸面上同权重 */
+.rs-bullets b {
+  font-weight: 800;
+}
+
+/* 项目一句话摘要（CrawlerHub 等带 desc 的项目） */
+.rs-proj-desc {
+  margin-top: 0.4rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--cm-ink-22);
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+/* 另一语言版本：次级下载口，不抢主按钮 */
+.rs-alt-pdf {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  color: var(--grey);
+  text-decoration: underline;
+  text-decoration-color: var(--cm-ink-30);
+  text-underline-offset: 3px;
+}
+
+.rs-alt-pdf:hover {
+  color: var(--ink);
+  background: var(--lime);
+  text-decoration: none;
+}
+
+/* 英文版抬头没有出生年月行，动作区与姓名顶端对齐即可（已有 flex-start） */
+
+/* 打印：另一语言下载链接不该出现在纸上 */
+@media print {
+  .rs-alt-pdf {
+    display: none !important;
+  }
+}
+
+/* ===== 归档卡片：多图缩略带（数据来自 TRIP_PHOTOS 数组） ===== */
+.acard-strip {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.5rem 0.55rem 0;
+  overflow: hidden;
+}
+
+.acard-strip img {
+  width: 100%;
+  max-width: 66px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 3px;
+  opacity: 0.92;
+  transition: transform 0.25s var(--ease), opacity 0.25s var(--ease);
+}
+
+.acard-strip img:hover {
+  transform: translateY(-2px) scale(1.04);
+  opacity: 1;
+}
+
+[data-theme="dark"] .acard-strip img {
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acard-strip img {
+    transition: none;
+  }
+}
+
+/* ---- 简历纸：条目换行时日期靠右 / 移动端收起版本标签（2026-11） ---- */
+.rs-period {
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .rs::before {
+    display: none;
+  }
+}

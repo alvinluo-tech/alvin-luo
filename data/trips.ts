@@ -5,12 +5,22 @@
  * /travel 归档页：显示全部，可按国家筛选
  *
  * 2026-09 按实际到访清单重写（11 国 38 站）。
- * date/note 留空 = 待补（不编造）；照片缺失时卡片自动显示
- * 「Drop your photo at public/travel/{img}.webp」占位。
+ * date/note 留空 = 待补（不编造）；照片缺失时卡片自动显示海关签注 / 占位。
+ *
+ * 照片来源三种，优先级：
+ *   1) photoUrl（trips.ts 里手写的单张覆盖，适合特别指定）
+ *   2) TRIP_PHOTOS（data/trip-photos.generated.ts，批量上传后自动生成的编号→URL 映射）
+ *   3) 本地 public/travel/{img}.webp（入库图片）
  * ============================================================ */
 
+import { TRIP_DATE, TRIP_PHOTOS, type GeneratedTripPhoto } from "./trip-photos.generated";
+
+export type TripPhoto = GeneratedTripPhoto;
+
 export type Trip = {
-  img: string; // public/travel/{img}.webp
+  img: string; // 本地照片编号：public/travel/{img}.webp
+  /** 远程照片完整 URL（Cloudflare R2 / S3 等）。填了它就不需要本地文件 */
+  photoUrl?: string;
   country: string;
   countryEn?: string;
   place: string;
@@ -27,7 +37,33 @@ export type Trip = {
 export const AVAILABLE_PHOTOS = new Set<string>(["05"]);
 
 export function hasTripPhoto(trip: Trip): boolean {
-  return trip.hasPhoto ?? AVAILABLE_PHOTOS.has(trip.img);
+  return (
+    Boolean(trip.photoUrl) ||
+    Boolean(TRIP_PHOTOS[trip.img]?.length) ||
+    (trip.hasPhoto ?? AVAILABLE_PHOTOS.has(trip.img))
+  );
+}
+
+/** 该站点的全部远程照片（没有则空数组）。第一张即封面。 */
+export function tripPhotos(trip: Pick<Trip, "img">): TripPhoto[] {
+  return TRIP_PHOTOS[trip.img] ?? [];
+}
+
+/**
+ * 统一解析照片地址：
+ *   photoUrl（手写覆盖）> TRIP_PHOTOS（批量上传生成）> 本地 public/travel/{img}.webp
+ * basePath 只在子路径静态部署（GitHub Pages 项目页）时需要，组件传 NEXT_PUBLIC_BASE_PATH。
+ * 返回 null 表示没有可用照片，调用方应渲染占位/海关签注。
+ */
+export function tripPhotoSrc(
+  trip: Pick<Trip, "img" | "photoUrl" | "hasPhoto">,
+  basePath = "",
+): string | null {
+  if (trip.photoUrl) return trip.photoUrl;
+  const generated = TRIP_PHOTOS[trip.img]?.[0]?.url;
+  if (generated) return generated;
+  if (trip.hasPhoto ?? AVAILABLE_PHOTOS.has(trip.img)) return `${basePath}/travel/${trip.img}.webp`;
+  return null;
 }
 
 export const TRIPS: Trip[] = [
@@ -414,7 +450,8 @@ export function countryLabel(trip: Trip, locale: "en" | "zh") {
   return locale === "en" ? (trip.countryEn ?? trip.country) : trip.country;
 }
 
-/** 日期显示 */
+/** 日期显示：trips.ts 手写值优先，否则用照片拍摄时间去派生（如 "2026.11"） */
 export function dateLabel(trip: Trip, locale: "en" | "zh") {
-  return locale === "en" ? (trip.dateEn ?? trip.date) : trip.date;
+  const manual = locale === "en" ? (trip.dateEn ?? trip.date) : trip.date;
+  return manual || TRIP_DATE[trip.img] || "";
 }

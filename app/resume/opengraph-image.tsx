@@ -64,7 +64,7 @@ export default async function OgImage() {
             </span>
           </div>
           <div style={{ fontSize: 34, color: "#c9cfba", marginTop: 18, display: "flex" }}>
-            {RESUME.education[0].school} 计算机科学硕士 · AI Agent / 全栈
+            {RESUME.education[0].school} 高级计算机科学（AI）硕士 · AI Agent / 全栈
           </div>
         </div>
 

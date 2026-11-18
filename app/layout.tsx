@@ -6,6 +6,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import ScrollFX from "@/components/ScrollFX";
 import SmoothScroll from "@/components/SmoothScroll";
 import Konami from "@/components/Konami";
+import FooterResumeLink from "@/components/FooterResumeLink";
 import Palette from "@/components/Palette";
 import { LocaleProvider } from "@/components/i18n";
 import { SITE_URL, GITHUB_URL } from "@/config/site";
@@ -90,9 +91,7 @@ export default function RootLayout({
             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
               GITHUB ↗
             </a>
-            <a href="/resume/alvin-luo-resume.pdf" download="Alvin-Luo-Resume.pdf">
-              RÉSUMÉ ↧
-            </a>
+            <FooterResumeLink />
             <a href="#top">BACK TO TOP ↑</a>
           </footer>
         </LocaleProvider>

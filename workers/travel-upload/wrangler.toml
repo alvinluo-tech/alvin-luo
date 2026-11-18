@@ -1,0 +1,30 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "travel-upload"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+# 自定义域名：需要 alvin-luo.me 这个 zone 在本账号下。
+# 不想现在绑域名就先注释掉，用 https://travel-upload.<账号>.workers.dev 测试。
+routes = [
+  { pattern = "upload.alvin-luo.me", custom_domain = true }
+]
+
+# 照片桶（与 Python 上传脚本同一个桶）
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "pics-for-blog"
+
+[vars]
+# R2 公开域名（不是密钥）
+PUBLIC_BASE = "https://pub-996ee35c86674a47bf3eb5e069624f90.r2.dev"
+# 发布按钮触发的仓库与工作流
+GITHUB_REPO = "alvinluo-tech/alvin-luo"
+GITHUB_WORKFLOW = "deploy.yml"
+GITHUB_REF = "main"
+# 允许调用 API 的站点来源；本地调试可临时加 http://localhost:3000
+ALLOWED_ORIGINS = "https://alvin-luo.me"
+
+# UPLOAD_TOKEN / GITHUB_TOKEN 不写在这里，用：
+#   npx wrangler secret put UPLOAD_TOKEN
+#   npx wrangler secret put GITHUB_TOKEN

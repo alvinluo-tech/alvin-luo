@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto } from "@/data/trips";
+import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto, tripPhotoSrc } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
 import PassportStamp from "./PassportStamp";
 
@@ -241,7 +241,7 @@ export default function Travel() {
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
-                      src={`${BASE_PATH}/travel/${item.trip.img}.webp`}
+                      src={tripPhotoSrc(item.trip, BASE_PATH) ?? ""}
                       alt={pick(
                         locale,
                         `Travel photo of ${item.trip.place}`,

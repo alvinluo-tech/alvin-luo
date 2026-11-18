@@ -47,6 +47,19 @@ jobs:
             echo "value=/$NAME" >> "$GITHUB_OUTPUT"
           fi
 
+      # 同步 R2 照片清单（仓库变量 PHOTO_MANIFEST_URL）。
+      # 拉取失败时脚本会保留旧文件并 exit 0，不会打断构建；
+      # 变量没配且生成文件不存在时，写空表兜底。
+      - name: Sync trip photos
+        env:
+          PHOTO_MANIFEST_URL: ${{ vars.PHOTO_MANIFEST_URL }}
+        run: |
+          if [ -n "$PHOTO_MANIFEST_URL" ]; then
+            node scripts/gen-trip-photos.mjs --remote "$PHOTO_MANIFEST_URL"
+          elif [ ! -f data/trip-photos.generated.ts ]; then
+            node scripts/gen-trip-photos.mjs --in /dev/null
+          fi
+
       # 注入 basePath + 静态导出开关（静态模式没有 /api 代理，NOW PLAYING 走降级）
       - name: Build
         run: npm run build

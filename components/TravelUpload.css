@@ -1,0 +1,463 @@
+/* /upload —— 手机端上传工具页（不参与站点导航） */
+
+.upload-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(2.4rem, 7vw, 5.5rem) clamp(1rem, 4vw, 2.5rem) 7rem;
+}
+
+.upload-head {
+  margin-bottom: clamp(1.6rem, 4vw, 2.6rem);
+}
+
+.upload-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  color: var(--grey);
+  margin-bottom: 0.8rem;
+}
+
+.upload-head h1 {
+  font-size: clamp(2rem, 7vw, 3.6rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.upload-head h1 span {
+  color: var(--lime);
+}
+
+.upload-sub {
+  margin-top: 0.9rem;
+  max-width: 46ch;
+  color: var(--grey);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ---------- 顶部操作条 ---------- */
+
+.upload-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem 1.2rem;
+  padding: 1rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.upload-pick {
+  position: relative;
+  display: inline-flex;
+}
+
+.upload-pick input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-pick span {
+  display: inline-flex;
+  align-items: center;
+  height: 2.6rem;
+  padding: 0 1.3rem;
+  background: var(--lime);
+  color: #101400;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  transition: transform 0.2s var(--ease);
+}
+
+.upload-pick:hover span {
+  transform: translateY(-1px);
+}
+
+.upload-default {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--grey);
+}
+
+.upload-default select,
+.upload-controls select {
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  max-width: 15rem;
+}
+
+.upload-ghost {
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.upload-ghost:hover {
+  background: var(--panel);
+  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
+}
+
+.upload-ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.upload-notice {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--lime) 22%, transparent);
+  border-left: 3px solid var(--lime);
+  padding: 0.6rem 0.8rem;
+  border-radius: 0 6px 6px 0;
+}
+
+/* ---------- 列表 ---------- */
+
+.upload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+
+.upload-empty {
+  padding: 3rem 0;
+  color: var(--grey);
+  font-size: 0.9rem;
+  text-align: center;
+  border: 1px dashed color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 12px;
+}
+
+.upload-item {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 55%, transparent);
+}
+
+.upload-item.is-done {
+  border-color: color-mix(in srgb, var(--lime) 65%, transparent);
+}
+
+.upload-item.is-error {
+  border-color: color-mix(in srgb, #d33 55%, transparent);
+}
+
+.upload-thumb {
+  width: 84px;
+  height: 84px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--panel);
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  color: var(--grey);
+  text-align: center;
+}
+
+.upload-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.upload-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.upload-info b {
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-info span {
+  font-size: 0.76rem;
+  color: var(--grey);
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-info em {
+  font-style: normal;
+  font-size: 0.74rem;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--lime) 25%, transparent);
+  align-self: flex-start;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+}
+
+.upload-info em.is-error {
+  background: color-mix(in srgb, #d33 14%, transparent);
+  color: #b22;
+}
+
+.upload-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.7rem;
+  justify-content: flex-end;
+}
+
+.upload-cover {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--grey);
+}
+
+.upload-state {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  color: var(--grey);
+  white-space: nowrap;
+}
+
+.upload-state.is-uploading {
+  color: #7a8a00;
+  border-color: var(--lime);
+}
+
+.upload-state.is-done {
+  color: #3f6b00;
+}
+
+.upload-state.is-error {
+  color: #b22;
+}
+
+.upload-controls a {
+  font-size: 0.76rem;
+  color: var(--ink);
+  border-bottom: 1px solid currentColor;
+}
+
+/* ---------- 底部操作 ---------- */
+
+.upload-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1.6rem;
+  padding: 0.9rem 0;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.upload-actions > span {
+  margin-right: auto;
+  font-size: 0.8rem;
+  color: var(--grey);
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-actions button,
+.upload-gate button {
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 999px;
+  padding: 0.62rem 1.3rem;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.upload-actions button:hover:not(:disabled),
+.upload-gate button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.upload-actions button.is-primary {
+  background: var(--lime);
+  color: #101400;
+  border-color: var(--lime);
+}
+
+.upload-actions button:disabled,
+.upload-gate button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- 构建状态 ---------- */
+
+.upload-run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-top: 1rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: var(--grey);
+}
+
+.upload-run b {
+  color: var(--ink);
+}
+
+.upload-run a {
+  color: var(--ink);
+  border-bottom: 1px solid currentColor;
+}
+
+.upload-token-reset {
+  margin-top: 2rem;
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--grey);
+  background: none;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ---------- token 门 ---------- */
+
+.upload-gate {
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 60%, transparent);
+}
+
+.upload-gate label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  color: var(--grey);
+}
+
+.upload-gate input {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+}
+
+.upload-gate input:focus {
+  outline: 2px solid var(--lime);
+  outline-offset: 1px;
+}
+
+.upload-gate button {
+  align-self: flex-start;
+  background: var(--lime);
+  color: #101400;
+  border-color: var(--lime);
+}
+
+.upload-hint {
+  font-size: 0.72rem;
+  color: var(--grey);
+  word-break: break-all;
+}
+
+.upload-err {
+  font-size: 0.78rem;
+  color: #b22;
+}
+
+/* ---------- 手机 ---------- */
+
+@media (max-width: 720px) {
+  .upload-item {
+    grid-template-columns: 64px minmax(0, 1fr);
+    row-gap: 0.6rem;
+  }
+
+  .upload-thumb {
+    width: 64px;
+    height: 64px;
+  }
+
+  .upload-controls {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .upload-default {
+    width: 100%;
+  }
+
+  .upload-default select {
+    flex: 1;
+    max-width: none;
+  }
+
+  .upload-actions {
+    position: static;
+    justify-content: stretch;
+  }
+
+  .upload-actions > span {
+    width: 100%;
+  }
+
+  .upload-actions button {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-pick span,
+  .upload-actions button,
+  .upload-gate button {
+    transition: none;
+  }
+}
