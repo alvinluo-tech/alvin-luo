@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
  * 旅行数据 —— 唯一数据源
  *
  * 首页胶片：只显示 featured: true 的站（不足 3 站时回退为前 8 站）
@@ -453,8 +453,9 @@ export function countryLabel(trip: Trip, locale: "en" | "zh") {
   return locale === "en" ? (trip.countryEn ?? trip.country) : trip.country;
 }
 
-/** 日期显示：trips.ts 手写值优先，否则用照片拍摄时间去派生（如 "2026.11"） */
+/** 日期显示：trips.ts 手写值优先，否则用照片拍摄时间去派生（如 "2026.11.16"） */
 export function dateLabel(trip: Trip, locale: "en" | "zh") {
   const manual = locale === "en" ? (trip.dateEn ?? trip.date) : trip.date;
   return manual || TRIP_DATE[trip.img] || "";
 }
+

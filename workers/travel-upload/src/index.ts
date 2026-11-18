@@ -151,9 +151,11 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   if (!/^\d{2}$/.test(trip)) return json({ error: "trip must be two digits" }, 400);
 
   const takenAtRaw = text(form.get("takenAt"), 40);
-  const takenAt = Number.isFinite(Date.parse(takenAtRaw))
-    ? new Date(takenAtRaw).toISOString()
-    : new Date().toISOString();
+  // 保留客户端传来的当地时区（如 +02:00），不要把日期推成 UTC 的前一天
+  const takenAt =
+    Number.isFinite(Date.parse(takenAtRaw)) && /^\d{4}-\d{2}-\d{2}T/.test(takenAtRaw)
+      ? takenAtRaw
+      : new Date().toISOString();
 
   const key = keyFor(trip, takenAt);
   await env.PHOTOS.put(key, file.stream(), {

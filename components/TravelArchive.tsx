@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto, tripPhotoSrc, tripPhotos } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
 import PassportStamp from "./PassportStamp";
+import TravelLightbox, { type LightboxPhoto } from "./TravelLightbox";
 
 /* d3 + 105KB topojson 只有地图用得到：动态加载，滚出 travel 主包 */
 const WorldMap = dynamic(() => import("./WorldMap"), {
@@ -25,6 +26,9 @@ export default function TravelArchive() {
   const [filter, setFilter] = useState(ALL);
   const [focusedCity, setFocusedCity] = useState<string | null>(null);
   const [failed, setFailed] = useState<Record<string, boolean>>({});
+  const [lightbox, setLightbox] = useState<{ photos: LightboxPhoto[]; index: number; trip: Trip } | null>(
+    null
+  );
   const { locale } = useLocale();
 
   /* “全部”筛选键在两种语言下都归一到 “全部” */
@@ -70,6 +74,28 @@ export default function TravelArchive() {
         setTimeout(() => title?.classList.remove("is-flash"), 2200);
       }
     }, 850);
+  }
+
+  /** 该卡片可放大查看的全部照片：手写 photoUrl → 远程数组 → 本地文件 */
+  function photosFor(trip: Trip): LightboxPhoto[] {
+    const list: LightboxPhoto[] = [];
+    const push = (url: string, takenAt?: string, caption?: string) => {
+      if (!url || list.some((p) => p.url === url)) return;
+      list.push({ url, takenAt, caption });
+    };
+    if (trip.photoUrl) push(trip.photoUrl);
+    for (const p of tripPhotos(trip)) push(p.url, p.takenAt, p.caption);
+    if (!list.length) {
+      const src = tripPhotoSrc(trip, BASE_PATH);
+      if (src) push(src);
+    }
+    return list;
+  }
+
+  function openLightbox(trip: Trip, index = 0) {
+    const photos = photosFor(trip);
+    if (!photos.length) return;
+    setLightbox({ photos, index: Math.max(0, Math.min(index, photos.length - 1)), trip });
   }
 
   /* 首页胶片跳转深链接动效：读取 ?stop=01 或 ?country=... */
@@ -217,14 +243,33 @@ export default function TravelArchive() {
                     />
                   )}
                   <span className="country-chip">{countryLabel(t, locale)}</span>
+                  {!failed[t.img] && hasTripPhoto(t) ? (
+                    <button
+                      type="button"
+                      className="acard-zoom"
+                      onClick={() => openLightbox(t)}
+                      aria-label={pick(locale, `View ${t.place} photo larger`, `放大 ${t.place} 的照片`)}
+                    >
+                      <span aria-hidden="true">⤢</span>
+                    </button>
+                  ) : null}
                 </div>
                 {tripPhotos(t).length > 1 ? (
-                  <div className="acard-strip" aria-hidden="true">
+                  <div className="acard-strip">
                     {tripPhotos(t)
                       .slice(0, 4)
-                      .map((p) => (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img key={p.url} src={p.url} alt="" loading="lazy" />
+                      .map((p, pi) => (
+                        <button
+                          key={p.url}
+                          type="button"
+                          onClick={() =>
+                            openLightbox(t, photosFor(t).findIndex((x) => x.url === p.url))
+                          }
+                          aria-label={pick(locale, `View photo ${pi + 1}`, `查看第 ${pi + 1} 张`)}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p.url} alt="" loading="lazy" />
+                        </button>
                       ))}
                   </div>
                 ) : null}
@@ -244,6 +289,16 @@ export default function TravelArchive() {
         <T en="Next stop? — " zh="下一站？ — " />
         <a href="/">BACK TO HOME ↑</a>
       </p>
+
+      {lightbox ? (
+        <TravelLightbox
+          photos={lightbox.photos}
+          startIndex={lightbox.index}
+          title={lightbox.trip.place}
+          subtitle={dateLabel(lightbox.trip, locale)}
+          onClose={() => setLightbox(null)}
+        />
+      ) : null}
     </main>
   );
 }

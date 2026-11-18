@@ -47,9 +47,21 @@ export function isHeic(file: File): boolean {
   return /\.(heic|heif)$/i.test(file.name) || /heic|heif/i.test(file.type);
 }
 
+/** 把 Date 写成带本机时区偏移的 ISO（保留拍摄当地日期，不让 UTC 把日期推前一天） */
+function localIso(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  const offset = -d.getTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "-";
+  const oh = p(Math.floor(Math.abs(offset) / 60));
+  const om = p(Math.abs(offset) % 60);
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(
+    d.getMinutes()
+  )}:${p(d.getSeconds())}${sign}${oh}:${om}`;
+}
+
 /** 读拍摄时间与 GPS。任何失败都退化为文件修改时间，不阻塞上传。 */
 export async function readPhotoMeta(file: File): Promise<PhotoMeta> {
-  const fallback = new Date(file.lastModified || Date.now()).toISOString();
+  const fallback = localIso(new Date(file.lastModified || Date.now()));
   try {
     const exifr = (await import("exifr")).default;
     const data = (await exifr.parse(file, { pick: [...EXIF_PICK], gps: true })) as
@@ -59,7 +71,7 @@ export async function readPhotoMeta(file: File): Promise<PhotoMeta> {
 
     const rawDate = data.DateTimeOriginal ?? data.CreateDate ?? data.DateTime;
     const date = rawDate instanceof Date ? rawDate : rawDate ? new Date(String(rawDate)) : null;
-    const takenAt = date && Number.isFinite(date.getTime()) ? date.toISOString() : fallback;
+    const takenAt = date && Number.isFinite(date.getTime()) ? localIso(date) : fallback;
 
     const lat = typeof data.latitude === "number" ? data.latitude : undefined;
     const lng = typeof data.longitude === "number" ? data.longitude : undefined;
@@ -162,8 +174,17 @@ export async function toWebp(file: File): Promise<ConvertedPhoto> {
   return { blob, width, height };
 }
 
+/** 显示拍摄时间：直接取 ISO 里的当地日期与时间（不换算时区） */
 export function formatTakenAt(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso);
+  if (m) return `${m[1]}.${m[2]}.${m[3]} ${m[4]}:${m[5]}`;
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return "时间未知";
-  return d.toLocaleString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

@@ -1,0 +1,203 @@
+/* 旅行照片灯箱 */
+
+.tl-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.6rem, 3vw, 2rem);
+  padding-bottom: max(0.6rem, env(safe-area-inset-bottom));
+  background: rgba(8, 10, 4, 0.78);
+  backdrop-filter: blur(10px);
+  animation: tl-fade 0.25s var(--ease);
+}
+
+.tl-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: min(1280px, 100%);
+  height: min(90vh, 920px);
+}
+
+.tl-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #f0f0e6;
+}
+
+.tl-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.tl-meta b {
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-meta span {
+  font-size: 0.72rem;
+  opacity: 0.65;
+}
+
+.tl-counter {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.tl-close {
+  flex: 0 0 auto;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: transparent;
+  color: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.tl-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.tl-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tl-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 30px 80px -24px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+  user-select: none;
+}
+
+.tl-stage img.is-loaded {
+  opacity: 1;
+}
+
+.tl-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(10, 12, 6, 0.55);
+  color: #fff;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.tl-nav.is-prev {
+  left: 0.4rem;
+}
+
+.tl-nav.is-next {
+  right: 0.4rem;
+}
+
+.tl-nav:hover {
+  background: var(--lime);
+  color: #101400;
+  border-color: var(--lime);
+}
+
+.tl-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 1.4rem;
+  color: #e8e8dc;
+  font-size: 0.78rem;
+}
+
+.tl-caption p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.tl-caption time {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.tl-caption-empty {
+  opacity: 0.5;
+}
+
+@keyframes tl-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .tl-dialog {
+    height: 92vh;
+  }
+
+  .tl-nav {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.3rem;
+  }
+
+  .tl-caption {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    font-size: 0.72rem;
+  }
+
+  .tl-caption time {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-backdrop {
+    animation: none;
+  }
+
+  .tl-stage img {
+    transition: none;
+  }
+}

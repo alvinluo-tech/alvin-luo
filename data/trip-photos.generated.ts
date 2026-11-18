@@ -31,7 +31,7 @@ export const TRIP_PHOTOS: Record<string, GeneratedTripPhoto[]> = {
 
 };
 
-/** 站点编号 → 派生日期（"2026.11"）。trips.ts 里手写了 date 的优先 */
+/** 站点编号 → 派生日期（"2026.11.16"）。trips.ts 里手写了 date 的优先 */
 export const TRIP_DATE: Record<string, string> = {
 
 };

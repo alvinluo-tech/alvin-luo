@@ -6860,6 +6860,67 @@ a {
   }
 }
 
+/* 归档卡片：点击放大 */
+.acard-zoom {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.acard-zoom span {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(16, 20, 0, 0.55);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 0.95rem;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+.acard-zoom:hover span,
+.acard-zoom:focus-visible span {
+  opacity: 1;
+  transform: none;
+}
+
+.acard-zoom:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: -2px;
+}
+
+@media (hover: none) {
+  .acard-zoom span {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.acard-strip button {
+  flex: 0 0 66px;
+  width: 66px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.acard-strip button img {
+  width: 100%;
+  max-width: none;
+}
+
 /* ---- 简历纸：条目换行时日期靠右 / 移动端收起版本标签（2026-11） ---- */
 .rs-period {
   margin-left: auto;

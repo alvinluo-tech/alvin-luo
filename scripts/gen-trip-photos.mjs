@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
  * gen-trip-photos.mjs — 从上传清单生成 data/trip-photos.generated.ts
  *
@@ -216,7 +216,7 @@ export const TRIP_PHOTOS: Record<string, GeneratedTripPhoto[]> = {
 ${photoLines}
 };
 
-/** 站点编号 → 派生日期（"2026.11"）。trips.ts 里手写了 date 的优先 */
+/** 站点编号 → 派生日期（"2026.11.16"）。trips.ts 里手写了 date 的优先 */
 export const TRIP_DATE: Record<string, string> = {
 ${dateLines}
 };
@@ -362,13 +362,21 @@ async function main() {
     if (coverIdx > 0) items.unshift(...items.splice(coverIdx, 1));
   }
 
-  // 派生日期：该站最早一张有拍摄时间的照片 → YYYY.MM
+  // 派生日期：该站最早一张有拍摄时间的照片 → YYYY.MM.DD（取 ISO 里的当地日期）
   const derivedDates = new Map();
   for (const [stop, items] of groups) {
     const first = items.find((p) => p.takenAt && Number.isFinite(Date.parse(p.takenAt)));
     if (!first) continue;
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(first.takenAt);
+    if (m) {
+      derivedDates.set(stop, `${m[1]}.${m[2]}.${m[3]}`);
+      continue;
+    }
     const d = new Date(first.takenAt);
-    derivedDates.set(stop, `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}`);
+    derivedDates.set(
+      stop,
+      `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`
+    );
   }
 
   // 全局时间线
@@ -399,3 +407,4 @@ main().catch((e) => {
   console.error(`✗ ${e.stack || e.message}`);
   process.exit(1);
 });
+
