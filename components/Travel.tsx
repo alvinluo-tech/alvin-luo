@@ -241,7 +241,7 @@ export default function Travel() {
                   ) : (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
-                      src={tripPhotoThumb(item.trip, BASE_PATH) ?? ""}
+                      decoding="async" src={tripPhotoThumb(item.trip, BASE_PATH) ?? ""}
                       alt={pick(
                         locale,
                         `Travel photo of ${item.trip.place}`,

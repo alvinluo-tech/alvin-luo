@@ -413,6 +413,7 @@ export default function TravelLightbox({ photos, startIndex, title, subtitle, on
             ref={imgRef}
             key={photo.url}
             src={photo.url}
+            decoding="async"
             alt={`${title} 旅行照片 ${index + 1}`}
             className={`tl-image${loaded ? " is-loaded" : ""}`}
             style={{

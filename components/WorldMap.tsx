@@ -486,7 +486,7 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           loading="lazy"
-                          src={tripPhotoThumb(city, BASE_PATH) ?? ""}
+                          decoding="async" src={tripPhotoThumb(city, BASE_PATH) ?? ""}
                           alt={city.place}
                           className="card-photo"
                           onError={(e) => {

@@ -540,7 +540,7 @@ export default function YearReport({ stats }: { stats: YearStats }) {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       loading="lazy"
-                      src={tripPhotoThumb(stats.latestTrip, BASE_PATH) ?? ""}
+                      decoding="async" src={tripPhotoThumb(stats.latestTrip, BASE_PATH) ?? ""}
                       alt={pick(locale, stats.latestTrip.placeEn ?? stats.latestTrip.place, stats.latestTrip.place)}
                       onError={() => setTripImgFailed(true)}
                     />

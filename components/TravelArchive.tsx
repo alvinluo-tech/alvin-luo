@@ -237,7 +237,7 @@ export default function TravelArchive() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       loading="lazy"
-                      src={tripPhotoThumb(t, BASE_PATH) ?? ""}
+                      decoding="async" src={tripPhotoThumb(t, BASE_PATH) ?? ""}
                       alt={pick(locale, `Travel photo of ${t.place}`, `${t.place} 的旅行照片`)}
                       onError={() => setFailed((f) => ({ ...f, [t.img]: true }))}
                     />
