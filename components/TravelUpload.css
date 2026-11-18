@@ -518,6 +518,18 @@
   color: #101400;
 }
 
+.upload-suggest button.is-strong {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: #101400;
+  font-weight: 600;
+}
+
+.upload-geo {
+  font-size: 0.72rem;
+  color: var(--grey);
+}
+
 .upload-modal {
   position: fixed;
   inset: 0;

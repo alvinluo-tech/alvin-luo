@@ -15,6 +15,7 @@ export type GeneratedTripPhoto = {
   w?: number;
   h?: number;
   caption?: string;
+  place?: string;
 };
 
 /** 上传页新建、还没写进 trips.ts 的行程（构建时并进 TRIPS） */

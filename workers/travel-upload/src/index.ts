@@ -1,4 +1,4 @@
-/**
+﻿/**
  * travel-upload — 旅行照片上传 Worker
  *
  * 端点：
@@ -29,6 +29,7 @@ const PHOTO_PREFIX = "travel/";
 const META_PREFIX = "travel/_meta/";
 const TRIP_PREFIX = "travel/_trips/";
 const THUMB_PREFIX = "travel/_thumbs/";
+const GEO_PREFIX = "travel/_geo/";
 const CACHE_IMMUTABLE = "public, max-age=31536000, immutable";
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_MANIFEST = 5000;
@@ -193,6 +194,7 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   const w = Number(text(form.get("w"), 8)) || undefined;
   const h = Number(text(form.get("h"), 8)) || undefined;
   const caption = text(form.get("caption"), 300) || undefined;
+  const place = text(form.get("place"), 120) || undefined;
   const cover = text(form.get("cover"), 3) === "1";
 
   const meta = {
@@ -205,6 +207,7 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
     w,
     h,
     caption,
+    place,
     cover,
     bytes: file.size,
     uploadedAt: new Date().toISOString(),
@@ -359,8 +362,11 @@ async function handlePhotoPatch(request: Request, env: Env): Promise<Response> {
 
   const hasTrip = body.trip !== undefined;
   const hasCaption = body.caption !== undefined;
+  const hasPlace = body.place !== undefined;
   const hasCover = body.cover !== undefined;
-  if (!hasTrip && !hasCaption && !hasCover) return json({ error: "nothing to update" }, 400);
+  if (!hasTrip && !hasCaption && !hasPlace && !hasCover) {
+    return json({ error: "nothing to update" }, 400);
+  }
 
   const trip = hasTrip ? String(body.trip) : undefined;
   if (trip !== undefined && !/^\d{2}$/.test(trip)) {
@@ -383,6 +389,11 @@ async function handlePhotoPatch(request: Request, env: Env): Promise<Response> {
     const caption = String(body.caption ?? "").trim().slice(0, 300);
     if (caption) meta.caption = caption;
     else delete meta.caption;
+  }
+  if (hasPlace) {
+    const place = String(body.place ?? "").trim().slice(0, 120);
+    if (place) meta.place = place;
+    else delete meta.place;
   }
   if (hasCover) meta.cover = body.cover === true;
   meta.updatedAt = new Date().toISOString();
@@ -424,6 +435,64 @@ async function handlePhotoDelete(request: Request, env: Env): Promise<Response> 
   if (meta && typeof meta.thumbKey === "string") await env.PHOTOS.delete(meta.thumbKey);
 
   return json({ ok: true, key }, 200);
+}
+
+/** 反向地理编码：坐标只传 3 位小数给 Photon，结果缓存到 R2 */
+async function handleGeocode(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const lat = Number(url.searchParams.get("lat"));
+  const lng = Number(url.searchParams.get("lng"));
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return json({ error: "invalid coords" }, 400);
+  }
+
+  const lat3 = Math.round(lat * 1000) / 1000;
+  const lng3 = Math.round(lng * 1000) / 1000;
+  const key = `${GEO_PREFIX}${lat3},${lng3}.json`;
+
+  const cached = await env.PHOTOS.get(key);
+  if (cached) {
+    const data = await cached.json().catch(() => null);
+    if (data) return json(data, 200, { "Cache-Control": "public, max-age=86400" });
+  }
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(
+      `https://photon.komoot.io/reverse?lat=${lat3}&lon=${lng3}&lang=en`,
+      { headers: { "User-Agent": "alvin-luo.me travel upload" }, signal: ctrl.signal }
+    );
+    if (!res.ok) return json({ error: `geocode ${res.status}` }, 502);
+
+    const data = (await res.json()) as {
+      features?: Array<{ properties?: Record<string, unknown> }>;
+    };
+    const p = data.features?.[0]?.properties ?? {};
+    const pick = (v: unknown) => (typeof v === "string" ? v : "");
+    const city = pick(p.city) || pick(p.name) || pick(p.county) || pick(p.state);
+    const region = pick(p.state) || pick(p.county);
+    const country = pick(p.country);
+    const countryCode = pick(p.countrycode).toUpperCase();
+    const label = [city, country].filter(Boolean).join(", ");
+
+    const out = { ok: true, city, region, country, countryCode, label, lat: lat3, lng: lng3 };
+    await env.PHOTOS.put(key, JSON.stringify(out), {
+      httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
+    });
+    return json(out, 200, { "Cache-Control": "public, max-age=86400" });
+  } catch {
+    return json({ error: "geocode failed" }, 502);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function githubEnv(env: Env) {
@@ -537,6 +606,11 @@ export default {
         return withCors(await handleTrip(request, env));
       }
 
+      if (url.pathname === "/geocode" && request.method === "GET") {
+        if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
+        return withCors(await handleGeocode(request, env));
+      }
+
       if (url.pathname === "/photo" && request.method === "PATCH") {
         if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
         return withCors(await handlePhotoPatch(request, env));
@@ -569,3 +643,4 @@ export default {
     }
   },
 };
+

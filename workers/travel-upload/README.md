@@ -8,9 +8,10 @@
 |:--|:--|:--|:--|
 | GET | `/health` | 无 | 部署自检（含 `github.configured`） |
 | GET | `/manifest` | 无 | 聚合 `travel/_meta/*.json` 与 `_trips/*.json`（`no-store`） |
-| POST | `/upload` | Bearer | multipart：`file` `thumb` `trip` `takenAt` `w` `h` `cover` |
-| PATCH | `/photo` | Bearer | 改 `trip` / `caption` / `cover` |
+| POST | `/upload` | Bearer | multipart：`file` `thumb` `trip` `takenAt` `w` `h` `place` `cover` |
+| PATCH | `/photo` | Bearer | 改 `trip` / `caption` / `place` / `cover` |
 | DELETE | `/photo` | Bearer | 删除照片 + sidecar + 缩略图 |
+| GET | `/geocode?lat&lng` | Bearer | Photon 反向地理编码（坐标取 3 位小数，缓存到 `travel/_geo/`） |
 | POST | `/publish` | Bearer | 触发 GitHub Actions `workflow_dispatch` |
 | GET | `/status` | Bearer | 最近一次构建状态 |
 
@@ -19,10 +20,11 @@
 ```
 travel/08-20261118-ab12.webp          照片本体（一年 immutable 缓存）
 travel/_thumbs/08-20261118-ab12.webp  列表/地图用缩略图（长边 480）
-travel/_meta/08-20261118-ab12.json    元数据 sidecar（key/trip/takenAt/thumbUrl…）
+travel/_meta/08-20261118-ab12.json    元数据 sidecar（key/trip/takenAt/place/thumbUrl…）
 ```
 
-GPS 只在手机端用于归站，Worker 不接收、不存储；直传的小图会先在浏览器端剥掉 EXIF/XMP。
+GPS 只在手机端用于归站与地名解析，Worker 不存储原始坐标；直传的小图会先在浏览器端剥掉 EXIF/XMP。
+地名解析只把坐标四舍五入到 3 位小数发给 Photon，结果缓存在 `travel/_geo/`。
 
 ## 首次部署
 

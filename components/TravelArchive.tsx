@@ -79,12 +79,12 @@ export default function TravelArchive() {
   /** 该卡片可放大查看的全部照片：手写 photoUrl → 远程数组 → 本地文件 */
   function photosFor(trip: Trip): LightboxPhoto[] {
     const list: LightboxPhoto[] = [];
-    const push = (url: string, takenAt?: string, caption?: string) => {
+    const push = (url: string, takenAt?: string, caption?: string, place?: string) => {
       if (!url || list.some((p) => p.url === url)) return;
-      list.push({ url, takenAt, caption });
+      list.push({ url, takenAt, caption, place });
     };
     if (trip.photoUrl) push(trip.photoUrl);
-    for (const p of tripPhotos(trip)) push(p.url, p.takenAt, p.caption);
+    for (const p of tripPhotos(trip)) push(p.url, p.takenAt, p.caption, p.place);
     if (!list.length) {
       const src = tripPhotoSrc(trip, BASE_PATH);
       if (src) push(src);

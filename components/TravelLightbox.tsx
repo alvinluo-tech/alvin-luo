@@ -13,6 +13,7 @@ export type LightboxPhoto = {
   url: string;
   takenAt?: string;
   caption?: string;
+  place?: string;
 };
 
 type Props = {
@@ -457,12 +458,14 @@ export default function TravelLightbox({ photos, startIndex, title, subtitle, on
         </div>
 
         <footer className="tl-caption">
-          {photo.caption ? <p>{photo.caption}</p> : null}
-          {photo.takenAt ? (
-            <time dateTime={photo.takenAt}>{stamp(photo.takenAt)}</time>
-          ) : (
-            <span className="tl-caption-empty">{title}</span>
-          )}
+          <div className="tl-caption-main">
+            {photo.place ? <b className="tl-place">{photo.place}</b> : null}
+            {photo.caption ? <p>{photo.caption}</p> : null}
+            {!photo.place && !photo.caption ? (
+              <span className="tl-caption-empty">{title}</span>
+            ) : null}
+          </div>
+          {photo.takenAt ? <time dateTime={photo.takenAt}>{stamp(photo.takenAt)}</time> : null}
           <span className="tl-hint">滚轮 / 双击缩放 · 拖动平移</span>
         </footer>
       </div>

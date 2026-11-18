@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TRIPS } from "@/data/trips";
 import { distanceKm, formatTakenAt, isHeic, readPhotoMeta, suggestTrip, toOptimizedImage } from "@/lib/client-photo";
+import { tripFromPlace, type GeoPlace } from "@/lib/geo";
 import {
   clearDraft,
   loadDraft,
@@ -47,6 +48,7 @@ type Item = {
   preview?: string;
   thumbPreview?: string;
   gps?: [number, number];
+  geo?: GeoPlace;
   trip: string;
   candidate?: string;
   nearest?: string;
@@ -76,6 +78,7 @@ type UploadedPhoto = {
   trip: string;
   takenAt?: string;
   caption?: string;
+  place?: string;
   cover?: boolean;
 };
 
@@ -172,6 +175,7 @@ export default function TravelUpload() {
   const fileRef = useRef<HTMLInputElement>(null);
   const restoredRef = useRef(false);
   const itemsRef = useRef<Item[]>([]);
+  const geoCache = useRef(new Map<string, GeoPlace | null>());
 
   useEffect(() => {
     setToken(localStorage.getItem(TOKEN_KEY) || "");
@@ -192,6 +196,7 @@ export default function TravelUpload() {
               trip: string;
               takenAt?: string;
               caption?: string;
+              place?: string;
               cover?: boolean;
             }>;
           } | null
@@ -218,6 +223,7 @@ export default function TravelUpload() {
                   trip: p.trip,
                   takenAt: p.takenAt,
                   caption: p.caption,
+                  place: p.place,
                   cover: p.cover,
                 }))
             );
@@ -382,6 +388,53 @@ export default function TravelUpload() {
     localStorage.setItem(TRIP_KEY, id);
   }
 
+  async function geocode(gps: [number, number]): Promise<GeoPlace | null> {
+    const key = `${gps[1].toFixed(3)},${gps[0].toFixed(3)}`;
+    if (geoCache.current.has(key)) return geoCache.current.get(key) ?? null;
+    try {
+      const res = await fetch(
+        `${API}/geocode?lat=${encodeURIComponent(gps[1])}&lng=${encodeURIComponent(gps[0])}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: timeoutSignal(12_000),
+        }
+      );
+      if (!res.ok) return null;
+      const data = (await res.json()) as GeoPlace & { ok?: boolean };
+      if (!data?.label) return null;
+      geoCache.current.set(key, data);
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  /** 同一天（±18h）已归站的照片里，出现最多的行程 */
+  function sameDayTrip(item: Item): { trip: string; count: number } | null {
+    if (!item.takenAt) return null;
+    const t = Date.parse(item.takenAt);
+    if (!Number.isFinite(t)) return null;
+
+    const counts = new Map<string, { count: number; nearest: number }>();
+    const consider = (trip?: string, takenAt?: string) => {
+      if (!trip || !takenAt) return;
+      const d = Math.abs(Date.parse(takenAt) - t);
+      if (!Number.isFinite(d) || d > 18 * 3600 * 1000) return;
+      const cur = counts.get(trip) ?? { count: 0, nearest: Number.POSITIVE_INFINITY };
+      cur.count += 1;
+      cur.nearest = Math.min(cur.nearest, d);
+      counts.set(trip, cur);
+    };
+
+    for (const it of items) if (it.id !== item.id) consider(it.trip, it.takenAt);
+    for (const p of uploaded) consider(p.trip, p.takenAt);
+
+    const best = [...counts.entries()].sort(
+      (a, b) => b[1].count - a[1].count || a[1].nearest - b[1].nearest
+    )[0];
+    return best ? { trip: best[0], count: best[1].count } : null;
+  }
+
   async function addFiles(list: FileList | null) {
     if (!list?.length) return;
     const files = Array.from(list).filter((f) => f.type.startsWith("image/") || isHeic(f));
@@ -416,6 +469,15 @@ export default function TravelUpload() {
           cover: false,
         },
       ]);
+
+      // 后台解析地名：命中后补到卡片上，不阻塞转码
+      if (meta.gps) {
+        const gps = meta.gps;
+        void geocode(gps).then((geo) => {
+          if (!geo) return;
+          setItems((prev) => prev.map((it) => (it.id === id ? { ...it, geo } : it)));
+        });
+      }
 
       try {
         const conv = await toOptimizedImage(file, {
@@ -502,8 +564,16 @@ export default function TravelUpload() {
     });
   }
 
-  function openNewTrip(coord: [number, number] | null) {
-    setDialog({ open: true, coord, country: "", countryEn: "", place: "", error: "" });
+  function openNewTrip(coord: [number, number] | null, geo?: GeoPlace | null) {
+    const pre = tripFromPlace(geo);
+    setDialog({
+      open: true,
+      coord,
+      country: pre.country,
+      countryEn: pre.countryEn,
+      place: pre.place,
+      error: "",
+    });
   }
 
   async function createTrip() {
@@ -610,6 +680,7 @@ export default function TravelUpload() {
     fd.append("takenAt", item.takenAt);
     fd.append("w", String(item.width));
     fd.append("h", String(item.height));
+    if (item.geo?.label) fd.append("place", item.geo.label);
     fd.append("cover", item.cover ? "1" : "0");
 
     const res = await fetch(`${API}/upload`, {
@@ -663,7 +734,7 @@ export default function TravelUpload() {
 
   async function patchPhoto(
     key: string,
-    patch: Partial<Pick<UploadedPhoto, "trip" | "caption" | "cover">>,
+    patch: Partial<Pick<UploadedPhoto, "trip" | "caption" | "place" | "cover">>,
     success: string
   ) {
     try {
@@ -701,6 +772,17 @@ export default function TravelUpload() {
   function toggleCover(p: UploadedPhoto) {
     const next = !p.cover;
     void patchPhoto(p.key, { cover: next }, next ? "已设为封面；下次构建后生效" : "已取消封面");
+  }
+
+  function editPlace(p: UploadedPhoto) {
+    const next = window.prompt("拍摄地（如 Vik, Iceland）", p.place ?? "");
+    if (next === null) return;
+    const place = next.trim();
+    void patchPhoto(
+      p.key,
+      { place },
+      place ? "拍摄地已更新；下次构建后生效" : "拍摄地已清除"
+    );
   }
 
   async function deletePhoto(p: UploadedPhoto) {
@@ -844,7 +926,10 @@ export default function TravelUpload() {
         <button
           type="button"
           className="upload-ghost"
-          onClick={() => openNewTrip(items.find((i) => !i.trip && i.gps)?.gps ?? null)}
+          onClick={() => {
+            const first = items.find((i) => !i.trip && i.gps);
+            openNewTrip(first?.gps ?? null, first?.geo);
+          }}
         >
           ＋ 新建行程
         </button>
@@ -862,6 +947,7 @@ export default function TravelUpload() {
         ) : (
           items.map((item) => {
             const unmatched = item.status === "ready" && !item.trip;
+            const dayTrip = unmatched ? sameDayTrip(item) : null;
             return (
               <article
                 key={item.id}
@@ -905,15 +991,31 @@ export default function TravelUpload() {
 
                   {item.error ? <em className="is-error">{item.error}</em> : null}
 
+                  {item.geo ? (
+                    <span className="upload-geo">
+                      拍摄地 · {item.geo.label}
+                      {item.geo.city ? `（${item.geo.city}）` : ""}
+                    </span>
+                  ) : null}
+
                   {unmatched ? (
                     <span className="upload-suggest">
-                      {item.candidate ? (
+                      {dayTrip ? (
+                        <button
+                          type="button"
+                          className="is-strong"
+                          onClick={() => patch(item.id, { trip: dayTrip.trip, candidate: undefined })}
+                        >
+                          归到 {tripLabel(dayTrip.trip)}（同日 {dayTrip.count} 张）
+                        </button>
+                      ) : null}
+                      {item.candidate && (!dayTrip || dayTrip.trip !== item.candidate) ? (
                         <button type="button" onClick={() => patch(item.id, { trip: item.candidate!, candidate: undefined })}>
                           采用 {tripLabel(item.candidate)}
                         </button>
                       ) : null}
-                      <button type="button" onClick={() => openNewTrip(item.gps ?? null)}>
-                        ＋ 新建行程
+                      <button type="button" onClick={() => openNewTrip(item.gps ?? null, item.geo)}>
+                        {item.geo?.city ? `＋ 新建 ${item.geo.city}` : "＋ 新建行程"}
                       </button>
                     </span>
                   ) : null}
@@ -985,6 +1087,7 @@ export default function TravelUpload() {
                 <div className="upload-history-main">
                   <span className="upload-history-meta">
                     {p.takenAt ? formatTakenAt(p.takenAt) : p.key.split("/").pop()}
+                    {p.place ? ` · ${p.place}` : ""}
                     {p.caption ? ` · ${p.caption}` : ""}
                   </span>
                   <div className="upload-history-actions">
@@ -1002,6 +1105,14 @@ export default function TravelUpload() {
                       title="编辑图注"
                     >
                       ✎
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => editPlace(p)}
+                      aria-label="编辑拍摄地"
+                      title="编辑拍摄地"
+                    >
+                      📍
                     </button>
                     <button
                       type="button"
