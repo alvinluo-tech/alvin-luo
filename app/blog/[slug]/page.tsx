@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPost, getPostSlugs, CATEGORY_LABELS } from "@/lib/blog";
 import Toc from "@/components/Toc";
+import MarginNotes from "@/components/MarginNotes";
 import CodeCopy from "@/components/CodeCopy";
 import Lightbox from "@/components/Lightbox";
 import CoverImage from "@/components/CoverImage";
@@ -40,7 +41,7 @@ export default async function PostPage({
 
   return (
     <main className="post-page">
-      <div className="post-layout">
+      <div className={post.notes.length > 0 ? "post-layout has-notes" : "post-layout"}>
         <article>
           <header className="post-head">
             <Link className="post-back" href="/blog">
@@ -85,6 +86,9 @@ export default async function PostPage({
             <Link href="/blog">← BACK TO WRITING</Link>
           </footer>
         </article>
+
+        {/* 宽屏页边旁注（占位在目录左侧），窄屏隐藏并改为底卡 */}
+        <MarginNotes notes={post.notes} />
 
         <Toc items={post.toc} />
       </div>

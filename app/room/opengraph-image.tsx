@@ -1,22 +1,12 @@
 import { ImageResponse } from "next/og";
 import { GITHUB_USER } from "@/config/site";
+import { loadCjkFont } from "@/lib/og-font";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "Alvin Luo — The Room";
 /* 静态导出（output: export）要求 image 路由显式静态化 */
 export const dynamic = "force-static";
-
-/* CJK 字体：与博客/年度报告 OG 同一份构建期缓存 */
-let fontCache: Promise<ArrayBuffer | null> | null = null;
-function loadCjkFont() {
-  fontCache ??= fetch(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Bold.otf",
-  )
-    .then((r) => (r.ok ? r.arrayBuffer() : null))
-    .catch(() => null);
-  return fontCache;
-}
 
 /* /room 分享卡：纸面底 + 等距立方体意象 + 房间文案，与站内视觉同体系 */
 export default async function OgImage() {

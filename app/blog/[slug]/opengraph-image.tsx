@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { CATEGORY_LABELS, getAllPosts } from "@/lib/blog";
+import { loadCjkFont } from "@/lib/og-font";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -9,19 +10,6 @@ export const dynamic = "force-static";
 
 export function generateStaticParams() {
   return getAllPosts().map((p) => ({ slug: p.slug }));
-}
-
-/* 文章标题多为中文，satori 默认字体没有 CJK 字形。
-   构建时拉取 Noto Sans SC Bold（约 16MB，仅构建期），模块级 Promise 缓存：
-   12 篇文章 × 每篇一张图只抓一次。失败时降级为默认字体（中文会变方块，但不阻塞构建） */
-let fontCache: Promise<ArrayBuffer | null> | null = null;
-function loadCjkFont() {
-  fontCache ??= fetch(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Bold.otf",
-  )
-    .then((r) => (r.ok ? r.arrayBuffer() : null))
-    .catch(() => null);
-  return fontCache;
 }
 
 export default async function OgImage({

@@ -1,22 +1,12 @@
 import { ImageResponse } from "next/og";
 import { RESUME } from "@/lib/resume";
+import { loadCjkFont } from "@/lib/og-font";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "Alvin Luo — 简历 CV";
 /* 静态导出（output: export）要求 image 路由显式静态化 */
 export const dynamic = "force-static";
-
-/* CJK 字体：与博客/房间/年报 OG 同一份构建期缓存 */
-let fontCache: Promise<ArrayBuffer | null> | null = null;
-function loadCjkFont() {
-  fontCache ??= fetch(
-    "https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Bold.otf",
-  )
-    .then((r) => (r.ok ? r.arrayBuffer() : null))
-    .catch(() => null);
-  return fontCache;
-}
 
 /* /resume 分享卡：一张放在桌面上的简历纸 —— 与站内纸面视觉同体系 */
 export default async function OgImage() {

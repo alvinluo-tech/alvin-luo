@@ -6557,3 +6557,215 @@ a {
   letter-spacing: 0.12em;
   z-index: 1;
 }
+/* ================= 文章页边旁注 (Tufte Marginalia) ================= */
+/* 注意：本块在文件末尾——追加式文件里靠后才能赢同特异性（坑 #10） */
+
+/* 正文里的上标胶囊 [1] */
+.mn-ref {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25em;
+  height: 1.25em;
+  margin-left: 0.15em;
+  padding: 0 0.28em;
+  border-radius: 5px;
+  background: var(--lime);
+  color: #101400;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.58em;
+  font-weight: 800;
+  line-height: 1;
+  vertical-align: super;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+  box-shadow: 0 0 0 1px rgba(16, 20, 0, 0.35);
+}
+
+.mn-ref:hover {
+  transform: translateY(-1px) scale(1.08);
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+.mn-ref:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* 宽屏页边注列（窄屏隐藏，由底卡承担） */
+.post-notes {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  /* 有旁注时把版心加宽出第三列：正文 / 旁注 / 目录 */
+  .post-page:has(.toc) {
+    width: min(1320px, 100%);
+  }
+
+  .post-layout.has-notes {
+    grid-template-columns: minmax(0, 1fr) 250px 210px;
+    gap: 2.4rem 2.2rem;
+    align-items: start;
+  }
+
+  .post-notes {
+    display: block;
+    position: relative;
+    align-self: stretch;
+    min-height: 100%;
+  }
+
+  .mn-note {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    display: flex;
+    gap: 0.55rem;
+    padding: 0.1rem 0 0.1rem 0.9rem;
+    border-left: 1px solid var(--cm-ink-22);
+    color: var(--grey);
+    font-size: 0.78rem;
+    line-height: 1.65;
+    transition: top 0.3s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease);
+  }
+
+  /* 指向正文的连接短横线 */
+  .mn-note::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 0.62rem;
+    width: 11px;
+    height: 1px;
+    background: var(--cm-ink-30);
+  }
+
+  .mn-note:hover {
+    color: var(--ink);
+    border-left-color: var(--cm-ink-45);
+  }
+
+  .mn-note.is-active {
+    color: var(--ink);
+    border-left-color: var(--lime);
+  }
+
+  .mn-note.is-active::before {
+    background: var(--lime);
+  }
+
+  .mn-num {
+    flex: none;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--cm-ink-62-lime);
+    line-height: 1.9;
+  }
+
+  .mn-text {
+    min-width: 0;
+  }
+
+  /* 桌面端不显示底卡 */
+  .mn-sheet-wrap {
+    display: none;
+  }
+}
+
+/* 窄屏底卡（宽屏由上面的 media 隐藏） */
+.mn-sheet-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.mn-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: rgba(10, 14, 6, 0.45);
+  cursor: pointer;
+}
+
+.mn-sheet {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 6px 10px 28px -12px rgba(16, 20, 0, 0.55);
+  animation: mn-sheet-in 0.22s var(--ease);
+}
+
+@keyframes mn-sheet-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+}
+
+.mn-sheet-num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6em;
+  height: 1.6em;
+  border-radius: 6px;
+  background: var(--lime);
+  color: #101400;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.mn-sheet-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.86rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.mn-sheet-close {
+  flex: none;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mn-sheet-close:hover {
+  background: var(--lime);
+  color: #101400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mn-ref,
+  .mn-note {
+    transition: none;
+  }
+
+  .mn-sheet {
+    animation: none;
+  }
+}

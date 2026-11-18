@@ -22,7 +22,7 @@ export type PostMeta = {
   toc: { id: string; text: string; depth: number }[];
 };
 
-export type Post = PostMeta & { html: string };
+export type Post = PostMeta & { html: string; notes: string[] };
 
 const DIR = path.join(process.cwd(), "content", "blog");
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -124,13 +124,30 @@ export function getPost(slug: string): Post | null {
   const { content } = matter(raw);
   // 正文自带的一级标题与页面标题重复，去掉首个 h1
   const body = content.replace(/^\s*#\s+.+?\n/, "");
+
+  /* 旁注语法 `{{note: ...}}`：只替换代码围栏之外的片段，
+     换成上标编号胶囊；旁注正文收集到 notes，由页面渲染为侧栏/底卡 */
+  const notes: string[] = [];
+  const withRefs = body
+    .split(/(```[\s\S]*?```)/g)
+    .map((chunk, i) => {
+      // 奇数下标是代码围栏，原样保留
+      if (i % 2 === 1) return chunk;
+      return chunk.replace(/\{\{note:\s*([\s\S]*?)\}\}/g, (_m, text: string) => {
+        notes.push(text.trim());
+        const n = notes.length;
+        return `<sup class="mn-ref" id="mnr-${n}" data-mn="${n}" role="button" tabindex="0" aria-label="旁注 ${n}">${n}</sup>`;
+      });
+    })
+    .join("");
+
   const { md, toc } = makeMarkdown();
   // 正文图片处理，顺序要紧：
   //  1. 注入 width/height（构建期读文件头）—— 浏览器据此提前占位，消除长文 CLS
   //  2. 注入 loading/decoding —— 正文配图都在首屏之下，一律懒加载 + 异步解码
   //  3. 静态导出部署在子路径时，正文内的本地图片需要带上 basePath
   const html = md
-    .parse(body, { async: false })
+    .parse(withRefs, { async: false })
     .replace(/<img\s+([^>]*?)>/g, (_whole, attrs: string) => {
       const src = /src="([^"]+)"/.exec(attrs)?.[1];
       let size = "";
@@ -150,7 +167,7 @@ export function getPost(slug: string): Post | null {
       return `<img loading="lazy" decoding="async"${size} ${attrs}>`;
     })
     .replaceAll('src="/blog/', `src="${BASE_PATH}/blog/`);
-  return { ...meta, toc, html };
+  return { ...meta, toc, html, notes };
 }
 
 export const CATEGORY_LABELS: Record<string, string> = {

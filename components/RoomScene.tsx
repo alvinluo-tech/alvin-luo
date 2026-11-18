@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { T, pick, useLocale } from "./i18n";
 import { useMusic, type NowPlaying } from "@/lib/music";
-import { playClick, playVinylNeedle } from "@/lib/sfx";
+import { playClick, playVinylNeedle, playKeyThock } from "@/lib/sfx";
 import { pt, poly, boxIso, boxIsoRaised, type P } from "@/lib/iso";
 import { fetchDurhamWeather, type DurhamWeather } from "@/lib/weather";
 import "./RoomScene.css";
@@ -165,6 +165,144 @@ export default function RoomScene() {
   const hourDeg = ((hour % 12) + minute / 60) * 30;
   const minDeg = minute * 6;
 
+  /* ---------- 毛线球：可拖拽的小玩具 ---------- */
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [yarn, setYarn] = useState<P>([492, 615]);
+  const yarnRef = useRef<P>(yarn);
+  yarnRef.current = yarn;
+  const [yarnDrag, setYarnDrag] = useState(false);
+  const [yarnRot, setYarnRot] = useState(0);
+  const [swat, setSwat] = useState(false);
+  const yarnOffset = useRef<P>([0, 0]);
+  const yarnVel = useRef({ x: 0, y: 0 });
+  const yarnRaf = useRef<number | null>(null);
+  const swatTimer = useRef<number | null>(null);
+
+  /* 卸载时停掉惯性帧与拍球定时器 */
+  useEffect(() => {
+    return () => {
+      if (yarnRaf.current) cancelAnimationFrame(yarnRaf.current);
+      if (swatTimer.current) window.clearTimeout(swatTimer.current);
+    };
+  }, []);
+
+  const clampYarn = (p: P): P => [
+    Math.min(980, Math.max(150, p[0])),
+    Math.min(700, Math.max(500, p[1])),
+  ];
+
+  const svgPoint = (clientX: number, clientY: number): P | null => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const m = svg.getScreenCTM();
+    if (!m) return null;
+    const p = pt.matrixTransform(m.inverse());
+    return [p.x, p.y];
+  };
+
+  const onYarnDown = (e: React.PointerEvent<SVGGElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const p = svgPoint(e.clientX, e.clientY);
+    if (!p) return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    yarnOffset.current = [p[0] - yarnRef.current[0], p[1] - yarnRef.current[1]];
+    yarnVel.current = { x: 0, y: 0 };
+    if (yarnRaf.current) {
+      cancelAnimationFrame(yarnRaf.current);
+      yarnRaf.current = null;
+    }
+    setYarnDrag(true);
+    playKeyThock();
+  };
+
+  /* 拖动与惯性：window 级监听，拖出房间也能继续 */
+  useEffect(() => {
+    if (!yarnDrag) return;
+    let prev = { t: performance.now(), p: yarnRef.current };
+
+    const move = (e: PointerEvent) => {
+      const p = svgPoint(e.clientX, e.clientY);
+      if (!p) return;
+      const next = clampYarn([p[0] - yarnOffset.current[0], p[1] - yarnOffset.current[1]]);
+      const now = performance.now();
+      const dt = Math.max(8, now - prev.t);
+      const dx = next[0] - prev.p[0];
+      const dy = next[1] - prev.p[1];
+      // 浏览器偶尔会在松手前补一个同位置 move：不要用它把速度清零
+      if (dx !== 0 || dy !== 0) {
+        yarnVel.current = { x: (dx / dt) * 16, y: (dy / dt) * 16 };
+      }
+      prev = { t: now, p: next };
+      setYarn(next);
+      setYarnRot((r) => r + dx * 0.6);
+    };
+
+    const up = () => {
+      setYarnDrag(false);
+
+      /* 松手时靠近猫 → 猫咪拍球 + 呼噜 */
+      const [px, py] = yarnRef.current;
+      if (Math.hypot(px - 630, py - 552) < 140) {
+        playClick(760);
+        setSwat(true);
+        setMeow(true);
+        if (meowTimer.current) window.clearTimeout(meowTimer.current);
+        meowTimer.current = window.setTimeout(() => setMeow(false), 2400);
+        if (swatTimer.current) window.clearTimeout(swatTimer.current);
+        swatTimer.current = window.setTimeout(() => setSwat(false), 900);
+      }
+
+      /* 惯性滑行：reduced-motion 下直接停住 */
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      let { x, y } = yarnVel.current;
+      /* 给一次轻微加速，让「甩出去」的手感更明显；
+         阈值低一点，轻拖也能滑一小段 */
+      x *= 1.8;
+      y *= 1.8;
+      if (Math.hypot(x, y) < 0.3) return;
+
+      const step = () => {
+        x *= 0.94;
+        y *= 0.94;
+        if (Math.hypot(x, y) < 0.2) {
+          yarnRaf.current = null;
+          return;
+        }
+        setYarn(([px0, py0]) => clampYarn([px0 + x, py0 + y]));
+        setYarnRot((r) => r + x * 1.4);
+        yarnRaf.current = requestAnimationFrame(step);
+      };
+      yarnRaf.current = requestAnimationFrame(step);
+    };
+
+    window.addEventListener("pointermove", move, { passive: true });
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [yarnDrag]);
+
+  const onYarnKey = (e: React.KeyboardEvent<SVGGElement>) => {
+    const step = e.shiftKey ? 36 : 14;
+    const map: Record<string, P> = {
+      ArrowLeft: [-step, 0],
+      ArrowRight: [step, 0],
+      ArrowUp: [0, -step],
+      ArrowDown: [0, step],
+    };
+    const d = map[e.key];
+    if (!d) return;
+    e.preventDefault();
+    setYarn(([x, y]) => clampYarn([x + d[0], y + d[1]]));
+  };
+
   const pet = () => {
     playClick(900);
     setMeow(true);
@@ -198,6 +336,7 @@ export default function RoomScene() {
 
       <div className={`room-stage is-sky-${sky}`} ref={stageRef}>
         <svg
+          ref={svgRef}
           className="room-svg"
           viewBox="0 0 1200 720"
           role="img"
@@ -797,6 +936,28 @@ export default function RoomScene() {
                 </g>
               </g>
             </g>
+
+            {/* 毛线球：拖给猫玩 → 猫会伸爪拍球 */}
+            <g
+              className={yarnDrag ? "room-yarn is-dragging" : "room-yarn"}
+              transform={`translate(${yarn[0].toFixed(1)}, ${yarn[1].toFixed(1)})`}
+              role="button"
+              tabIndex={0}
+              aria-label={pick(locale, "Yarn ball — drag it to the cat", "毛线球——拖给猫玩")}
+              onPointerDown={onYarnDown}
+              onKeyDown={onYarnKey}
+            >
+              <ellipse className="room-yarn-shadow" cx={0} cy={7} rx={15} ry={5} />
+              {/* 明确的可点击热区：比球体略大，方便手指抓取 */}
+              <circle className="room-yarn-hit" r={20} fill="rgba(0,0,0,0)" />
+              <g style={{ transform: `rotate(${yarnRot.toFixed(1)}deg)` } as React.CSSProperties}>
+                <circle className="room-yarn-ball" r={12} />
+                <path className="room-yarn-strand" d="M -9 -3 q 7 -9 16 -2 q 7 6 -1 11 q -8 4 -14 -1" />
+                <path className="room-yarn-strand" d="M -11 4 q 8 7 17 3" />
+                <path className="room-yarn-strand" d="M -3 -10 q 4 10 -1 19" />
+              </g>
+              <path className="room-yarn-tail" d="M 11 7 q 20 10 32 3 q 9 -5 13 1" />
+            </g>
           </g>
 
           {/* ============ 前层：猫 ============ */}
@@ -809,7 +970,7 @@ export default function RoomScene() {
               onClick={pet}
               onKeyDown={(e) => e.key === "Enter" && pet()}
             >
-              <g className="room-cat-body">
+              <g className={swat ? "room-cat-body is-swatting" : "room-cat-body"}>
                 <ellipse className="room-cat-fur" cx={592} cy={560} rx={40} ry={21} />
                 <path className="room-cat-stripe" d="M 564 546 q 6 14 2 28 M 582 542 q 6 16 2 34 M 600 544 q 5 14 2 30" />
                 <path className="room-cat-tail" d="M 556 566 q -28 4 -26 -18" />
@@ -852,6 +1013,14 @@ export default function RoomScene() {
                 )}
               </g>
               <polygon className="room-hit" points="536,528 660,528 660,588 536,588" />
+              {/* 拍球瞬间的三道运动线 */}
+              {swat && (
+                <g className="room-swat" aria-hidden="true">
+                  <path d="M 648 556 q 16 -9 30 -2" />
+                  <path d="M 650 566 q 14 2 26 10" />
+                  <path d="M 646 548 q 12 -10 22 -12" />
+                </g>
+              )}
               {meow && (
                 <g className="room-meow" aria-hidden="true">
                   <path className="room-meow-bubble" d="M 650 500 q 30 -18 60 0 q 26 16 0 30 q -30 16 -56 2 l -14 12 l 4 -16 q -18 -14 6 -28 Z" />
