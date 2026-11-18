@@ -385,9 +385,14 @@ async function main() {
   }
 
   // 派生日期：该站最早一张有拍摄时间的照片 → YYYY.MM.DD（取 ISO 里的当地日期）
+  // 注意不能拿 items[0]：封面会被提前，封面日期不一定是最早的
   const derivedDates = new Map();
   for (const [stop, items] of groups) {
-    const first = items.find((p) => p.takenAt && Number.isFinite(Date.parse(p.takenAt)));
+    let first = null;
+    for (const p of items) {
+      if (!p.takenAt || !Number.isFinite(Date.parse(p.takenAt))) continue;
+      if (!first || Date.parse(p.takenAt) < Date.parse(first.takenAt)) first = p;
+    }
     if (!first) continue;
     const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(first.takenAt);
     if (m) {

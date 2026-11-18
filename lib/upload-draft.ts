@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 上传草稿的本地持久化（IndexedDB）。
  *
  * 两个 store：
@@ -28,6 +28,7 @@ export type DraftMeta = {
   trip: string;
   status: "ready" | "uploading" | "done" | "error";
   url?: string;
+  uploadedSize?: number;
   error?: string;
   cover: boolean;
   candidate?: string;
@@ -121,3 +122,4 @@ export async function clearDraft(): Promise<void> {
     };
   });
 }
+
