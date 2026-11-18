@@ -27,6 +27,7 @@ const DEFAULT_PUBLIC_BASE = "https://pub-996ee35c86674a47bf3eb5e069624f90.r2.dev
 const DEFAULT_ALLOWED = "https://alvin-luo.me";
 const PHOTO_PREFIX = "travel/";
 const META_PREFIX = "travel/_meta/";
+const TRIP_PREFIX = "travel/_trips/";
 const CACHE_IMMUTABLE = "public, max-age=31536000, immutable";
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_MANIFEST = 5000;
@@ -45,7 +46,7 @@ function corsHeaders(request: Request, env: Env): Record<string, string> {
   const ok = allowedOrigins(env).includes(origin);
   return {
     "Access-Control-Allow-Origin": ok ? origin : allowedOrigins(env)[0] || "",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
     "Access-Control-Allow-Headers": "authorization,content-type",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -184,38 +185,51 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   return json(meta, 201);
 }
 
-async function listMetaKeys(env: Env): Promise<string[]> {
+async function listKeys(env: Env, prefix: string): Promise<string[]> {
   const keys: string[] = [];
   let cursor: string | undefined;
   do {
-    const page = await env.PHOTOS.list({ prefix: META_PREFIX, limit: 1000, cursor });
+    const page = await env.PHOTOS.list({ prefix, limit: 1000, cursor });
     for (const obj of page.objects) keys.push(obj.key);
     cursor = page.truncated ? page.cursor : undefined;
   } while (cursor && keys.length < MAX_MANIFEST);
   return keys;
 }
 
-async function handleManifest(env: Env): Promise<Response> {
-  const keys = await listMetaKeys(env);
-  const photos: Record<string, unknown>[] = [];
-
+async function readJsonObjects(env: Env, keys: string[]): Promise<Record<string, unknown>[]> {
+  const rows: Record<string, unknown>[] = [];
   for (let i = 0; i < keys.length; i += 25) {
     const chunk = keys.slice(i, i + 25);
-    const rows = await Promise.all(
+    const parsed = await Promise.all(
       chunk.map(async (key) => {
         const obj = await env.PHOTOS.get(key);
         if (!obj) return null;
         try {
-          return JSON.parse(await obj.text());
+          return JSON.parse(await obj.text()) as Record<string, unknown>;
         } catch {
           return null;
         }
       })
     );
-    for (const row of rows) {
-      if (row && typeof row.url === "string" && typeof row.trip === "string") photos.push(row);
-    }
+    for (const row of parsed) if (row) rows.push(row);
   }
+  return rows;
+}
+
+async function handleManifest(env: Env): Promise<Response> {
+  const [metaKeys, tripKeys] = await Promise.all([
+    listKeys(env, META_PREFIX),
+    listKeys(env, TRIP_PREFIX),
+  ]);
+
+  const [metaRows, tripRows] = await Promise.all([
+    readJsonObjects(env, metaKeys),
+    readJsonObjects(env, tripKeys),
+  ]);
+
+  const photos = metaRows.filter(
+    (row) => typeof row.url === "string" && typeof row.trip === "string"
+  );
 
   photos.sort((a, b) => {
     const ta = Date.parse(String(a.takenAt || ""));
@@ -224,11 +238,114 @@ async function handleManifest(env: Env): Promise<Response> {
     return String(a.key).localeCompare(String(b.key));
   });
 
+  const trips = tripRows
+    .filter(
+      (row) =>
+        typeof row.id === "string" &&
+        typeof row.country === "string" &&
+        typeof row.place === "string" &&
+        Array.isArray(row.coord)
+    )
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+
   return json(
-    { count: photos.length, photos },
+    { count: photos.length, photos, trips },
     200,
     { "Cache-Control": "public, max-age=60", "X-Robots-Tag": "noindex" }
   );
+}
+
+/** 新建行程：写 travel/_trips/<id>.json，构建时并进 TRIPS */
+async function handleTrip(request: Request, env: Env): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return json({ error: "expected application/json" }, 400);
+  }
+
+  const id = String(body.id ?? "");
+  if (!/^\d{2}$/.test(id)) return json({ error: "id must be two digits" }, 400);
+
+  const country = String(body.country ?? "").trim().slice(0, 40);
+  const countryEn = String(body.countryEn ?? "").trim().slice(0, 40) || undefined;
+  const place = String(body.place ?? "").trim().slice(0, 80);
+  if (!country || !place) return json({ error: "country and place are required" }, 400);
+
+  const coord = body.coord;
+  if (
+    !Array.isArray(coord) ||
+    coord.length !== 2 ||
+    !coord.every((n) => typeof n === "number" && Number.isFinite(n))
+  ) {
+    return json({ error: "coord must be [lng, lat]" }, 400);
+  }
+  const [lng, lat] = coord as [number, number];
+  if (lng < -180 || lng > 180 || lat < -90 || lat > 90) {
+    return json({ error: "coord out of range" }, 400);
+  }
+
+  const key = `${TRIP_PREFIX}${id}.json`;
+  const existing = await env.PHOTOS.get(key);
+  if (existing) {
+    const data = (await existing.json().catch(() => null)) as Record<string, unknown> | null;
+    if (data?.place && data.place !== place) {
+      return json({ error: `trip ${id} already exists (${data.place})` }, 409);
+    }
+  }
+
+  const trip = {
+    id,
+    country,
+    countryEn,
+    place,
+    // 坐标压到两位小数（约 1km），够地图用又不暴露精确位置
+    coord: [Math.round(lng * 100) / 100, Math.round(lat * 100) / 100],
+    createdAt: new Date().toISOString(),
+  };
+
+  await env.PHOTOS.put(key, JSON.stringify(trip), {
+    httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
+  });
+
+  return json(trip, existing ? 200 : 201);
+}
+
+/** 修正已上传照片的归属（只改 sidecar；对象 key 保持原样，构建时按 sidecar 的 trip 分组） */
+async function handlePhotoPatch(request: Request, env: Env): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return json({ error: "expected application/json" }, 400);
+  }
+
+  const key = String(body.key ?? "");
+  if (!/^travel\/\d{2}-[^/]+\.(webp|jpe?g|png)$/i.test(key)) {
+    return json({ error: "invalid photo key" }, 400);
+  }
+  const trip = String(body.trip ?? "");
+  if (!/^\d{2}$/.test(trip)) return json({ error: "trip must be two digits" }, 400);
+
+  const metaKey = metaKeyFor(key);
+  const obj = await env.PHOTOS.get(metaKey);
+  if (!obj) return json({ error: "photo metadata not found" }, 404);
+
+  let meta: Record<string, unknown>;
+  try {
+    meta = JSON.parse(await obj.text()) as Record<string, unknown>;
+  } catch {
+    return json({ error: "photo metadata is corrupted" }, 500);
+  }
+
+  meta.trip = trip;
+  meta.updatedAt = new Date().toISOString();
+
+  await env.PHOTOS.put(metaKey, JSON.stringify(meta), {
+    httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
+  });
+
+  return json(meta, 200);
 }
 
 function githubEnv(env: Env) {
@@ -242,7 +359,8 @@ function githubEnv(env: Env) {
 
 async function handlePublish(env: Env): Promise<Response> {
   const { token, repo, workflow, ref } = githubEnv(env);
-  if (!token || !repo) return json({ error: "GitHub publish is not configured" }, 501);
+  if (!token) return json({ error: "GITHUB_TOKEN secret is not set" }, 501);
+  if (!repo) return json({ error: "GITHUB_REPO var is not set" }, 501);
 
   const res = await fetch(
     `https://api.github.com/repos/${repo}/actions/workflows/${encodeURIComponent(workflow)}/dispatches`,
@@ -267,7 +385,8 @@ async function handlePublish(env: Env): Promise<Response> {
 
 async function handleStatus(env: Env): Promise<Response> {
   const { token, repo, workflow } = githubEnv(env);
-  if (!token || !repo) return json({ error: "GitHub status is not configured" }, 501);
+  if (!token) return json({ error: "GITHUB_TOKEN secret is not set" }, 501);
+  if (!repo) return json({ error: "GITHUB_REPO var is not set" }, 501);
 
   const res = await fetch(
     `https://api.github.com/repos/${repo}/actions/workflows/${encodeURIComponent(workflow)}/runs?per_page=1`,
@@ -319,11 +438,30 @@ export default {
 
     try {
       if (url.pathname === "/health" && request.method === "GET") {
-        return withCors(json({ ok: true, service: "travel-upload" }, 200));
+        return withCors(
+          json(
+            {
+              ok: true,
+              service: "travel-upload",
+              github: { configured: Boolean(env.GITHUB_TOKEN && env.GITHUB_REPO) },
+            },
+            200
+          )
+        );
       }
 
       if (url.pathname === "/manifest" && request.method === "GET") {
         return withCors(await handleManifest(env));
+      }
+
+      if (url.pathname === "/trip" && request.method === "POST") {
+        if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
+        return withCors(await handleTrip(request, env));
+      }
+
+      if (url.pathname === "/photo" && request.method === "PATCH") {
+        if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
+        return withCors(await handlePhotoPatch(request, env));
       }
 
       if (url.pathname === "/upload" && request.method === "POST") {

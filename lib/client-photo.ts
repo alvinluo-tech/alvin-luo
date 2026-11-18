@@ -18,9 +18,13 @@ export type ConvertedPhoto = {
 };
 
 export type TripSuggestion = {
+  /** 50km 内，直接归入 */
   trip?: string;
+  /** 50–200km，只是候选，需要用户确认 */
+  candidate?: string;
+  /** 最近的站点（无论多远），用于提示 */
+  nearest?: string;
   distanceKm?: number;
-  ambiguous: boolean;
 };
 
 export const MAX_EDGE = 2000;
@@ -65,7 +69,7 @@ export async function readPhotoMeta(file: File): Promise<PhotoMeta> {
   }
 }
 
-function haversineKm(a: [number, number], b: [number, number]): number {
+export function distanceKm(a: [number, number], b: [number, number]): number {
   const R = 6371;
   const toRad = (d: number) => (d * Math.PI) / 180;
   const [lng1, lat1] = a;
@@ -77,18 +81,20 @@ function haversineKm(a: [number, number], b: [number, number]): number {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/** 用照片 GPS 找最近的站点；近距离多站（如索伦托/波西塔塔）标记为需要确认。 */
+/**
+ * 用照片 GPS 找站点。只有 50km 内才自动归入；50–200km 只给候选；
+ * 更远（比如米兰不在清单里）不猜，交给用户选或新建行程。
+ */
 export function suggestTrip(gps?: [number, number]): TripSuggestion {
-  if (!gps) return { ambiguous: false };
-  const ranked = TRIPS.map((t) => ({ id: t.img, d: haversineKm(gps, t.coord) })).sort((a, b) => a.d - b.d);
+  if (!gps) return {};
+  const ranked = TRIPS.map((t) => ({ id: t.img, d: distanceKm(gps, t.coord) })).sort((a, b) => a.d - b.d);
   const best = ranked[0];
-  if (!best || best.d > 200) return { ambiguous: false };
-  const second = ranked[1];
-  return {
-    trip: best.id,
-    distanceKm: Math.round(best.d),
-    ambiguous: Boolean(second && second.d - best.d < 50),
-  };
+  if (!best) return {};
+
+  const distanceKmRounded = Math.round(best.d);
+  if (best.d <= 50) return { trip: best.id, nearest: best.id, distanceKm: distanceKmRounded };
+  if (best.d <= 200) return { candidate: best.id, nearest: best.id, distanceKm: distanceKmRounded };
+  return { nearest: best.id, distanceKm: distanceKmRounded };
 }
 
 function loadImage(blob: Blob): Promise<HTMLImageElement> {

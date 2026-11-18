@@ -13,7 +13,7 @@
  *   3) 本地 public/travel/{img}.webp（入库图片）
  * ============================================================ */
 
-import { TRIP_DATE, TRIP_PHOTOS, type GeneratedTripPhoto } from "./trip-photos.generated";
+import { EXTRA_TRIPS, TRIP_DATE, TRIP_PHOTOS, type GeneratedTripPhoto } from "./trip-photos.generated";
 
 export type TripPhoto = GeneratedTripPhoto;
 
@@ -66,7 +66,7 @@ export function tripPhotoSrc(
   return null;
 }
 
-export const TRIPS: Trip[] = [
+const HAND_TRIPS: Trip[] = [
   /* ---------- 中国 ---------- */
   {
     img: "05",
@@ -444,6 +444,9 @@ export const TRIPS: Trip[] = [
     coord: [14.51, 35.9],
   },
 ];
+
+/** 全部站点 = 手写 + 上传页新建（构建时从 R2 manifest 生成） */
+export const TRIPS: Trip[] = [...HAND_TRIPS, ...EXTRA_TRIPS];
 
 /** 国家显示名：英文模式优先用 countryEn（国家名是数据，UI 按 locale 取） */
 export function countryLabel(trip: Trip, locale: "en" | "zh") {

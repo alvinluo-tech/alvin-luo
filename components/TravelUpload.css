@@ -461,3 +461,204 @@
     transition: none;
   }
 }
+
+/* ---------- 未匹配 / 新建行程 ---------- */
+
+.upload-item.is-unmatched {
+  border-color: color-mix(in srgb, #d97706 55%, transparent);
+  background: color-mix(in srgb, #f59e0b 7%, transparent);
+}
+
+.upload-info em.is-unmatched {
+  background: color-mix(in srgb, #f59e0b 20%, transparent);
+  color: #8a4b00;
+}
+
+[data-theme="dark"] .upload-info em.is-unmatched {
+  color: #f2c879;
+}
+
+.upload-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.upload-suggest button {
+  font: inherit;
+  font-size: 0.72rem;
+  padding: 0.26rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.upload-suggest button:hover {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: #101400;
+}
+
+.upload-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(16, 20, 0, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.upload-modal-card {
+  width: min(430px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 16px;
+  background: var(--paper);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.upload-modal-card h2 {
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.upload-modal-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--grey);
+}
+
+.upload-modal-card input {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+
+.upload-modal-card input:focus {
+  outline: 2px solid var(--lime);
+  outline-offset: 1px;
+}
+
+.upload-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.3rem;
+}
+
+.upload-modal-actions button {
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  cursor: pointer;
+}
+
+.upload-modal-actions button.is-primary {
+  background: var(--lime);
+  color: #101400;
+  border-color: var(--lime);
+}
+
+/* ---------- 最近上传 / 修正归属 ---------- */
+
+.upload-history {
+  margin-top: 1.6rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 20%, transparent);
+}
+
+.upload-history summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--grey);
+  list-style: none;
+}
+
+.upload-history summary::-webkit-details-marker {
+  display: none;
+}
+
+.upload-history summary::before {
+  content: "▸ ";
+}
+
+.upload-history[open] summary::before {
+  content: "▾ ";
+}
+
+.upload-history summary span {
+  opacity: 0.7;
+}
+
+.upload-history ul {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 42vh;
+  overflow: auto;
+}
+
+.upload-history li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.7rem;
+  align-items: center;
+  font-size: 0.76rem;
+  color: var(--grey);
+}
+
+.upload-history-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-history select {
+  font: inherit;
+  font-size: 0.76rem;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  border-radius: 6px;
+  padding: 0.3rem 0.45rem;
+  max-width: 13rem;
+}
+
+.upload-history a {
+  color: var(--ink);
+  border-bottom: 1px solid currentColor;
+}
+
+@media (max-width: 720px) {
+  .upload-history li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .upload-history a {
+    grid-column: 2;
+    justify-self: end;
+  }
+}

@@ -15,6 +15,17 @@ export type GeneratedTripPhoto = {
   caption?: string;
 };
 
+/** 上传页新建、还没写进 trips.ts 的行程（构建时并进 TRIPS） */
+export type GeneratedTrip = {
+  img: string;
+  country: string;
+  countryEn?: string;
+  place: string;
+  date: string;
+  note: string;
+  coord: [number, number];
+};
+
 /** 站点编号 → 照片（第一张为封面） */
 export const TRIP_PHOTOS: Record<string, GeneratedTripPhoto[]> = {
 
@@ -27,5 +38,10 @@ export const TRIP_DATE: Record<string, string> = {
 
 /** 全局时间线：按拍摄时间升序，供未来的时间轨迹地图使用 */
 export const PHOTO_TIMELINE: (GeneratedTripPhoto & { trip: string })[] = [
+
+];
+
+/** 上传页新建的行程 */
+export const EXTRA_TRIPS: GeneratedTrip[] = [
 
 ];

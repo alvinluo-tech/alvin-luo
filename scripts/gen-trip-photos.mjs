@@ -61,18 +61,45 @@ function normalize(value, keyHint) {
   };
 }
 
+function normalizeTrip(value) {
+  if (!value || typeof value !== "object") return null;
+  const id = String(value.id ?? value.img ?? "");
+  if (!/^\d{2}$/.test(id)) return null;
+  const coord = Array.isArray(value.coord) && value.coord.length === 2
+    ? [Number(value.coord[0]), Number(value.coord[1])]
+    : null;
+  if (!value.country || !value.place || !coord || !coord.every(Number.isFinite)) return null;
+  return {
+    img: id,
+    country: String(value.country),
+    countryEn: value.countryEn ? String(value.countryEn) : undefined,
+    place: String(value.place),
+    coord,
+  };
+}
+
 function readManifest(raw) {
   const text = String(raw).trim();
-  if (!text) return [];
+  if (!text) return { photos: [], trips: [] };
 
   if (text.startsWith("{") || text.startsWith("[")) {
     const data = JSON.parse(text);
-    if (Array.isArray(data)) return data.map((v) => normalize(v)).filter(Boolean);
-    if (Array.isArray(data.photos)) return data.photos.map((v) => normalize(v)).filter(Boolean);
-    if (Array.isArray(data.items)) return data.items.map((v) => normalize(v)).filter(Boolean);
-    return Object.entries(data)
-      .map(([key, value]) => normalize(value, key))
-      .filter(Boolean);
+    if (Array.isArray(data)) return { photos: data.map((v) => normalize(v)).filter(Boolean), trips: [] };
+    if (Array.isArray(data.photos) || Array.isArray(data.trips)) {
+      return {
+        photos: (data.photos || []).map((v) => normalize(v)).filter(Boolean),
+        trips: (data.trips || []).map((v) => normalizeTrip(v)).filter(Boolean),
+      };
+    }
+    if (Array.isArray(data.items)) {
+      return { photos: data.items.map((v) => normalize(v)).filter(Boolean), trips: [] };
+    }
+    return {
+      photos: Object.entries(data)
+        .map(([key, value]) => normalize(value, key))
+        .filter(Boolean),
+      trips: [],
+    };
   }
 
   // photo_links.txt 形态：`key: url`
@@ -86,7 +113,7 @@ function readManifest(raw) {
     const url = t.slice(idx + 2).trim();
     if (key && url) rows.push({ key, url });
   }
-  return rows;
+  return { photos: rows, trips: [] };
 }
 
 /* ---------- 解析编号 ---------- */
@@ -125,7 +152,7 @@ function renderPhoto(p) {
   return `{ ${parts.join(", ")} }`;
 }
 
-function render(groups, timeline, derivedDates) {
+function render(groups, timeline, derivedDates, extraTrips = []) {
   const stops = [...groups.keys()].sort();
   const photoLines = stops
     .map((stop) => {
@@ -146,6 +173,16 @@ function render(groups, timeline, derivedDates) {
     })
     .join("\n");
 
+  const tripLines = [...extraTrips]
+    .sort((a, b) => a.img.localeCompare(b.img))
+    .map((t) => {
+      const countryEn = t.countryEn ? `countryEn: ${esc(t.countryEn)}, ` : "";
+      return `  { img: ${esc(t.img)}, country: ${esc(t.country)}, ${countryEn}place: ${esc(
+        t.place
+      )}, date: "", note: "", coord: [${t.coord[0]}, ${t.coord[1]}] },`;
+    })
+    .join("\n");
+
   return `/* 由 scripts/gen-trip-photos.mjs 自动生成 —— 请勿手改
  *
  * 用途：R2 批量上传后，把「站点编号 → 照片列表」注入旅行轨迹页。
@@ -163,6 +200,17 @@ export type GeneratedTripPhoto = {
   caption?: string;
 };
 
+/** 上传页新建、还没写进 trips.ts 的行程（构建时并进 TRIPS） */
+export type GeneratedTrip = {
+  img: string;
+  country: string;
+  countryEn?: string;
+  place: string;
+  date: string;
+  note: string;
+  coord: [number, number];
+};
+
 /** 站点编号 → 照片（第一张为封面） */
 export const TRIP_PHOTOS: Record<string, GeneratedTripPhoto[]> = {
 ${photoLines}
@@ -177,6 +225,11 @@ ${dateLines}
 export const PHOTO_TIMELINE: (GeneratedTripPhoto & { trip: string })[] = [
 ${timelineBody}
 ];
+
+/** 上传页新建的行程 */
+export const EXTRA_TRIPS: GeneratedTrip[] = [
+${tripLines}
+];
 `;
 }
 
@@ -190,9 +243,19 @@ export type GeneratedTripPhoto = {
   h?: number;
   caption?: string;
 };
+export type GeneratedTrip = {
+  img: string;
+  country: string;
+  countryEn?: string;
+  place: string;
+  date: string;
+  note: string;
+  coord: [number, number];
+};
 export const TRIP_PHOTOS: Record<string, GeneratedTripPhoto[]> = {};
 export const TRIP_DATE: Record<string, string> = {};
 export const PHOTO_TIMELINE: (GeneratedTripPhoto & { trip: string })[] = [];
+export const EXTRA_TRIPS: GeneratedTrip[] = [];
 `;
 }
 
@@ -215,9 +278,13 @@ async function main() {
 
   if (checkOnly) {
     const existing = fs.existsSync(OUT_FILE) ? fs.readFileSync(OUT_FILE, "utf8") : "";
-    const ids = [...existing.matchAll(/^  "(\d{2})": \[/gm)].map((m) => m[1]);
-    const unknown = ids.filter((id) => !stops.has(id));
-    console.log(`生成文件里 ${ids.length} 个有照片的站点；trips.ts 共 ${stops.size} 个站点。`);
+    const photoIds = [...existing.matchAll(/^  "(\d{2})": \[/gm)].map((m) => m[1]);
+    const tripIds = [...existing.matchAll(/img: "(\d{2})"/g)].map((m) => m[1]);
+    const allowed = new Set([...stops, ...tripIds]);
+    const unknown = photoIds.filter((id) => !allowed.has(id));
+    console.log(
+      `生成文件里 ${photoIds.length} 个有照片的站点、${tripIds.length} 个新建行程；trips.ts 手写 ${stops.size} 个站点。`
+    );
     if (unknown.length) {
       console.error(`✗ 生成文件引用了不存在的站点编号：${unknown.join(", ")}`);
       process.exit(1);
@@ -259,7 +326,7 @@ async function main() {
     process.exit(1);
   }
 
-  const rows = readManifest(raw);
+  const { photos: rows, trips: extraTrips } = readManifest(raw);
   for (const row of rows) {
     if (!/^https?:\/\//.test(row.url)) {
       if (!baseUrl) {
@@ -281,9 +348,10 @@ async function main() {
     groups.get(stop).push(row);
   }
 
-  const unknown = [...groups.keys()].filter((id) => !stops.has(id));
+  const allowed = new Set([...stops, ...extraTrips.map((t) => t.img)]);
+  const unknown = [...groups.keys()].filter((id) => !allowed.has(id));
   if (unknown.length) {
-    console.warn(`⚠ 这些编号在 data/trips.ts 里不存在，已跳过：${unknown.join(", ")}`);
+    console.warn(`⚠ 这些编号在 trips.ts / 新建行程里都找不到，已跳过：${unknown.join(", ")}`);
     for (const id of unknown) groups.delete(id);
   }
 
@@ -313,7 +381,7 @@ async function main() {
   timeline.sort((a, b) => Date.parse(a.takenAt) - Date.parse(b.takenAt));
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, render(groups, timeline, derivedDates), "utf8");
+  fs.writeFileSync(outPath, render(groups, timeline, derivedDates, extraTrips), "utf8");
 
   const total = [...groups.values()].reduce((n, items) => n + items.length, 0);
   console.log(
