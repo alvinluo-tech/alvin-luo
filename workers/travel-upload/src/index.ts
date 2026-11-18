@@ -216,6 +216,7 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   await env.PHOTOS.put(metaKeyFor(key), JSON.stringify(meta), {
     httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
   });
+  invalidateManifest();
 
   return json(meta, 201);
 }
@@ -251,7 +252,19 @@ async function readJsonObjects(env: Env, keys: string[]): Promise<Record<string,
   return rows;
 }
 
-async function handleManifest(env: Env): Promise<Response> {
+/* ---------------- manifest 短缓存（isolate 内存） ----------------
+ * /manifest 公开无鉴权，每次请求都要 list + 逐条读全部 sidecar
+ * （25 张 = 26 次 R2 读，5000 张 = 5000 次/请求），必须 memo。
+ * TTL 30s；任何写操作（上传/修改/删除/新建行程）立即失效——
+ * publish 触发的 CI 拉取发生在几分钟之后，不会读到旧清单。 */
+let manifestCache: { at: number; body: string } | null = null;
+const MANIFEST_TTL_MS = 30_000;
+
+function invalidateManifest(): void {
+  manifestCache = null;
+}
+
+async function buildManifestBody(env: Env): Promise<string> {
   const [metaKeys, tripKeys] = await Promise.all([
     listKeys(env, META_PREFIX),
     listKeys(env, TRIP_PREFIX),
@@ -283,11 +296,22 @@ async function handleManifest(env: Env): Promise<Response> {
     )
     .sort((a, b) => String(a.id).localeCompare(String(b.id)));
 
-  return json(
-    { count: photos.length, photos, trips },
-    200,
-    { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" }
-  );
+  return JSON.stringify({ count: photos.length, photos, trips });
+}
+
+async function handleManifest(env: Env): Promise<Response> {
+  const now = Date.now();
+  if (!manifestCache || now - manifestCache.at >= MANIFEST_TTL_MS) {
+    manifestCache = { at: now, body: await buildManifestBody(env) };
+  }
+  return new Response(manifestCache.body, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex",
+    },
+  });
 }
 
 /** 新建行程：写 travel/_trips/<id>.json，构建时并进 TRIPS */
@@ -342,6 +366,7 @@ async function handleTrip(request: Request, env: Env): Promise<Response> {
   await env.PHOTOS.put(key, JSON.stringify(trip), {
     httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
   });
+  invalidateManifest();
 
   return json(trip, existing ? 200 : 201);
 }
@@ -401,6 +426,7 @@ async function handlePhotoPatch(request: Request, env: Env): Promise<Response> {
   await env.PHOTOS.put(metaKey, JSON.stringify(meta), {
     httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
   });
+  invalidateManifest();
 
   return json(meta, 200);
 }
@@ -433,6 +459,7 @@ async function handlePhotoDelete(request: Request, env: Env): Promise<Response> 
   await env.PHOTOS.delete(key);
   if (obj) await env.PHOTOS.delete(metaKey);
   if (meta && typeof meta.thumbKey === "string") await env.PHOTOS.delete(meta.thumbKey);
+  invalidateManifest();
 
   return json({ ok: true, key }, 200);
 }
@@ -529,7 +556,27 @@ async function lookupPlace(lat: number, lng: number): Promise<GeoPlace | null> {
   return photon ? parsePhoton(photon, lat, lng) : null;
 }
 
-/** 反向地理编码：坐标只传 2 位小数（约 1km），结果缓存到 R2 */
+/** 反向地理编码 + R2 缓存（坐标先取 2 位小数，约 1km）。返回 null = 上游都失败 */
+async function geocodeWithCache(env: Env, lat: number, lng: number): Promise<GeoPlace | null> {
+  const lat2 = Math.round(lat * 100) / 100;
+  const lng2 = Math.round(lng * 100) / 100;
+  const key = `${GEO_PREFIX}${lat2},${lng2}.json`;
+
+  const cached = await env.PHOTOS.get(key);
+  if (cached) {
+    const data = await cached.json().catch(() => null);
+    if (data) return data as GeoPlace;
+  }
+
+  const out = await lookupPlace(lat2, lng2);
+  if (!out) return null;
+
+  await env.PHOTOS.put(key, JSON.stringify(out), {
+    httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
+  });
+  return out;
+}
+
 async function handleGeocode(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const lat = Number(url.searchParams.get("lat"));
@@ -545,22 +592,8 @@ async function handleGeocode(request: Request, env: Env): Promise<Response> {
     return json({ error: "invalid coords" }, 400);
   }
 
-  const lat2 = Math.round(lat * 100) / 100;
-  const lng2 = Math.round(lng * 100) / 100;
-  const key = `${GEO_PREFIX}${lat2},${lng2}.json`;
-
-  const cached = await env.PHOTOS.get(key);
-  if (cached) {
-    const data = await cached.json().catch(() => null);
-    if (data) return json(data, 200, { "Cache-Control": "public, max-age=86400" });
-  }
-
-  const out = await lookupPlace(lat2, lng2);
+  const out = await geocodeWithCache(env, lat, lng);
   if (!out) return json({ error: "geocode failed" }, 502);
-
-  await env.PHOTOS.put(key, JSON.stringify(out), {
-    httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
-  });
   return json(out, 200, { "Cache-Control": "public, max-age=86400" });
 }
 
@@ -654,8 +687,16 @@ export default {
 
     try {
       if (url.pathname === "/health" && request.method === "GET") {
+        /* 诊断口（geocode/probe/photon）会打上游第三方服务，必须带 token：
+           否则任何人都能刷 /health 让 Worker 出口 IP 被 Nominatim 限流。
+           geocode=1 走 R2 缓存（固定坐标只有首次会真正请求上游）。 */
+        const diagnostics = url.searchParams.get("geocode") || url.searchParams.get("photon");
+        if (diagnostics && !authorized(request, env)) {
+          return withCors(json({ error: "unauthorized" }, 401));
+        }
+
         if (url.searchParams.get("geocode") === "1") {
-          const sample = await lookupPlace(63.419, -19.006);
+          const sample = await geocodeWithCache(env, 63.419, -19.006);
           return withCors(
             json(
               {
@@ -708,7 +749,7 @@ export default {
         }
 
         let photon: number | string | undefined;
-        if (url.searchParams.get("photon") === "1") {
+        if (diagnostics === "1" && url.searchParams.get("photon") === "1") {
           const ctrl = new AbortController();
           const timer = setTimeout(() => ctrl.abort(), 8000);
           try {

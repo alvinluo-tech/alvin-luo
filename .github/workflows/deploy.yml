@@ -25,6 +25,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # 默认就用线上 Worker；想换地址再在仓库变量里覆盖
+      PHOTO_MANIFEST_URL: ${{ vars.PHOTO_MANIFEST_URL || 'https://upload.alvin-luo.me/manifest' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -47,19 +50,65 @@ jobs:
             echo "value=/$NAME" >> "$GITHUB_OUTPUT"
           fi
 
-      # 同步 R2 照片清单（仓库变量 PHOTO_MANIFEST_URL）。
-      # 拉取失败时脚本会保留旧文件并 exit 0，不会打断构建；
+      # 上一次成功构建的照片清单：Worker 短暂不可达时的兜底。
+      # 仓库里提交的生成文件是空表，若不做这一步，失败兜底等于「全站照片静默消失」。
+      - name: Restore last trip photos manifest
+        if: env.PHOTO_MANIFEST_URL != ''
+        uses: actions/cache/restore@v4
+        with:
+          path: data/trip-photos.generated.ts
+          key: trip-photos-manifest-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            trip-photos-manifest-
+
+      # 同步 R2 照片清单：失败重试 3 次；仍失败则沿用上面恢复的历史清单继续构建。
       # 变量没配且生成文件不存在时，写空表兜底。
       - name: Sync trip photos
-        env:
-          # 默认就用线上 Worker；想换地址再在仓库变量里覆盖
-          PHOTO_MANIFEST_URL: ${{ vars.PHOTO_MANIFEST_URL || 'https://upload.alvin-luo.me/manifest' }}
         run: |
+          ok=""
           if [ -n "$PHOTO_MANIFEST_URL" ]; then
-            node scripts/gen-trip-photos.mjs --remote "$PHOTO_MANIFEST_URL"
-          elif [ ! -f data/trip-photos.generated.ts ]; then
-            node scripts/gen-trip-photos.mjs --in /dev/null
+            for i in 1 2 3; do
+              echo "attempt $i: $PHOTO_MANIFEST_URL"
+              if node scripts/gen-trip-photos.mjs --remote "$PHOTO_MANIFEST_URL" --strict; then
+                ok=1
+                break
+              fi
+              sleep $((i * 5))
+            done
+          else
+            # 没配清单地址：交给仓库里提交的生成文件，没有才写空表
+            [ -f data/trip-photos.generated.ts ] || node scripts/gen-trip-photos.mjs --in /dev/null
+            ok=1
           fi
+
+          # 只有「配置了地址且重试全失败」才走降级分支
+          if [ -n "$PHOTO_MANIFEST_URL" ] && [ -z "$ok" ]; then
+            if grep -q 'url: "' data/trip-photos.generated.ts 2>/dev/null; then
+              echo "::warning::照片清单拉取失败，已沿用上一次构建的 manifest（可能缺最新照片），构建继续。"
+            else
+              node scripts/gen-trip-photos.mjs --in /dev/null
+              echo "::error::照片清单拉取失败且没有历史清单——本次部署将不含上传照片。Worker 恢复后重新发布即可。"
+            fi
+          fi
+
+      # 是否真的有照片（生成的条目行是 url: "..."；类型定义 url: string 不算）
+      - name: Check manifest validity
+        if: always()
+        id: manifest
+        run: |
+          if [ -f data/trip-photos.generated.ts ] && grep -q 'url: "' data/trip-photos.generated.ts; then
+            echo "has_photos=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_photos=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 只缓存带真实照片的清单：空表入缓存会污染之后所有兜底
+      - name: Save trip photos manifest cache
+        if: env.PHOTO_MANIFEST_URL != '' && steps.manifest.outputs.has_photos == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: data/trip-photos.generated.ts
+          key: trip-photos-manifest-${{ github.run_id }}-${{ github.run_attempt }}
 
       # 注入 basePath + 静态导出开关（静态模式没有 /api 代理，NOW PLAYING 走降级）
       - name: Build

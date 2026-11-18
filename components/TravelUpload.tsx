@@ -390,7 +390,21 @@ export default function TravelUpload() {
     localStorage.setItem(TRIP_KEY, id);
   }
 
-  async function geocode(gps: [number, number]): Promise<{ geo?: GeoPlace; error?: string }> {
+  /** 地名解析串行队列：Worker 端 geopace 1.1s/条，一次选十几张不同地点的照片
+      时，并发请求会把排在后面的拖过超时线（报「解析失败」）；客户端排队后，
+      每个请求只需覆盖自己的上游耗时，同坐标的重复项命中 geoCache 直接返回。 */
+  const geoQueue = useRef<Promise<void>>(Promise.resolve());
+
+  function geocode(gps: [number, number]): Promise<{ geo?: GeoPlace; error?: string }> {
+    const run = geoQueue.current.then(() => doGeocode(gps));
+    geoQueue.current = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  async function doGeocode(gps: [number, number]): Promise<{ geo?: GeoPlace; error?: string }> {
     const key = `${gps[1].toFixed(2)},${gps[0].toFixed(2)}`;
     if (geoCache.current.has(key)) {
       const cached = geoCache.current.get(key);
@@ -401,7 +415,7 @@ export default function TravelUpload() {
         `${API}/geocode?lat=${encodeURIComponent(gps[1])}&lng=${encodeURIComponent(gps[0])}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-          signal: timeoutSignal(12_000),
+          signal: timeoutSignal(30_000),
         }
       );
       if (!res.ok) return { error: `HTTP ${res.status}` };
@@ -887,7 +901,15 @@ export default function TravelUpload() {
   async function testConnection() {
     setNotice("正在连接…");
     try {
-      const res = await fetch(`${API}/health?geocode=1`, { signal: timeoutSignal(20_000) });
+      /* geocode=1 是诊断口，Worker 端已要求鉴权；这里带上 token */
+      const res = await fetch(`${API}/health?geocode=1`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: timeoutSignal(20_000),
+      });
+      if (res.status === 401) {
+        setNotice("token 无效，请重新输入");
+        return;
+      }
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         geocode?: { status?: number | string; provider?: string; label?: string };
