@@ -28,6 +28,7 @@ const DEFAULT_ALLOWED = "https://alvin-luo.me";
 const PHOTO_PREFIX = "travel/";
 const META_PREFIX = "travel/_meta/";
 const TRIP_PREFIX = "travel/_trips/";
+const THUMB_PREFIX = "travel/_thumbs/";
 const CACHE_IMMUTABLE = "public, max-age=31536000, immutable";
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_MANIFEST = 5000;
@@ -46,7 +47,7 @@ function corsHeaders(request: Request, env: Env): Record<string, string> {
   const ok = allowedOrigins(env).includes(origin);
   return {
     "Access-Control-Allow-Origin": ok ? origin : allowedOrigins(env)[0] || "",
-    "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
     "Access-Control-Allow-Headers": "authorization,content-type",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -169,6 +170,26 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
     httpMetadata: { contentType: file.type, cacheControl: CACHE_IMMUTABLE },
   });
 
+  // 可选缩略图：列表/地图只加载它，灯箱才用原图
+  const thumb = form.get("thumb");
+  let thumbKey: string | undefined;
+  let thumbUrl: string | undefined;
+  if (
+    thumb instanceof File &&
+    thumb.size > 0 &&
+    thumb.size <= 600 * 1024 &&
+    /^image\/(webp|jpeg|png)$/.test(thumb.type)
+  ) {
+    const base = key.slice(PHOTO_PREFIX.length).replace(/\.[^.]+$/, "");
+    const thumbExt =
+      thumb.type === "image/jpeg" ? "jpg" : thumb.type === "image/png" ? "png" : "webp";
+    thumbKey = `${THUMB_PREFIX}${base}.${thumbExt}`;
+    await env.PHOTOS.put(thumbKey, thumb.stream(), {
+      httpMetadata: { contentType: thumb.type, cacheControl: CACHE_IMMUTABLE },
+    });
+    thumbUrl = publicUrl(env, thumbKey);
+  }
+
   const w = Number(text(form.get("w"), 8)) || undefined;
   const h = Number(text(form.get("h"), 8)) || undefined;
   const caption = text(form.get("caption"), 300) || undefined;
@@ -177,6 +198,8 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
   const meta = {
     key,
     url: publicUrl(env, key),
+    thumbKey,
+    thumbUrl,
     trip,
     takenAt,
     w,
@@ -260,7 +283,7 @@ async function handleManifest(env: Env): Promise<Response> {
   return json(
     { count: photos.length, photos, trips },
     200,
-    { "Cache-Control": "public, max-age=60", "X-Robots-Tag": "noindex" }
+    { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" }
   );
 }
 
@@ -320,7 +343,7 @@ async function handleTrip(request: Request, env: Env): Promise<Response> {
   return json(trip, existing ? 200 : 201);
 }
 
-/** 修正已上传照片的归属（只改 sidecar；对象 key 保持原样，构建时按 sidecar 的 trip 分组） */
+/** 修改已上传照片：归属 / 图注 / 封面 */
 async function handlePhotoPatch(request: Request, env: Env): Promise<Response> {
   let body: Record<string, unknown>;
   try {
@@ -333,8 +356,16 @@ async function handlePhotoPatch(request: Request, env: Env): Promise<Response> {
   if (!/^travel\/\d{2}-[^/]+\.(webp|jpe?g|png)$/i.test(key)) {
     return json({ error: "invalid photo key" }, 400);
   }
-  const trip = String(body.trip ?? "");
-  if (!/^\d{2}$/.test(trip)) return json({ error: "trip must be two digits" }, 400);
+
+  const hasTrip = body.trip !== undefined;
+  const hasCaption = body.caption !== undefined;
+  const hasCover = body.cover !== undefined;
+  if (!hasTrip && !hasCaption && !hasCover) return json({ error: "nothing to update" }, 400);
+
+  const trip = hasTrip ? String(body.trip) : undefined;
+  if (trip !== undefined && !/^\d{2}$/.test(trip)) {
+    return json({ error: "trip must be two digits" }, 400);
+  }
 
   const metaKey = metaKeyFor(key);
   const obj = await env.PHOTOS.get(metaKey);
@@ -347,7 +378,13 @@ async function handlePhotoPatch(request: Request, env: Env): Promise<Response> {
     return json({ error: "photo metadata is corrupted" }, 500);
   }
 
-  meta.trip = trip;
+  if (trip !== undefined) meta.trip = trip;
+  if (hasCaption) {
+    const caption = String(body.caption ?? "").trim().slice(0, 300);
+    if (caption) meta.caption = caption;
+    else delete meta.caption;
+  }
+  if (hasCover) meta.cover = body.cover === true;
   meta.updatedAt = new Date().toISOString();
 
   await env.PHOTOS.put(metaKey, JSON.stringify(meta), {
@@ -355,6 +392,38 @@ async function handlePhotoPatch(request: Request, env: Env): Promise<Response> {
   });
 
   return json(meta, 200);
+}
+
+/** 删除已上传照片（对象 + sidecar + 缩略图） */
+async function handlePhotoDelete(request: Request, env: Env): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return json({ error: "expected application/json" }, 400);
+  }
+
+  const key = String(body.key ?? "");
+  if (!/^travel\/\d{2}-[^/]+\.(webp|jpe?g|png)$/i.test(key)) {
+    return json({ error: "invalid photo key" }, 400);
+  }
+
+  const metaKey = metaKeyFor(key);
+  const obj = await env.PHOTOS.get(metaKey);
+  let meta: Record<string, unknown> | null = null;
+  if (obj) {
+    try {
+      meta = JSON.parse(await obj.text()) as Record<string, unknown>;
+    } catch {
+      meta = null;
+    }
+  }
+
+  await env.PHOTOS.delete(key);
+  if (obj) await env.PHOTOS.delete(metaKey);
+  if (meta && typeof meta.thumbKey === "string") await env.PHOTOS.delete(meta.thumbKey);
+
+  return json({ ok: true, key }, 200);
 }
 
 function githubEnv(env: Env) {
@@ -471,6 +540,11 @@ export default {
       if (url.pathname === "/photo" && request.method === "PATCH") {
         if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
         return withCors(await handlePhotoPatch(request, env));
+      }
+
+      if (url.pathname === "/photo" && request.method === "DELETE") {
+        if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
+        return withCors(await handlePhotoDelete(request, env));
       }
 
       if (url.pathname === "/upload" && request.method === "POST") {

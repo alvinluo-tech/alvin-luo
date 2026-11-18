@@ -8,6 +8,8 @@
 
 export type GeneratedTripPhoto = {
   url: string;
+  /** 列表/地图用的小图；缺省时回退 url */
+  thumb?: string;
   /** 拍摄时间（ISO 8601，带偏移则保留） */
   takenAt?: string;
   w?: number;

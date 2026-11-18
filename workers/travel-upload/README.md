@@ -6,20 +6,23 @@
 
 | 方法 | 路径 | 鉴权 | 说明 |
 |:--|:--|:--|:--|
-| GET | `/health` | 无 | 部署自检 |
-| GET | `/manifest` | 无 | 聚合 `travel/_meta/*.json`，构建时同步用 |
-| POST | `/upload` | Bearer | multipart：`file` `trip` `takenAt` `w` `h` `cover` `caption` |
+| GET | `/health` | 无 | 部署自检（含 `github.configured`） |
+| GET | `/manifest` | 无 | 聚合 `travel/_meta/*.json` 与 `_trips/*.json`（`no-store`） |
+| POST | `/upload` | Bearer | multipart：`file` `thumb` `trip` `takenAt` `w` `h` `cover` |
+| PATCH | `/photo` | Bearer | 改 `trip` / `caption` / `cover` |
+| DELETE | `/photo` | Bearer | 删除照片 + sidecar + 缩略图 |
 | POST | `/publish` | Bearer | 触发 GitHub Actions `workflow_dispatch` |
 | GET | `/status` | Bearer | 最近一次构建状态 |
 
-上传成功会写两个对象：
+上传成功会写这些对象：
 
 ```
-travel/08-20261118-ab12.webp         照片本体（一年 immutable 缓存）
-travel/_meta/08-20261118-ab12.json   元数据 sidecar（key/trip/takenAt/cover…）
+travel/08-20261118-ab12.webp          照片本体（一年 immutable 缓存）
+travel/_thumbs/08-20261118-ab12.webp  列表/地图用缩略图（长边 480）
+travel/_meta/08-20261118-ab12.json    元数据 sidecar（key/trip/takenAt/thumbUrl…）
 ```
 
-GPS 只在手机端用于归站，Worker 不接收、不存储。
+GPS 只在手机端用于归站，Worker 不接收、不存储；直传的小图会先在浏览器端剥掉 EXIF/XMP。
 
 ## 首次部署
 

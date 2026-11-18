@@ -57,6 +57,9 @@ function normalize(value, keyHint) {
     w: Number.isFinite(value.w) ? Number(value.w) : undefined,
     h: Number.isFinite(value.h) ? Number(value.h) : undefined,
     caption: value.caption ? String(value.caption) : undefined,
+    thumb: value.thumbUrl ? String(value.thumbUrl) : value.thumb ? String(value.thumb) : undefined,
+    updatedAt: value.updatedAt ? String(value.updatedAt) : undefined,
+    uploadedAt: value.uploadedAt ? String(value.uploadedAt) : undefined,
     cover: value.cover === true,
   };
 }
@@ -145,6 +148,7 @@ const esc = (v) => JSON.stringify(v);
 
 function renderPhoto(p) {
   const parts = [`url: ${esc(p.url)}`];
+  if (p.thumb) parts.push(`thumb: ${esc(p.thumb)}`);
   if (p.takenAt) parts.push(`takenAt: ${esc(p.takenAt)}`);
   if (p.w) parts.push(`w: ${p.w}`);
   if (p.h) parts.push(`h: ${p.h}`);
@@ -193,6 +197,8 @@ function render(groups, timeline, derivedDates, extraTrips = []) {
 
 export type GeneratedTripPhoto = {
   url: string;
+  /** 列表/地图用的小图；缺省时回退 url */
+  thumb?: string;
   /** 拍摄时间（ISO 8601，带偏移则保留） */
   takenAt?: string;
   w?: number;
@@ -238,6 +244,8 @@ function emptyTemplate() {
   return `/* 由 scripts/gen-trip-photos.mjs 自动生成 —— 请勿手改 */
 export type GeneratedTripPhoto = {
   url: string;
+  /** 列表/地图用的小图；缺省时回退 url */
+  thumb?: string;
   takenAt?: string;
   w?: number;
   h?: number;
@@ -286,7 +294,9 @@ async function main() {
       `生成文件里 ${photoIds.length} 个有照片的站点、${tripIds.length} 个新建行程；trips.ts 手写 ${stops.size} 个站点。`
     );
     if (unknown.length) {
-      console.error(`✗ 生成文件引用了不存在的站点编号：${unknown.join(", ")}`);
+      const msg = `生成文件引用了不存在的站点编号：${unknown.join(", ")}`;
+      console.error(`✗ ${msg}`);
+      if (process.env.GITHUB_ACTIONS) console.log(`::error title=Unknown trip ids::${msg}`);
       process.exit(1);
     }
     console.log("✓ 编号全部有效");
@@ -351,15 +361,27 @@ async function main() {
   const allowed = new Set([...stops, ...extraTrips.map((t) => t.img)]);
   const unknown = [...groups.keys()].filter((id) => !allowed.has(id));
   if (unknown.length) {
-    console.warn(`⚠ 这些编号在 trips.ts / 新建行程里都找不到，已跳过：${unknown.join(", ")}`);
+    const msg = `这些编号在 trips.ts / 新建行程里都找不到，已跳过：${unknown.join(", ")}`;
+    console.warn(`⚠ ${msg}`);
+    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Unknown trip ids::${msg}`);
     for (const id of unknown) groups.delete(id);
   }
 
   // 每组排序并把封面放第一
   for (const [, items] of groups) {
     items.sort(byTime);
-    const coverIdx = items.findIndex((p) => p.cover || /[-_.]cover\./i.test(p.key));
-    if (coverIdx > 0) items.unshift(...items.splice(coverIdx, 1));
+    // 多张标了封面时，以最近一次标记的为准（updatedAt/uploadedAt）
+    const covers = items.filter((p) => p.cover || /[-_.]cover\./i.test(p.key));
+    if (covers.length) {
+      covers.sort(
+        (a, b) =>
+          (Date.parse(b.updatedAt || b.uploadedAt || "") || 0) -
+          (Date.parse(a.updatedAt || a.uploadedAt || "") || 0)
+      );
+      const chosen = covers[0];
+      const idx = items.indexOf(chosen);
+      if (idx > 0) items.unshift(...items.splice(idx, 1));
+    }
   }
 
   // 派生日期：该站最早一张有拍摄时间的照片 → YYYY.MM.DD（取 ISO 里的当地日期）
@@ -407,4 +429,5 @@ main().catch((e) => {
   console.error(`✗ ${e.stack || e.message}`);
   process.exit(1);
 });
+
 

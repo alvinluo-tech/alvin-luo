@@ -16,7 +16,7 @@ import { isMusicConfigured, useMusic, type MusicStats, type Song } from "@/lib/m
 import { GITHUB_USER, GITHUB_URL, SITE_URL } from "@/config/site";
 import { fetchGitHubYear, type GitHubYearStats } from "@/lib/github";
 import { playClick } from "@/lib/sfx";
-import { TRIPS, tripPhotoSrc } from "@/data/trips";
+import { TRIPS, tripPhotoThumb } from "@/data/trips";
 import { BOOKS } from "@/data/books";
 import "./YearReport.css";
 
@@ -536,11 +536,11 @@ export default function YearReport({ stats }: { stats: YearStats }) {
             {stats.latestTrip && (
               <div className="yr-postcard yr-anim" style={{ "--i": 3 } as React.CSSProperties}>
                 <span className={`yr-photo-frame ${tripImgFailed ? "is-fallback" : ""}`}>
-                  {!tripImgFailed && tripPhotoSrc(stats.latestTrip, BASE_PATH) ? (
+                  {!tripImgFailed && tripPhotoThumb(stats.latestTrip, BASE_PATH) ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       loading="lazy"
-                      src={tripPhotoSrc(stats.latestTrip, BASE_PATH) ?? ""}
+                      src={tripPhotoThumb(stats.latestTrip, BASE_PATH) ?? ""}
                       alt={pick(locale, stats.latestTrip.placeEn ?? stats.latestTrip.place, stats.latestTrip.place)}
                       onError={() => setTripImgFailed(true)}
                     />

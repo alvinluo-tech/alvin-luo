@@ -139,14 +139,27 @@ export default function TravelLightbox({ photos, startIndex, title, subtitle, on
         onClose();
         return;
       }
-      if (e.key === "ArrowRight") {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
         e.preventDefault();
-        go(1);
+        if (scaleRef.current > 1) {
+          const dx = e.key === "ArrowRight" ? 80 : -80;
+          commit(
+            scaleRef.current,
+            clampOffset(offsetRef.current.x + dx, offsetRef.current.y, scaleRef.current)
+          );
+        } else {
+          go(e.key === "ArrowRight" ? 1 : -1);
+        }
         return;
       }
-      if (e.key === "ArrowLeft") {
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        if (scaleRef.current <= 1) return;
         e.preventDefault();
-        go(-1);
+        const dy = e.key === "ArrowDown" ? 80 : -80;
+        commit(
+          scaleRef.current,
+          clampOffset(offsetRef.current.x, offsetRef.current.y + dy, scaleRef.current)
+        );
         return;
       }
       if (e.key === "+" || e.key === "=") {
@@ -183,7 +196,7 @@ export default function TravelLightbox({ photos, startIndex, title, subtitle, on
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [applyScale, go, onClose, resetZoom]);
+  }, [applyScale, clampOffset, commit, go, onClose, resetZoom]);
 
   /* 切图：重置缩放、加载态 */
   useEffect(() => {

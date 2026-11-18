@@ -18,7 +18,7 @@ import { feature } from "topojson-client";
 import type { Topology, Objects } from "topojson-specification";
 import type { FeatureCollection, Geometry } from "geojson";
 import worldTopology from "@/data/countries-110m.json";
-import { TRIPS, dateLabel, hasTripPhoto, tripPhotoSrc, tripPhotos } from "@/data/trips";
+import { TRIPS, dateLabel, hasTripPhoto, tripPhotoThumb, tripPhotos } from "@/data/trips";
 import { useLocale } from "./i18n";
 
 /* GitHub Pages 子路径部署：构建时内联 */
@@ -486,7 +486,7 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           loading="lazy"
-                          src={tripPhotoSrc(city, BASE_PATH) ?? ""}
+                          src={tripPhotoThumb(city, BASE_PATH) ?? ""}
                           alt={city.place}
                           className="card-photo"
                           onError={(e) => {

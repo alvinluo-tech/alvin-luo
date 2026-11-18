@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * /upload —— 手机端旅行照片上传。
@@ -43,7 +43,9 @@ type Item = {
   name: string;
   size: number;
   blob?: Blob;
+  thumb?: Blob;
   preview?: string;
+  thumbPreview?: string;
   gps?: [number, number];
   trip: string;
   candidate?: string;
@@ -54,6 +56,7 @@ type Item = {
   height: number;
   status: Status;
   url?: string;
+  uploadedSize?: number;
   error?: string;
   cover: boolean;
 };
@@ -68,8 +71,12 @@ type RunStatus = {
 type UploadedPhoto = {
   key: string;
   url: string;
+  thumbUrl?: string;
+  bytes?: number;
   trip: string;
   takenAt?: string;
+  caption?: string;
+  cover?: boolean;
 };
 
 type TripDialog = {
@@ -106,6 +113,22 @@ function mb(bytes: number): string {
 
 function statusText(s: Status): string {
   return { processing: "处理中", ready: "待上传", uploading: "上传中", done: "已上传", error: "失败" }[s];
+}
+
+function timeoutSignal(ms: number): AbortSignal | undefined {
+  const timeout = (AbortSignal as unknown as { timeout?: (n: number) => AbortSignal }).timeout;
+  try {
+    return timeout ? timeout(ms) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function friendlyError(err: unknown, fallback: string): string {
+  if (err instanceof DOMException && (err.name === "TimeoutError" || err.name === "AbortError")) {
+    return "请求超时，请检查网络后重试";
+  }
+  return err instanceof Error ? err.message : fallback;
 }
 
 /** 只把可重建状态写进 IndexedDB；Blob 单独按 id 存，避免每次改行程都重写大文件 */
@@ -161,7 +184,15 @@ export default function TravelUpload() {
         (
           data: {
             trips?: Array<{ id: string; country: string; countryEn?: string; place: string; coord: [number, number] }>;
-            photos?: Array<{ key: string; url: string; trip: string; takenAt?: string }>;
+            photos?: Array<{
+              key: string;
+              url: string;
+              thumbUrl?: string;
+              trip: string;
+              takenAt?: string;
+              caption?: string;
+              cover?: boolean;
+            }>;
           } | null
         ) => {
           if (!data) return;
@@ -179,7 +210,15 @@ export default function TravelUpload() {
               data.photos
                 .slice(-40)
                 .reverse()
-                .map((p) => ({ key: p.key, url: p.url, trip: p.trip, takenAt: p.takenAt }))
+                .map((p) => ({
+                  key: p.key,
+                  url: p.url,
+                  thumbUrl: p.thumbUrl,
+                  trip: p.trip,
+                  takenAt: p.takenAt,
+                  caption: p.caption,
+                  cover: p.cover,
+                }))
             );
           }
         }
@@ -204,14 +243,19 @@ export default function TravelUpload() {
           .flatMap((f) => {
             const m = metaById.get(f.id);
             if (!m) return [];
+            if (!f.blob && !f.thumb && m.status !== "done") return [];
             const status: Status = m.status === "uploading" ? "ready" : m.status;
+            const preview = f.thumb ?? f.blob;
+            const previewUrl = preview ? URL.createObjectURL(preview) : undefined;
             return [
               {
                 id: f.id,
                 name: f.name,
                 size: f.size,
                 blob: f.blob,
-                preview: URL.createObjectURL(f.blob),
+                thumb: f.thumb,
+                preview: previewUrl,
+                thumbPreview: previewUrl,
                 gps: f.gps,
                 trip: m.trip,
                 candidate: m.candidate,
@@ -230,7 +274,11 @@ export default function TravelUpload() {
           .sort((a, b) => (metaById.get(a.id)?.order ?? 0) - (metaById.get(b.id)?.order ?? 0));
 
         if (restored.length) {
-          setItems(restored);
+          // 合并而不是替换：恢复期间用户可能已经新选了照片
+          setItems((prev) => {
+            const seen = new Set(prev.map((p) => p.id));
+            return [...restored.filter((r) => !seen.has(r.id)), ...prev];
+          });
           const interrupted = meta.filter((m) => m.status === "uploading").length;
           setNotice(
             interrupted
@@ -368,13 +416,17 @@ export default function TravelUpload() {
       ]);
 
       try {
-        const conv = await toOptimizedImage(file);
-        const preview = URL.createObjectURL(conv.blob);
+        const conv = await toOptimizedImage(file, {
+          hasGps: Boolean(meta.gps),
+          orientation: meta.orientation,
+        });
+        const preview = URL.createObjectURL(conv.thumb);
         void putDraftFile({
           id,
           name: file.name,
           size: file.size,
           blob: conv.blob,
+          thumb: conv.thumb,
           width: conv.width,
           height: conv.height,
           takenAt: meta.takenAt,
@@ -385,7 +437,16 @@ export default function TravelUpload() {
         setItems((prev) =>
           prev.map((it) =>
             it.id === id
-              ? { ...it, blob: conv.blob, preview, width: conv.width, height: conv.height, status: "ready" }
+              ? {
+                  ...it,
+                  blob: conv.blob,
+                  thumb: conv.thumb,
+                  preview,
+                  thumbPreview: preview,
+                  width: conv.width,
+                  height: conv.height,
+                  status: "ready",
+                }
               : it
           )
         );
@@ -411,6 +472,9 @@ export default function TravelUpload() {
     setItems((prev) => {
       const target = prev.find((it) => it.id === id);
       if (target?.preview) URL.revokeObjectURL(target.preview);
+      if (target?.thumbPreview && target.thumbPreview !== target.preview) {
+        URL.revokeObjectURL(target.thumbPreview);
+      }
       return prev.filter((it) => it.id !== id);
     });
   }
@@ -419,6 +483,7 @@ export default function TravelUpload() {
     if (!window.confirm("清空当前列表？已上传的照片不会被删除。")) return;
     for (const it of items) {
       if (it.preview) URL.revokeObjectURL(it.preview);
+      if (it.thumbPreview && it.thumbPreview !== it.preview) URL.revokeObjectURL(it.thumbPreview);
     }
     setItems([]);
     void clearDraft().catch(() => {});
@@ -452,29 +517,55 @@ export default function TravelUpload() {
       return;
     }
 
-    const id = nextTripId(allTrips);
+    const base = Number(nextTripId(allTrips));
+    let trip: LocalTrip | null = null;
+    let conflict = false;
+
     try {
-      const res = await fetch(`${API}/trip`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
+      for (let attempt = 0; attempt < 3 && !trip; attempt++) {
+        const num = base + attempt;
+        if (num > 99) break;
+        const id = String(num).padStart(2, "0");
+        const res = await fetch(`${API}/trip`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id,
+            country,
+            countryEn: dialog.countryEn.trim() || undefined,
+            place,
+            coord,
+          }),
+          signal: timeoutSignal(20_000),
+        });
+        if (res.status === 409) {
+          conflict = true;
+          continue;
+        }
+        const data = (await res.json().catch(() => ({}))) as { error?: string; id?: string };
+        if (!res.ok) throw new Error(data.error || `新建失败（HTTP ${res.status}）`);
+        trip = {
+          img: data.id || id,
           country,
           countryEn: dialog.countryEn.trim() || undefined,
           place,
           coord,
-        }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { error?: string; id?: string };
-      if (!res.ok) throw new Error(data.error || `新建失败（HTTP ${res.status}）`);
+        };
+      }
+    } catch (err) {
+      setDialog((d) => ({ ...d, error: friendlyError(err, "新建失败") }));
+      return;
+    }
 
-      const trip: LocalTrip = {
-        img: data.id || id,
-        country,
-        countryEn: dialog.countryEn.trim() || undefined,
-        place,
-        coord,
-      };
+    if (!trip) {
+      setDialog((d) => ({
+        ...d,
+        error: conflict ? "行程编号被占用了，请刷新页面再试" : "找不到可用编号",
+      }));
+      return;
+    }
+
+    try {
       setExtraTrips((prev) => [...prev, trip]);
 
       // 把坐标 120km 内、还没归站的同批照片一起归进去
@@ -503,6 +594,16 @@ export default function TravelUpload() {
     const fd = new FormData();
     const ext = item.blob.type === "image/jpeg" ? "jpg" : item.blob.type === "image/png" ? "png" : "webp";
     fd.append("file", new File([item.blob], `${item.trip}.${ext}`, { type: item.blob.type || "image/webp" }));
+    if (item.thumb) {
+      const thumbExt =
+        item.thumb.type === "image/jpeg" ? "jpg" : item.thumb.type === "image/png" ? "png" : "webp";
+      fd.append(
+        "thumb",
+        new File([item.thumb], `${item.trip}-thumb.${thumbExt}`, {
+          type: item.thumb.type || "image/webp",
+        })
+      );
+    }
     fd.append("trip", item.trip);
     fd.append("takenAt", item.takenAt);
     fd.append("w", String(item.width));
@@ -513,48 +614,114 @@ export default function TravelUpload() {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: fd,
+      signal: timeoutSignal(120_000),
     });
     if (!res.ok) {
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (res.status === 401) throw new Error("token 无效，请重新输入");
       throw new Error(data.error || `上传失败（HTTP ${res.status}）`);
     }
-    const data = (await res.json()) as { key: string; url: string };
-    return { key: data.key, url: data.url, trip: item.trip, takenAt: item.takenAt };
+    const data = (await res.json()) as UploadedPhoto;
+    return { ...data, trip: item.trip, takenAt: item.takenAt };
   }
 
   async function uploadAll() {
     if (busy || !uploadable.length) return;
     setBusy(true);
     setNotice("");
-    for (const item of uploadable) {
+    for (const snapshot of uploadable) {
+      // 用最新状态，避免上传途中改行程后仍传到旧行程
+      const item = itemsRef.current.find((i) => i.id === snapshot.id);
+      if (!item || item.status !== "ready" || !item.trip) continue;
       patch(item.id, { status: "uploading", error: undefined });
       try {
         const meta = await uploadOne(item);
-        patch(item.id, { status: "done", url: meta.url });
+        patch(item.id, { status: "done", url: meta.url, blob: undefined, uploadedSize: meta.bytes });
+        // 草稿瘦身：上传成功后只保留缩略图，释放 IndexedDB 空间
+        if (item.thumb) {
+          void putDraftFile({
+            id: item.id,
+            name: item.name,
+            size: item.size,
+            thumb: item.thumb,
+            width: item.width,
+            height: item.height,
+            takenAt: item.takenAt,
+            gps: item.gps,
+          }).catch(() => {});
+        }
         setUploaded((prev) => [meta, ...prev.filter((p) => p.key !== meta.key)]);
       } catch (err) {
-        patch(item.id, { status: "error", error: err instanceof Error ? err.message : "上传失败" });
+        patch(item.id, { status: "error", error: friendlyError(err, "上传失败") });
       }
     }
     if (missing) setNotice(`${missing} 张还没选行程，已跳过；选好后再传一次即可`);
     setBusy(false);
   }
 
-  async function movePhoto(key: string, trip: string) {
-    if (!trip) return;
+  async function patchPhoto(
+    key: string,
+    patch: Partial<Pick<UploadedPhoto, "trip" | "caption" | "cover">>,
+    success: string
+  ) {
     try {
       const res = await fetch(`${API}/photo`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ key, trip }),
+        body: JSON.stringify({ key, ...patch }),
+        signal: timeoutSignal(20_000),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error || `修改失败（HTTP ${res.status}）`);
-      setUploaded((prev) => prev.map((p) => (p.key === key ? { ...p, trip } : p)));
-      setNotice(`已改到 ${tripLabel(trip)}；下次构建后生效`);
+      setUploaded((prev) => prev.map((p) => (p.key === key ? { ...p, ...patch } : p)));
+      setNotice(success);
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "修改失败");
+      setNotice(friendlyError(err, "修改失败"));
+    }
+  }
+
+  function movePhoto(key: string, trip: string) {
+    if (!trip) return;
+    void patchPhoto(key, { trip }, `已改到 ${tripLabel(trip)}；下次构建后生效`);
+  }
+
+  function editCaption(p: UploadedPhoto) {
+    const next = window.prompt("图注（留空清除）", p.caption ?? "");
+    if (next === null) return;
+    const caption = next.trim();
+    void patchPhoto(
+      p.key,
+      { caption },
+      caption ? "图注已更新；下次构建后生效" : "图注已清除"
+    );
+  }
+
+  function toggleCover(p: UploadedPhoto) {
+    const next = !p.cover;
+    void patchPhoto(p.key, { cover: next }, next ? "已设为封面；下次构建后生效" : "已取消封面");
+  }
+
+  async function deletePhoto(p: UploadedPhoto) {
+    if (
+      !window.confirm(
+        `删除这张照片？\n${p.key}\n\n会同时删除原图、缩略图和元数据，不可恢复。`
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/photo`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ key: p.key }),
+        signal: timeoutSignal(30_000),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(data.error || `删除失败（HTTP ${res.status}）`);
+      setUploaded((prev) => prev.filter((x) => x.key !== p.key));
+      setNotice("已删除；下次构建后从站点消失");
+    } catch (err) {
+      setNotice(friendlyError(err, "删除失败"));
     }
   }
 
@@ -581,7 +748,7 @@ export default function TravelUpload() {
   async function pollStatus(times = 1) {
     for (let i = 0; i < times; i++) {
       try {
-        const res = await fetch(`${API}/status`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`${API}/status`, { headers: { Authorization: `Bearer ${token}` }, signal: timeoutSignal(15_000) });
         if (res.ok) {
           const data = (await res.json()) as RunStatus;
           setRun(data);
@@ -597,7 +764,7 @@ export default function TravelUpload() {
   async function testConnection() {
     setNotice("正在连接…");
     try {
-      const res = await fetch(`${API}/health`);
+      const res = await fetch(`${API}/health`, { signal: timeoutSignal(10_000) });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; github?: { configured?: boolean } };
       if (res.ok && data.ok) {
         setNotice(
@@ -699,9 +866,9 @@ export default function TravelUpload() {
                 className={`upload-item is-${item.status}${unmatched ? " is-unmatched" : ""}`}
               >
                 <div className="upload-thumb">
-                  {item.preview ? (
+                  {(item.thumbPreview ?? item.preview) ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={item.preview} alt="" />
+                    <img src={item.thumbPreview ?? item.preview} alt="" />
                   ) : (
                     <span>{item.status === "processing" ? "转码中…" : "!"}</span>
                   )}
@@ -712,7 +879,7 @@ export default function TravelUpload() {
                   <span>
                     {formatTakenAt(item.takenAt)}
                     {item.width ? ` · ${item.width}×${item.height}` : ""} · 原始 {mb(item.size)}
-                    {item.blob ? ` → 上传 ${mb(item.blob.size)}` : ""}
+                    {item.blob ? ` → 上传 ${mb(item.blob.size)}` : item.uploadedSize ? ` → 已上传 ${mb(item.uploadedSize)}` : ""}
                   </span>
 
                   {unmatched ? (
@@ -754,7 +921,7 @@ export default function TravelUpload() {
                   <select
                     value={item.trip}
                     onChange={(e) => patch(item.id, { trip: e.target.value, candidate: undefined })}
-                    disabled={item.status === "done" || item.status === "uploading"}
+                    disabled={busy || item.status === "done" || item.status === "uploading"}
                     aria-label="归到哪个行程"
                   >
                     {tripOptions(true)}
@@ -765,7 +932,7 @@ export default function TravelUpload() {
                       type="checkbox"
                       checked={item.cover}
                       onChange={() => setCover(item.id)}
-                      disabled={item.status === "done" || !item.trip}
+                      disabled={busy || item.status === "done" || !item.trip}
                     />
                     封面
                   </label>
@@ -801,19 +968,61 @@ export default function TravelUpload() {
           <ul>
             {uploaded.map((p) => (
               <li key={p.key}>
-                <span className="upload-history-meta">
-                  {p.takenAt ? formatTakenAt(p.takenAt) : p.key.split("/").pop()}
-                </span>
-                <select
-                  value={p.trip}
-                  onChange={(e) => void movePhoto(p.key, e.target.value)}
-                  aria-label="修改归属"
-                >
-                  {tripOptions(true)}
-                </select>
-                <a href={p.url} target="_blank" rel="noreferrer">
-                  查看
-                </a>
+                {p.thumbUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    className="upload-history-thumb"
+                    src={p.thumbUrl}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <span className="upload-history-thumb is-empty" aria-hidden="true" />
+                )}
+                <div className="upload-history-main">
+                  <span className="upload-history-meta">
+                    {p.takenAt ? formatTakenAt(p.takenAt) : p.key.split("/").pop()}
+                    {p.caption ? ` · ${p.caption}` : ""}
+                  </span>
+                  <div className="upload-history-actions">
+                    <select
+                      value={p.trip}
+                      onChange={(e) => movePhoto(p.key, e.target.value)}
+                      aria-label="修改归属"
+                    >
+                      {tripOptions(true)}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => editCaption(p)}
+                      aria-label="编辑图注"
+                      title="编辑图注"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      className={p.cover ? "is-on" : undefined}
+                      onClick={() => toggleCover(p)}
+                      aria-label={p.cover ? "取消封面" : "设为封面"}
+                      title={p.cover ? "取消封面" : "设为封面"}
+                    >
+                      {p.cover ? "★" : "☆"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void deletePhoto(p)}
+                      aria-label="删除照片"
+                      title="删除照片"
+                    >
+                      ✕
+                    </button>
+                    <a href={p.url} target="_blank" rel="noreferrer">
+                      查看
+                    </a>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
@@ -925,3 +1134,6 @@ export default function TravelUpload() {
     </main>
   );
 }
+
+
+

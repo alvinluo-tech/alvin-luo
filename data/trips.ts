@@ -66,6 +66,19 @@ export function tripPhotoSrc(
   return null;
 }
 
+/** 列表/地图/胶片用的小图；没有缩略图时回退原图 */
+export function tripPhotoThumb(
+  trip: Pick<Trip, "img" | "photoUrl" | "hasPhoto">,
+  basePath = "",
+): string | null {
+  if (trip.photoUrl) return trip.photoUrl;
+  const generated = TRIP_PHOTOS[trip.img]?.[0];
+  if (generated?.thumb) return generated.thumb;
+  if (generated?.url) return generated.url;
+  if (trip.hasPhoto ?? AVAILABLE_PHOTOS.has(trip.img)) return `${basePath}/travel/${trip.img}.webp`;
+  return null;
+}
+
 const HAND_TRIPS: Trip[] = [
   /* ---------- 中国 ---------- */
   {

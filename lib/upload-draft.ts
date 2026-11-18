@@ -12,7 +12,10 @@ export type DraftFile = {
   id: string;
   name: string;
   size: number;
-  blob: Blob;
+  /** 上传成功后会被清掉，只留 thumb，省 IndexedDB 空间 */
+  blob?: Blob;
+  /** 列表预览用的小图 */
+  thumb?: Blob;
   width: number;
   height: number;
   takenAt: string;

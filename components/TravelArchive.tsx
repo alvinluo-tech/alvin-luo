@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto, tripPhotoSrc, tripPhotos } from "@/data/trips";
+import { TRIPS, type Trip, countryLabel, dateLabel, hasTripPhoto, tripPhotoSrc, tripPhotoThumb, tripPhotos } from "@/data/trips";
 import { T, pick, useLocale } from "./i18n";
 import PassportStamp from "./PassportStamp";
 import TravelLightbox, { type LightboxPhoto } from "./TravelLightbox";
@@ -237,7 +237,7 @@ export default function TravelArchive() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       loading="lazy"
-                      src={tripPhotoSrc(t, BASE_PATH) ?? ""}
+                      src={tripPhotoThumb(t, BASE_PATH) ?? ""}
                       alt={pick(locale, `Travel photo of ${t.place}`, `${t.place} 的旅行照片`)}
                       onError={() => setFailed((f) => ({ ...f, [t.img]: true }))}
                     />
@@ -268,7 +268,7 @@ export default function TravelArchive() {
                           aria-label={pick(locale, `View photo ${pi + 1}`, `查看第 ${pi + 1} 张`)}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={p.url} alt="" loading="lazy" />
+                          <img src={p.thumb ?? p.url} alt="" loading="lazy" decoding="async" />
                         </button>
                       ))}
                   </div>
