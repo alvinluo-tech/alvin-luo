@@ -585,12 +585,29 @@ export default {
 
     try {
       if (url.pathname === "/health" && request.method === "GET") {
+        let photon: number | string | undefined;
+        if (url.searchParams.get("photon") === "1") {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 8000);
+          try {
+            const r = await fetch(
+              "https://photon.komoot.io/reverse?lat=63.419&lon=-19.006&lang=en",
+              { headers: { "User-Agent": "alvin-luo.me travel upload" }, signal: ctrl.signal }
+            );
+            photon = r.status;
+          } catch {
+            photon = "error";
+          } finally {
+            clearTimeout(timer);
+          }
+        }
         return withCors(
           json(
             {
               ok: true,
               service: "travel-upload",
               github: { configured: Boolean(env.GITHUB_TOKEN && env.GITHUB_REPO) },
+              ...(photon !== undefined ? { photon } : {}),
             },
             200
           )

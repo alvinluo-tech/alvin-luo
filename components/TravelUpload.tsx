@@ -49,6 +49,8 @@ type Item = {
   thumbPreview?: string;
   gps?: [number, number];
   geo?: GeoPlace;
+  geoStatus?: "loading" | "done" | "error";
+  geoError?: string;
   trip: string;
   candidate?: string;
   nearest?: string;
@@ -388,9 +390,12 @@ export default function TravelUpload() {
     localStorage.setItem(TRIP_KEY, id);
   }
 
-  async function geocode(gps: [number, number]): Promise<GeoPlace | null> {
+  async function geocode(gps: [number, number]): Promise<{ geo?: GeoPlace; error?: string }> {
     const key = `${gps[1].toFixed(3)},${gps[0].toFixed(3)}`;
-    if (geoCache.current.has(key)) return geoCache.current.get(key) ?? null;
+    if (geoCache.current.has(key)) {
+      const cached = geoCache.current.get(key);
+      return cached ? { geo: cached } : { error: "之前解析失败" };
+    }
     try {
       const res = await fetch(
         `${API}/geocode?lat=${encodeURIComponent(gps[1])}&lng=${encodeURIComponent(gps[0])}`,
@@ -399,14 +404,26 @@ export default function TravelUpload() {
           signal: timeoutSignal(12_000),
         }
       );
-      if (!res.ok) return null;
+      if (!res.ok) return { error: `HTTP ${res.status}` };
       const data = (await res.json()) as GeoPlace & { ok?: boolean };
-      if (!data?.label) return null;
+      if (!data?.label) return { error: "未找到地名" };
       geoCache.current.set(key, data);
-      return data;
-    } catch {
-      return null;
+      return { geo: data };
+    } catch (err) {
+      return { error: friendlyError(err, "网络错误") };
     }
+  }
+
+  async function retryGeo(item: Item) {
+    if (!item.gps) return;
+    geoCache.current.delete(`${item.gps[1].toFixed(3)},${item.gps[0].toFixed(3)}`);
+    patch(item.id, { geoStatus: "loading", geoError: undefined });
+    const r = await geocode(item.gps);
+    patch(item.id, {
+      geo: r.geo,
+      geoStatus: r.geo ? "done" : "error",
+      geoError: r.error,
+    });
   }
 
   /** 同一天（±18h）已归站的照片里，出现最多的行程 */
@@ -466,6 +483,7 @@ export default function TravelUpload() {
           width: 0,
           height: 0,
           status: "processing",
+          geoStatus: meta.gps ? "loading" : undefined,
           cover: false,
         },
       ]);
@@ -473,9 +491,30 @@ export default function TravelUpload() {
       // 后台解析地名：命中后补到卡片上，不阻塞转码
       if (meta.gps) {
         const gps = meta.gps;
-        void geocode(gps).then((geo) => {
-          if (!geo) return;
-          setItems((prev) => prev.map((it) => (it.id === id ? { ...it, geo } : it)));
+        void geocode(gps).then((r) => {
+          setItems((prev) =>
+            prev.map((it) =>
+              it.id === id
+                ? {
+                    ...it,
+                    geo: r.geo,
+                    geoStatus: r.geo ? "done" : "error",
+                    geoError: r.error,
+                  }
+                : it
+            )
+          );
+          // 弹窗如果已经打开且还是空的，地名到了就补上预填
+          if (r.geo) {
+            setDialog((d) => {
+              if (!d.open || d.country || d.place || !d.coord) return d;
+              const same =
+                Math.abs(d.coord[0] - gps[0]) < 0.001 && Math.abs(d.coord[1] - gps[1]) < 0.001;
+              if (!same) return d;
+              const pre = tripFromPlace(r.geo);
+              return { ...d, country: pre.country, countryEn: pre.countryEn, place: pre.place };
+            });
+          }
         });
       }
 
@@ -848,11 +887,15 @@ export default function TravelUpload() {
   async function testConnection() {
     setNotice("正在连接…");
     try {
-      const res = await fetch(`${API}/health`, { signal: timeoutSignal(10_000) });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; github?: { configured?: boolean } };
+      const res = await fetch(`${API}/health?photon=1`, { signal: timeoutSignal(15_000) });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        photon?: number | string;
+        github?: { configured?: boolean };
+      };
       if (res.ok && data.ok) {
         setNotice(
-          `Worker 在线：${API}${data.github ? `　GitHub 发布：${data.github.configured ? "已配置" : "未配置"}` : ""}`
+          `Worker 在线：${API}　地名服务：${data.photon === 200 ? "正常" : "异常（" + (data.photon ?? "未返回") + "）"}${data.github ? `　GitHub 发布：${data.github.configured ? "已配置" : "未配置"}` : ""}`
         );
       } else {
         setNotice(`Worker 响应异常（HTTP ${res.status}）`);
@@ -996,6 +1039,15 @@ export default function TravelUpload() {
                       拍摄地 · {item.geo.label}
                       {item.geo.city ? `（${item.geo.city}）` : ""}
                     </span>
+                  ) : item.geoStatus === "loading" ? (
+                    <span className="upload-geo">地名解析中…</span>
+                  ) : item.geoStatus === "error" ? (
+                    <span className="upload-geo is-error">
+                      地名解析失败{item.geoError ? `（${item.geoError}）` : ""}
+                      <button type="button" onClick={() => void retryGeo(item)}>
+                        重试
+                      </button>
+                    </span>
                   ) : null}
 
                   {unmatched ? (
@@ -1087,7 +1139,7 @@ export default function TravelUpload() {
                 <div className="upload-history-main">
                   <span className="upload-history-meta">
                     {p.takenAt ? formatTakenAt(p.takenAt) : p.key.split("/").pop()}
-                    {p.place ? ` · ${p.place}` : ""}
+                    {p.place ? ` · ${p.place}` : " · 未记录拍摄地"}
                     {p.caption ? ` · ${p.caption}` : ""}
                   </span>
                   <div className="upload-history-actions">

@@ -530,6 +530,22 @@
   color: var(--grey);
 }
 
+.upload-geo.is-error {
+  color: #b22;
+}
+
+.upload-geo button {
+  margin-left: 0.4rem;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--ink);
+  background: none;
+  border: none;
+  border-bottom: 1px solid currentColor;
+  padding: 0;
+  cursor: pointer;
+}
+
 .upload-modal {
   position: fixed;
   inset: 0;
