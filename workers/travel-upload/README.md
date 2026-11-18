@@ -11,7 +11,7 @@
 | POST | `/upload` | Bearer | multipart：`file` `thumb` `trip` `takenAt` `w` `h` `place` `cover` |
 | PATCH | `/photo` | Bearer | 改 `trip` / `caption` / `place` / `cover` |
 | DELETE | `/photo` | Bearer | 删除照片 + sidecar + 缩略图 |
-| GET | `/geocode?lat&lng` | Bearer | Photon 反向地理编码（坐标取 3 位小数，缓存到 `travel/_geo/`） |
+| GET | `/geocode?lat&lng` | Bearer | 反向地理编码：Nominatim（中文优先）→ Photon 兜底；坐标取 2 位小数，缓存到 `travel/_geo/` |
 | POST | `/publish` | Bearer | 触发 GitHub Actions `workflow_dispatch` |
 | GET | `/status` | Bearer | 最近一次构建状态 |
 

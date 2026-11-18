@@ -437,7 +437,99 @@ async function handlePhotoDelete(request: Request, env: Env): Promise<Response> 
   return json({ ok: true, key }, 200);
 }
 
-/** 反向地理编码：坐标只传 3 位小数给 Photon，结果缓存到 R2 */
+type GeoPlace = {
+  ok: true;
+  city: string;
+  region: string;
+  country: string;
+  countryCode: string;
+  label: string;
+  lat: number;
+  lng: number;
+  provider: "nominatim" | "photon";
+};
+
+/* Nominatim 要求 ≤1 req/s；同 isolate 内串行化，配合 R2 缓存 */
+let geoChain: Promise<void> = Promise.resolve();
+let geoLast = 0;
+
+function geopace(): Promise<void> {
+  const run = geoChain.then(async () => {
+    const wait = 1100 - (Date.now() - geoLast);
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    geoLast = Date.now();
+  });
+  geoChain = run.catch(() => {});
+  return run;
+}
+
+async function fetchJson(url: string, ms = 9000): Promise<unknown | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "alvin-luo.me travel upload (+https://alvin-luo.me)" },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function parseNominatim(data: unknown, lat: number, lng: number): GeoPlace | null {
+  const root = (data ?? {}) as Record<string, unknown>;
+  const a = (root.address ?? {}) as Record<string, unknown>;
+  const pick = (v: unknown) => (typeof v === "string" ? v : "");
+  const city =
+    pick(a.city) ||
+    pick(a.town) ||
+    pick(a.village) ||
+    pick(a.hamlet) ||
+    pick(a.municipality) ||
+    pick(a.county) ||
+    pick(a.state);
+  const region = pick(a.state) || pick(a.county) || pick(a.municipality);
+  const country = pick(a.country).split(" / ")[0];
+  const countryCode = pick(a.country_code).toUpperCase();
+  const label = [city, country].filter(Boolean).join(", ");
+  if (!label) return null;
+  return { ok: true, city, region, country, countryCode, label, lat, lng, provider: "nominatim" };
+}
+
+function parsePhoton(data: unknown, lat: number, lng: number): GeoPlace | null {
+  const root = (data ?? {}) as { features?: Array<{ properties?: Record<string, unknown> }> };
+  const p = root.features?.[0]?.properties ?? {};
+  const pick = (v: unknown) => (typeof v === "string" ? v : "");
+  const city = pick(p.city) || pick(p.name) || pick(p.county) || pick(p.state);
+  const region = pick(p.state) || pick(p.county);
+  const country = pick(p.country);
+  const countryCode = pick(p.countrycode).toUpperCase();
+  const label = [city, country].filter(Boolean).join(", ");
+  if (!label) return null;
+  return { ok: true, city, region, country, countryCode, label, lat, lng, provider: "photon" };
+}
+
+/** 先 Nominatim（中文优先），失败再退 Photon */
+async function lookupPlace(lat: number, lng: number): Promise<GeoPlace | null> {
+  await geopace();
+  const nominatim = await fetchJson(
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=zh,en&lat=${lat}&lon=${lng}`
+  );
+  if (nominatim) {
+    const parsed = parseNominatim(nominatim, lat, lng);
+    if (parsed) return parsed;
+  }
+  const photon = await fetchJson(
+    `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=en`
+  );
+  return photon ? parsePhoton(photon, lat, lng) : null;
+}
+
+/** 反向地理编码：坐标只传 2 位小数（约 1km），结果缓存到 R2 */
 async function handleGeocode(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const lat = Number(url.searchParams.get("lat"));
@@ -453,9 +545,9 @@ async function handleGeocode(request: Request, env: Env): Promise<Response> {
     return json({ error: "invalid coords" }, 400);
   }
 
-  const lat3 = Math.round(lat * 1000) / 1000;
-  const lng3 = Math.round(lng * 1000) / 1000;
-  const key = `${GEO_PREFIX}${lat3},${lng3}.json`;
+  const lat2 = Math.round(lat * 100) / 100;
+  const lng2 = Math.round(lng * 100) / 100;
+  const key = `${GEO_PREFIX}${lat2},${lng2}.json`;
 
   const cached = await env.PHOTOS.get(key);
   if (cached) {
@@ -463,36 +555,13 @@ async function handleGeocode(request: Request, env: Env): Promise<Response> {
     if (data) return json(data, 200, { "Cache-Control": "public, max-age=86400" });
   }
 
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
-  try {
-    const res = await fetch(
-      `https://photon.komoot.io/reverse?lat=${lat3}&lon=${lng3}&lang=en`,
-      { headers: { "User-Agent": "alvin-luo.me travel upload" }, signal: ctrl.signal }
-    );
-    if (!res.ok) return json({ error: `geocode ${res.status}` }, 502);
+  const out = await lookupPlace(lat2, lng2);
+  if (!out) return json({ error: "geocode failed" }, 502);
 
-    const data = (await res.json()) as {
-      features?: Array<{ properties?: Record<string, unknown> }>;
-    };
-    const p = data.features?.[0]?.properties ?? {};
-    const pick = (v: unknown) => (typeof v === "string" ? v : "");
-    const city = pick(p.city) || pick(p.name) || pick(p.county) || pick(p.state);
-    const region = pick(p.state) || pick(p.county);
-    const country = pick(p.country);
-    const countryCode = pick(p.countrycode).toUpperCase();
-    const label = [city, country].filter(Boolean).join(", ");
-
-    const out = { ok: true, city, region, country, countryCode, label, lat: lat3, lng: lng3 };
-    await env.PHOTOS.put(key, JSON.stringify(out), {
-      httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
-    });
-    return json(out, 200, { "Cache-Control": "public, max-age=86400" });
-  } catch {
-    return json({ error: "geocode failed" }, 502);
-  } finally {
-    clearTimeout(timer);
-  }
+  await env.PHOTOS.put(key, JSON.stringify(out), {
+    httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
+  });
+  return json(out, 200, { "Cache-Control": "public, max-age=86400" });
 }
 
 function githubEnv(env: Env) {
@@ -585,6 +654,59 @@ export default {
 
     try {
       if (url.pathname === "/health" && request.method === "GET") {
+        if (url.searchParams.get("geocode") === "1") {
+          const sample = await lookupPlace(63.419, -19.006);
+          return withCors(
+            json(
+              {
+                ok: true,
+                geocode: sample
+                  ? {
+                      status: 200,
+                      provider: sample.provider,
+                      city: sample.city,
+                      country: sample.country,
+                      countryCode: sample.countryCode,
+                      label: sample.label,
+                    }
+                  : { status: "failed" },
+              },
+              200
+            )
+          );
+        }
+
+        if (url.searchParams.get("geocode") === "probe") {
+          const probes: Record<string, string> = {
+            photon: "https://photon.komoot.io/reverse?lat=63.419&lon=-19.006&lang=en",
+            nominatim:
+              "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=63.419&lon=-19.006&accept-language=en",
+            bdc: "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=63.419&longitude=-19.006&localityLanguage=en",
+            wiki: "https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=63.419%7C-19.006&gsradius=10000&gslimit=3&format=json",
+            overpass:
+              "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%3Bnode%28around%3A5000%2C63.419%2C-19.006%29%5Bplace~%22city%7Ctown%7Cvillage%22%5D%3Bout%201%3B",
+          };
+          const out: Record<string, string | number> = {};
+          await Promise.all(
+            Object.entries(probes).map(async ([key, target]) => {
+              const ctrl = new AbortController();
+              const timer = setTimeout(() => ctrl.abort(), 8000);
+              try {
+                const r = await fetch(target, {
+                  headers: { "User-Agent": "alvin-luo.me travel upload (contact@alvin-luo.me)" },
+                  signal: ctrl.signal,
+                });
+                out[key] = r.status;
+              } catch {
+                out[key] = "error";
+              } finally {
+                clearTimeout(timer);
+              }
+            })
+          );
+          return withCors(json({ ok: true, probe: out }, 200));
+        }
+
         let photon: number | string | undefined;
         if (url.searchParams.get("photon") === "1") {
           const ctrl = new AbortController();
@@ -660,4 +782,5 @@ export default {
     }
   },
 };
+
 

@@ -391,7 +391,7 @@ export default function TravelUpload() {
   }
 
   async function geocode(gps: [number, number]): Promise<{ geo?: GeoPlace; error?: string }> {
-    const key = `${gps[1].toFixed(3)},${gps[0].toFixed(3)}`;
+    const key = `${gps[1].toFixed(2)},${gps[0].toFixed(2)}`;
     if (geoCache.current.has(key)) {
       const cached = geoCache.current.get(key);
       return cached ? { geo: cached } : { error: "之前解析失败" };
@@ -416,7 +416,7 @@ export default function TravelUpload() {
 
   async function retryGeo(item: Item) {
     if (!item.gps) return;
-    geoCache.current.delete(`${item.gps[1].toFixed(3)},${item.gps[0].toFixed(3)}`);
+    geoCache.current.delete(`${item.gps[1].toFixed(2)},${item.gps[0].toFixed(2)}`);
     patch(item.id, { geoStatus: "loading", geoError: undefined });
     const r = await geocode(item.gps);
     patch(item.id, {
@@ -887,15 +887,20 @@ export default function TravelUpload() {
   async function testConnection() {
     setNotice("正在连接…");
     try {
-      const res = await fetch(`${API}/health?photon=1`, { signal: timeoutSignal(15_000) });
+      const res = await fetch(`${API}/health?geocode=1`, { signal: timeoutSignal(20_000) });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
-        photon?: number | string;
+        geocode?: { status?: number | string; provider?: string; label?: string };
         github?: { configured?: boolean };
       };
       if (res.ok && data.ok) {
+        const g = data.geocode;
+        const geoText =
+          g?.status === 200
+            ? `正常（${g.provider ?? "?"} · ${g.label ?? ""}）`
+            : `异常（${g?.status ?? "未返回"}）`;
         setNotice(
-          `Worker 在线：${API}　地名服务：${data.photon === 200 ? "正常" : "异常（" + (data.photon ?? "未返回") + "）"}${data.github ? `　GitHub 发布：${data.github.configured ? "已配置" : "未配置"}` : ""}`
+          `Worker 在线：${API}　地名服务：${geoText}${data.github ? `　GitHub 发布：${data.github.configured ? "已配置" : "未配置"}` : ""}`
         );
       } else {
         setNotice(`Worker 响应异常（HTTP ${res.status}）`);
@@ -1299,6 +1304,7 @@ export default function TravelUpload() {
     </main>
   );
 }
+
 
 
 
