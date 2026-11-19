@@ -78,6 +78,8 @@ type Item = {
   orientation?: number;
   /** 用户坚持上传重复照片 */
   forced?: boolean;
+  /** 行程是系统自动给的（GPS 建议或默认行程）；手动改过后为 false */
+  tripAuto?: boolean;
   /** 判定为重复时，已有照片的信息 */
   dupOf?: {
     trip: string;
@@ -160,6 +162,14 @@ function statusText(s: Status): string {
     duplicate: "已上传过",
     error: "失败",
   }[s];
+}
+
+/** 本地日期键（同一天判断用） */
+function dayKey(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
 /** 「最近上传」里补传的老照片：上传日期 ≠ 拍摄日期时才标注 */
@@ -524,6 +534,33 @@ export default function TravelUpload() {
     localStorage.setItem(TRIP_KEY, id);
   }
 
+  /** 手动改一张照片的行程：
+   *  - 无 GPS 的照片通常是同一天的连拍，把**同一天、没有 GPS、还没被单独指定过**
+   *    的其他照片一起归过去，避免一张张点；
+   *  - 这次选择同时设为新的默认行程——之后再选无 GPS 的照片直接用它。 */
+  function chooseTrip(item: Item, trip: string) {
+    patch(item.id, { trip, candidate: undefined, tripAuto: false });
+    const key = dayKey(item.takenAt);
+    const siblings =
+      !item.gps && trip && key
+        ? itemsRef.current.filter(
+            (it) =>
+              it.id !== item.id &&
+              !it.gps &&
+              it.tripAuto !== false &&
+              it.status !== "done" &&
+              it.status !== "uploading" &&
+              dayKey(it.takenAt) === key
+          )
+        : [];
+    if (siblings.length) {
+      const ids = new Set(siblings.map((s) => s.id));
+      setItems((prev) => prev.map((it) => (ids.has(it.id) ? { ...it, trip } : it)));
+      setNotice(`同一天另外 ${siblings.length} 张无 GPS 照片也归到 ${tripLabel(trip)}（可单独改）`);
+    }
+    if (trip && trip !== defaultTrip) pickDefaultTrip(trip);
+  }
+
   /** 地名解析串行队列：Worker 端 geopace 1.1s/条，一次选十几张不同地点的照片
       时，并发请求会把排在后面的拖过超时线（报「解析失败」）；客户端排队后，
       每个请求只需覆盖自己的上游耗时，同坐标的重复项命中 geoCache 直接返回。 */
@@ -786,6 +823,7 @@ export default function TravelUpload() {
           gps: meta.gps,
           takenAt: meta.takenAt,
           trip,
+          tripAuto: true,
           candidate: sug.candidate,
           nearest: sug.nearest,
           distanceKm: sug.distanceKm,
@@ -1497,7 +1535,9 @@ export default function TravelUpload() {
                       {typeof item.distanceKm === "number" ? ` · 约 ${item.distanceKm}km` : ""}
                     </em>
                   ) : !item.gps && item.trip ? (
-                    <em>无 GPS，按默认行程归到 {tripLabel(item.trip)}</em>
+                    <em>
+                      {item.tripAuto === false ? "手动归到" : "无 GPS，按默认行程归到"} {tripLabel(item.trip)}
+                    </em>
                   ) : null}
 
                   {item.error ? <em className="is-error">{item.error}</em> : null}
@@ -1524,13 +1564,13 @@ export default function TravelUpload() {
                         <button
                           type="button"
                           className="is-strong"
-                          onClick={() => patch(item.id, { trip: dayTrip.trip, candidate: undefined })}
+                          onClick={() => patch(item.id, { trip: dayTrip.trip, candidate: undefined, tripAuto: false })}
                         >
                           归到 {tripLabel(dayTrip.trip)}（同日 {dayTrip.count} 张）
                         </button>
                       ) : null}
                       {item.candidate && (!dayTrip || dayTrip.trip !== item.candidate) ? (
-                        <button type="button" onClick={() => patch(item.id, { trip: item.candidate!, candidate: undefined })}>
+                        <button type="button" onClick={() => patch(item.id, { trip: item.candidate!, candidate: undefined, tripAuto: false })}>
                           采用 {tripLabel(item.candidate)}
                         </button>
                       ) : null}
@@ -1544,7 +1584,7 @@ export default function TravelUpload() {
                 <div className="upload-controls">
                   <select
                     value={item.trip}
-                    onChange={(e) => patch(item.id, { trip: e.target.value, candidate: undefined })}
+                    onChange={(e) => chooseTrip(item, e.target.value)}
                     disabled={locked}
                     aria-label="归到哪个行程"
                   >
