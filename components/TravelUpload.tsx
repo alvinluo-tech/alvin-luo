@@ -16,6 +16,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TRIPS } from "@/data/trips";
+import { useLocale } from "./i18n";
 import { distanceKm, formatTakenAt, isHeic, readPhotoMeta, sha256Hex, suggestTrip, toOptimizedImage } from "@/lib/client-photo";
 import { tripFromPlace, type GeoPlace } from "@/lib/geo";
 import {
@@ -131,12 +132,14 @@ type SiteBase = {
   updatedAt?: string;
 };
 
-/** ipwho.is 返回的 IP 属地 */
+/** ipwho.is 返回的 IP 属地（同时带中英两套，界面按语言显示） */
 type IpInfo = {
   place: string;
   placeEn: string;
   region: string;
+  regionEn: string;
   country: string;
+  countryEn: string;
   countryCode: string;
   coord: [number, number];
 };
@@ -263,6 +266,7 @@ function toDraftMeta(items: Item[]): DraftMeta[] {
 }
 
 export default function TravelUpload() {
+  const { locale } = useLocale();
   const [token, setToken] = useState("");
   const [tokenDraft, setTokenDraft] = useState("");
   const [defaultTrip, setDefaultTrip] = useState(TRIPS[0]?.img ?? "05");
@@ -639,35 +643,42 @@ export default function TravelUpload() {
     });
   }
 
-  /** 获取当前出口 IP 的属地（ipwho.is 免 key） */
+  /** 获取当前出口 IP 的属地（ipwho.is 免 key；同时取中英两套） */
   async function detectIp() {
     if (ipBusy) return;
     setIpBusy(true);
     try {
-      const res = await fetch("https://ipwho.is/", { signal: timeoutSignal(15_000) });
-      const data = (await res.json()) as {
-        success?: boolean;
-        city?: string;
-        region?: string;
-        country?: string;
-        country_code?: string;
-        latitude?: number;
-        longitude?: number;
+      const fetchIp = async (lang: "zh-CN" | "en") => {
+        const res = await fetch(`https://ipwho.is/?lang=${lang}`, { signal: timeoutSignal(15_000) });
+        const data = (await res.json()) as {
+          success?: boolean;
+          city?: string;
+          region?: string;
+          country?: string;
+          country_code?: string;
+          latitude?: number;
+          longitude?: number;
+        };
+        if (!res.ok || data.success === false) throw new Error("IP 属地服务不可用");
+        return data;
       };
-      if (!res.ok || data.success === false) throw new Error("IP 属地服务不可用");
-      const city = (data.city || "").trim();
-      const region = (data.region || "").trim();
-      const country = (data.country || "").trim();
-      const place = city || region || country;
-      const lat = Number(data.latitude);
-      const lng = Number(data.longitude);
+      const [zh, en] = await Promise.all([fetchIp("zh-CN"), fetchIp("en").catch(() => null)]);
+      const zhCity = (zh.city || "").trim();
+      const enCity = (en?.city || "").trim();
+      const zhRegion = (zh.region || "").trim();
+      const zhCountry = (zh.country || "").trim();
+      const place = zhCity || zhRegion || zhCountry;
+      const lat = Number(zh.latitude);
+      const lng = Number(zh.longitude);
       if (!place || !Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error("没解析出地名");
       setIpInfo({
         place,
-        placeEn: place,
-        region,
-        country,
-        countryCode: (data.country_code || "").toUpperCase(),
+        placeEn: enCity || en?.region || en?.country || place,
+        region: zhRegion,
+        regionEn: (en?.region || "").trim(),
+        country: zhCountry,
+        countryEn: (en?.country || "").trim(),
+        countryCode: (zh.country_code || "").toUpperCase(),
         coord: [lng, lat],
       });
     } catch (err) {
@@ -1573,7 +1584,11 @@ export default function TravelUpload() {
       <details className="upload-base">
         <summary>
           站点常驻 ·{" "}
-          {siteBase ? `${siteBase.place}${siteBase.region && siteBase.region !== siteBase.place ? `（${siteBase.region}）` : ""}` : "未设置"}
+          {siteBase
+            ? locale === "zh"
+              ? `${siteBase.place}${siteBase.region && siteBase.region !== siteBase.place ? `（${siteBase.region}）` : ""}`
+              : siteBase.placeEn || siteBase.place
+            : "未设置"}
         </summary>
         <div className="upload-base-body">
           <button type="button" className="upload-ghost" onClick={() => void detectIp()} disabled={ipBusy}>
@@ -1581,9 +1596,18 @@ export default function TravelUpload() {
           </button>
           {ipInfo ? (
             <p className="upload-base-result">
-              {ipInfo.region && ipInfo.region !== ipInfo.place ? `${ipInfo.region} · ` : ""}
-              {ipInfo.place}
-              {ipInfo.country ? `，${ipInfo.country}` : ""}
+              {locale === "zh" ? (
+                <>
+                  {ipInfo.region && ipInfo.region !== ipInfo.place ? `${ipInfo.region} · ` : ""}
+                  {ipInfo.place}
+                  {ipInfo.country ? `，${ipInfo.country}` : ""}
+                </>
+              ) : (
+                <>
+                  {ipInfo.placeEn}
+                  {ipInfo.countryEn ? `, ${ipInfo.countryEn}` : ""}
+                </>
+              )}
               <span> · {ipInfo.coord[1].toFixed(2)}, {ipInfo.coord[0].toFixed(2)}</span>
             </p>
           ) : (
