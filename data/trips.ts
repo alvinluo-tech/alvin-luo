@@ -194,6 +194,15 @@ const HAND_TRIPS: Trip[] = [
     note: "",
     coord: [117.65, 24.51],
   },
+  {
+    img: "52",
+    country: "中国",
+    countryEn: "China",
+    place: "武功山 WUGONGSHAN",
+    date: "",
+    note: "",
+    coord: [114.18, 27.46],
+  },
 
   /* ---------- 新加坡 ---------- */
   {
