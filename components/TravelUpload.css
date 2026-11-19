@@ -894,3 +894,24 @@
 .upload-actions .upload-progress i {
   min-width: 2px;
 }
+
+/* 「最近上传」展开全部（照片多了也能翻到旧的那张改归属） */
+.upload-history-more {
+  margin: 0.7rem 0 0.2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--grey);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.upload-history-more:hover {
+  color: var(--ink);
+  background: var(--lime);
+  text-decoration: none;
+}

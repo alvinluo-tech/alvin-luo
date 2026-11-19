@@ -112,6 +112,7 @@ type UploadedPhoto = {
   bytes?: number;
   trip: string;
   takenAt?: string;
+  uploadedAt?: string;
   caption?: string;
   place?: string;
   cover?: boolean;
@@ -159,6 +160,24 @@ function statusText(s: Status): string {
     duplicate: "已上传过",
     error: "失败",
   }[s];
+}
+
+/** 「最近上传」里补传的老照片：上传日期 ≠ 拍摄日期时才标注 */
+function uploadHint(p: { takenAt?: string; uploadedAt?: string }): string {
+  if (!p.uploadedAt) return "";
+  const u = new Date(p.uploadedAt);
+  if (Number.isNaN(u.getTime())) return "";
+  if (p.takenAt) {
+    const t = new Date(p.takenAt);
+    if (!Number.isNaN(t.getTime())) {
+      const same =
+        u.getFullYear() === t.getFullYear() &&
+        u.getMonth() === t.getMonth() &&
+        u.getDate() === t.getDate();
+      if (same) return "";
+    }
+  }
+  return ` · 上传 ${u.getMonth() + 1}.${u.getDate()}`;
 }
 
 /** 把一帧让给浏览器：先画出「排队中」，再开始压缩这种重活。
@@ -230,6 +249,8 @@ export default function TravelUpload() {
   /** 上传阶段进度。上传中的卡片已经不是「待上传」，底栏必须切到这条显示，
       否则最后一张会出现「卡片：上传中 / 底栏：0 张待上传」的矛盾。 */
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  /** 最近上传默认只显示 40 条，可展开全部（照片多了也能翻到旧的那张改归属） */
+  const [showAllUploaded, setShowAllUploaded] = useState(false);
   const [dialog, setDialog] = useState<TripDialog>({
     open: false,
     coord: null,
@@ -267,6 +288,8 @@ export default function TravelUpload() {
               caption?: string;
               place?: string;
               cover?: boolean;
+              /** 服务端记录的上传时间（ISO） */
+              uploadedAt?: string;
               /** 原文件字节 hash（客户端算） */
               hash?: string;
               /** 成品字节 hash（服务端算，老照片回填后也有） */
@@ -297,20 +320,31 @@ export default function TravelUpload() {
               if (p.hash) knownHashes.current.set(p.hash, info);
               if (p.bhash) knownHashes.current.set(p.bhash, info);
             }
+            /* 「最近上传」按**上传时间**排，不是拍摄时间：
+               manifest 是按 takenAt 升序的，补传的老照片拍摄时间很早，
+               按它排会沉底，甚至被 slice 直接丢掉（列表里就找不到了）。 */
+            const recent = [...data.photos].sort((a, b) => {
+              const ua = Date.parse(a.uploadedAt || "");
+              const ub = Date.parse(b.uploadedAt || "");
+              if (Number.isFinite(ua) && Number.isFinite(ub) && ua !== ub) return ub - ua;
+              if (Number.isFinite(ua) !== Number.isFinite(ub)) return Number.isFinite(ua) ? -1 : 1;
+              const ta = Date.parse(a.takenAt || "");
+              const tb = Date.parse(b.takenAt || "");
+              if (Number.isFinite(ta) && Number.isFinite(tb) && ta !== tb) return tb - ta;
+              return a.key.localeCompare(b.key);
+            });
             setUploaded(
-              data.photos
-                .slice(-40)
-                .reverse()
-                .map((p) => ({
-                  key: p.key,
-                  url: p.url,
-                  thumbUrl: p.thumbUrl,
-                  trip: p.trip,
-                  takenAt: p.takenAt,
-                  caption: p.caption,
-                  place: p.place,
-                  cover: p.cover,
-                }))
+              recent.map((p) => ({
+                key: p.key,
+                url: p.url,
+                thumbUrl: p.thumbUrl,
+                trip: p.trip,
+                takenAt: p.takenAt,
+                uploadedAt: p.uploadedAt,
+                caption: p.caption,
+                place: p.place,
+                cover: p.cover,
+              }))
             );
           }
         }
@@ -1566,10 +1600,12 @@ export default function TravelUpload() {
       {uploaded.length ? (
         <details className="upload-history">
           <summary>
-            最近上传 · {uploaded.length} 张<span>（归错了可以直接改）</span>
+            最近上传 · {showAllUploaded ? uploaded.length : Math.min(40, uploaded.length)} 张
+            {uploaded.length > 40 && !showAllUploaded ? <span> / 共 {uploaded.length} 张</span> : null}
+            <span>（归错了可以直接改）</span>
           </summary>
           <ul>
-            {uploaded.map((p) => (
+            {(showAllUploaded ? uploaded : uploaded.slice(0, 40)).map((p) => (
               <li key={p.key}>
                 {p.thumbUrl ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -1586,6 +1622,7 @@ export default function TravelUpload() {
                 <div className="upload-history-main">
                   <span className="upload-history-meta">
                     {p.takenAt ? formatTakenAt(p.takenAt) : p.key.split("/").pop()}
+                    {uploadHint(p)}
                     {p.place ? ` · ${p.place}` : " · 未记录拍摄地"}
                     {p.caption ? ` · ${p.caption}` : ""}
                   </span>
@@ -1638,6 +1675,15 @@ export default function TravelUpload() {
               </li>
             ))}
           </ul>
+          {uploaded.length > 40 ? (
+            <button
+              type="button"
+              className="upload-history-more"
+              onClick={() => setShowAllUploaded((v) => !v)}
+            >
+              {showAllUploaded ? "只看最近 40 张" : `显示全部 ${uploaded.length} 张`}
+            </button>
+          ) : null}
         </details>
       ) : null}
 
