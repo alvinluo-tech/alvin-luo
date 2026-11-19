@@ -493,7 +493,7 @@ const HAND_TRIPS: Trip[] = [
     coord: [14.51, 35.9],
   },
   {
-    img: "47",
+    img: "49",
     country: "马耳他",
     countryEn: "Malta",
     place: "戈佐 GOZO",
@@ -502,7 +502,7 @@ const HAND_TRIPS: Trip[] = [
     coord: [14.24, 36.04],
   },
   {
-    img: "48",
+    img: "50",
     country: "马耳他",
     countryEn: "Malta",
     place: "科米诺 COMINO",
@@ -512,8 +512,16 @@ const HAND_TRIPS: Trip[] = [
   },
 ];
 
-/** 全部站点 = 手写 + 上传页新建（构建时从 R2 manifest 生成） */
-export const TRIPS: Trip[] = [...HAND_TRIPS, ...EXTRA_TRIPS];
+/** 全部站点 = 手写 + 上传页新建（构建时从 R2 manifest 生成）
+ *  手写站点优先：上传页新建的行程编号若撞上手写站点（历史上出现过），
+ *  丢弃 extra 里的那条并告警，避免重复 key / 照片归到错误站点。 */
+const HAND_IDS = new Set(HAND_TRIPS.map((t) => t.img));
+const EXTRA_ONLY = EXTRA_TRIPS.filter((t) => {
+  if (!HAND_IDS.has(t.img)) return true;
+  console.warn(`[trips] 行程编号冲突：${t.img}（${t.place}）与手写站点重复，已忽略 extra 版本`);
+  return false;
+});
+export const TRIPS: Trip[] = [...HAND_TRIPS, ...EXTRA_ONLY];
 
 /** 国家显示名：英文模式优先用 countryEn（国家名是数据，UI 按 locale 取） */
 export function countryLabel(trip: Trip, locale: "en" | "zh") {
