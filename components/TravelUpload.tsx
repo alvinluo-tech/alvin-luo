@@ -120,6 +120,27 @@ type UploadedPhoto = {
   cover?: boolean;
 };
 
+/** 站点「当前常驻」（地图上显示的常驻点） */
+type SiteBase = {
+  place: string;
+  placeEn?: string;
+  region?: string;
+  country?: string;
+  countryCode?: string;
+  coord: [number, number];
+  updatedAt?: string;
+};
+
+/** ipwho.is 返回的 IP 属地 */
+type IpInfo = {
+  place: string;
+  placeEn: string;
+  region: string;
+  country: string;
+  countryCode: string;
+  coord: [number, number];
+};
+
 type TripDialog = {
   open: boolean;
   coord: [number, number] | null;
@@ -261,6 +282,11 @@ export default function TravelUpload() {
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   /** 最近上传默认只显示 40 条，可展开全部（照片多了也能翻到旧的那张改归属） */
   const [showAllUploaded, setShowAllUploaded] = useState(false);
+  /** 站点当前常驻（manifest.base，构建时注入地图） */
+  const [siteBase, setSiteBase] = useState<SiteBase | null>(null);
+  /** IP 属地检测结果（未保存前只是预览） */
+  const [ipInfo, setIpInfo] = useState<IpInfo | null>(null);
+  const [ipBusy, setIpBusy] = useState(false);
   const [dialog, setDialog] = useState<TripDialog>({
     open: false,
     coord: null,
@@ -305,9 +331,12 @@ export default function TravelUpload() {
               /** 成品字节 hash（服务端算，老照片回填后也有） */
               bhash?: string;
             }>;
+            /** 站点当前常驻（上传页 IP 属地更新） */
+            base?: SiteBase | null;
           } | null
         ) => {
           if (!data) return;
+          if (data.base) setSiteBase(data.base);
           const known = new Set(MANUAL_TRIPS.map((t) => t.img));
           if (data.trips) {
             setExtraTrips(
@@ -317,8 +346,7 @@ export default function TravelUpload() {
                 .filter((t) => Array.isArray(t.coord) && t.coord.length === 2)
             );
           }
-          if (data.photos) {
-            /* 全量登记已知 hash（原文件 + 成品），不只最近 40 张，离线判重靠它 */
+          if (data.photos) {            /* 全量登记已知 hash（原文件 + 成品），不只最近 40 张，离线判重靠它 */
             for (const p of data.photos) {
               const info = {
                 state: "uploaded" as const,
@@ -609,6 +637,77 @@ export default function TravelUpload() {
       geoStatus: r.geo ? "done" : "error",
       geoError: r.error,
     });
+  }
+
+  /** 获取当前出口 IP 的属地（ipwho.is 免 key） */
+  async function detectIp() {
+    if (ipBusy) return;
+    setIpBusy(true);
+    try {
+      const res = await fetch("https://ipwho.is/", { signal: timeoutSignal(15_000) });
+      const data = (await res.json()) as {
+        success?: boolean;
+        city?: string;
+        region?: string;
+        country?: string;
+        country_code?: string;
+        latitude?: number;
+        longitude?: number;
+      };
+      if (!res.ok || data.success === false) throw new Error("IP 属地服务不可用");
+      const city = (data.city || "").trim();
+      const region = (data.region || "").trim();
+      const country = (data.country || "").trim();
+      const place = city || region || country;
+      const lat = Number(data.latitude);
+      const lng = Number(data.longitude);
+      if (!place || !Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error("没解析出地名");
+      setIpInfo({
+        place,
+        placeEn: place,
+        region,
+        country,
+        countryCode: (data.country_code || "").toUpperCase(),
+        coord: [lng, lat],
+      });
+    } catch (err) {
+      setNotice(friendlyError(err, "IP 属地获取失败"));
+    } finally {
+      setIpBusy(false);
+    }
+  }
+
+  /** 把 IP 属地写进站点常驻（发布后生效） */
+  async function saveBase() {
+    if (!ipInfo || ipBusy) return;
+    setIpBusy(true);
+    try {
+      const res = await fetch(`${API}/base`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          place: ipInfo.place,
+          placeEn: ipInfo.placeEn,
+          region: ipInfo.region,
+          country: ipInfo.country,
+          countryCode: ipInfo.countryCode,
+          coord: ipInfo.coord,
+        }),
+        signal: timeoutSignal(20_000),
+      });
+      if (res.status === 401) {
+        setNotice("token 无效，请重新输入");
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const saved = (await res.json()) as SiteBase;
+      setSiteBase(saved);
+      setNotice(`常驻已更新为 ${saved.place}；点「发布这批」后地图生效`);
+    } catch (err) {
+      setNotice(friendlyError(err, "常驻更新失败"));
+    } finally {
+      setIpBusy(false);
+    }
   }
 
   /** 同一天（±18h）已归站的照片里，出现最多的行程 */
@@ -1470,6 +1569,32 @@ export default function TravelUpload() {
       </section>
 
       {notice ? <p className="upload-notice">{notice}</p> : null}
+
+      <details className="upload-base">
+        <summary>
+          站点常驻 ·{" "}
+          {siteBase ? `${siteBase.place}${siteBase.region && siteBase.region !== siteBase.place ? `（${siteBase.region}）` : ""}` : "未设置"}
+        </summary>
+        <div className="upload-base-body">
+          <button type="button" className="upload-ghost" onClick={() => void detectIp()} disabled={ipBusy}>
+            {ipBusy ? "检测中…" : "获取当前 IP 属地"}
+          </button>
+          {ipInfo ? (
+            <p className="upload-base-result">
+              {ipInfo.region && ipInfo.region !== ipInfo.place ? `${ipInfo.region} · ` : ""}
+              {ipInfo.place}
+              {ipInfo.country ? `，${ipInfo.country}` : ""}
+              <span> · {ipInfo.coord[1].toFixed(2)}, {ipInfo.coord[0].toFixed(2)}</span>
+            </p>
+          ) : (
+            <p className="upload-base-result is-dim">按出口 IP 判断；开代理时会显示代理所在地。</p>
+          )}
+          <button type="button" className="upload-force" onClick={() => void saveBase()} disabled={!ipInfo || ipBusy}>
+            更新为当前常驻
+          </button>
+          <p className="upload-base-hint">更新后需要点「发布这批」重建站点，地图上才会生效。</p>
+        </div>
+      </details>
 
       <section className="upload-list" aria-live="polite" ref={listRef}>
         {items.length === 0 ? (

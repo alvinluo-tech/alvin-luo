@@ -13,9 +13,12 @@
  *   3) 本地 public/travel/{img}.webp（入库图片）
  * ============================================================ */
 
-import { EXTRA_TRIPS, TRIP_DATE, TRIP_PHOTOS, type GeneratedTripPhoto } from "./trip-photos.generated";
+import { EXTRA_TRIPS, SITE_BASE, TRIP_DATE, TRIP_PHOTOS, type GeneratedSiteBase, type GeneratedTripPhoto } from "./trip-photos.generated";
 
 export type TripPhoto = GeneratedTripPhoto;
+/** 站点「当前常驻」（上传页 IP 属地更新，构建时注入；未设置 null） */
+export type SiteBase = GeneratedSiteBase;
+export { SITE_BASE };
 
 export type Trip = {
   img: string; // 本地照片编号：public/travel/{img}.webp

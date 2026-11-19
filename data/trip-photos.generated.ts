@@ -29,6 +29,19 @@ export type GeneratedTrip = {
   coord: [number, number];
 };
 
+/** 站点「当前常驻」（上传页用 IP 属地更新；未设置时为 null） */
+export type GeneratedSiteBase = {
+  place: string;
+  placeEn: string;
+  region: string;
+  country: string;
+  countryCode: string;
+  coord: [number, number];
+  updatedAt: string;
+};
+
+export const SITE_BASE: GeneratedSiteBase | null = null;
+
 /** 站点编号 → 照片（第一张为封面） */
 export const TRIP_PHOTOS: Record<string, GeneratedTripPhoto[]> = {
 

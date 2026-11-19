@@ -28,6 +28,8 @@ const DEFAULT_ALLOWED = "https://alvin-luo.me";
 const PHOTO_PREFIX = "travel/";
 const META_PREFIX = "travel/_meta/";
 const TRIP_PREFIX = "travel/_trips/";
+/** 站点「当前常驻」：由上传页用 IP 属地更新，构建时写进站点 */
+const BASE_KEY = "travel/_base.json";
 /* 原文件 SHA-256（客户端算）与处理后文件 SHA-256（服务端算）→ 照片指针，
    用于服务端查重。放在 _hashes/ 下，不会被 /manifest 的 _meta/_trips 列表带走。 */
 const HASH_PREFIX = "travel/_hashes/";
@@ -320,10 +322,20 @@ async function buildManifestBody(env: Env): Promise<string> {
     listKeys(env, TRIP_PREFIX),
   ]);
 
-  const [metaRows, tripRows] = await Promise.all([
+  const [metaRows, tripRows, baseObj] = await Promise.all([
     readJsonObjects(env, metaKeys),
     readJsonObjects(env, tripKeys),
+    env.PHOTOS.get(BASE_KEY),
   ]);
+
+  let base: unknown = null;
+  if (baseObj) {
+    try {
+      base = JSON.parse(await baseObj.text());
+    } catch {
+      base = null;
+    }
+  }
 
   const photos = metaRows.filter(
     (row) => typeof row.url === "string" && typeof row.trip === "string"
@@ -346,7 +358,7 @@ async function buildManifestBody(env: Env): Promise<string> {
     )
     .sort((a, b) => String(a.id).localeCompare(String(b.id)));
 
-  return JSON.stringify({ count: photos.length, photos, trips });
+  return JSON.stringify({ count: photos.length, photos, trips, base });
 }
 
 async function handleManifest(env: Env): Promise<Response> {
@@ -362,6 +374,54 @@ async function handleManifest(env: Env): Promise<Response> {
       "X-Robots-Tag": "noindex",
     },
   });
+}
+
+/** 站点「当前常驻」：GET 公开读，POST 需鉴权写。
+ *  上传页用 IP 属地检测后写入，构建时由 manifest.base 带进站点。 */
+async function handleBase(request: Request, env: Env): Promise<Response> {
+  if (request.method === "GET") {
+    const obj = await env.PHOTOS.get(BASE_KEY);
+    if (!obj) return json({ base: null }, 200);
+    try {
+      return json({ base: JSON.parse(await obj.text()) }, 200, { "Cache-Control": "no-store" });
+    } catch {
+      return json({ base: null }, 200);
+    }
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return json({ error: "expected application/json" }, 400);
+  }
+  const place = text(body.place, 40);
+  const placeEn = text(body.placeEn, 40);
+  const region = text(body.region, 40);
+  const country = text(body.country, 40);
+  const countryCode = text(body.countryCode, 4);
+  const coord = Array.isArray(body.coord) ? body.coord : [];
+  const lng = Number(coord[0]);
+  const lat = Number(coord[1]);
+  if (!place) return json({ error: "place required" }, 400);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return json({ error: "invalid coord" }, 400);
+  }
+
+  const base = {
+    place,
+    placeEn: placeEn || place,
+    region,
+    country,
+    countryCode,
+    coord: [lng, lat],
+    updatedAt: new Date().toISOString(),
+  };
+  await env.PHOTOS.put(BASE_KEY, JSON.stringify(base), {
+    httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
+  });
+  invalidateManifest();
+  return json(base, 200);
 }
 
 /** 新建行程：写 travel/_trips/<id>.json，构建时并进 TRIPS */
@@ -926,6 +986,15 @@ export default {
       if (url.pathname === "/trip" && request.method === "POST") {
         if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
         return withCors(await handleTrip(request, env));
+      }
+
+      if (url.pathname === "/base" && request.method === "GET") {
+        return withCors(await handleBase(request, env));
+      }
+
+      if (url.pathname === "/base" && request.method === "POST") {
+        if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
+        return withCors(await handleBase(request, env));
       }
 
       if (url.pathname === "/geocode" && request.method === "GET") {

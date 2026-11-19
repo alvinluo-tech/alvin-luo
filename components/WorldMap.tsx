@@ -18,7 +18,7 @@ import { feature } from "topojson-client";
 import type { Topology, Objects } from "topojson-specification";
 import type { FeatureCollection, Geometry } from "geojson";
 import worldTopology from "@/data/countries-110m.json";
-import { TRIPS, dateLabel, hasTripPhoto, tripPhotoThumb, tripPhotos } from "@/data/trips";
+import { TRIPS, SITE_BASE, dateLabel, hasTripPhoto, tripPhotoThumb, tripPhotos } from "@/data/trips";
 import { useLocale } from "./i18n";
 
 /* GitHub Pages 子路径部署：构建时内联 */
@@ -93,16 +93,6 @@ function visitedParts(f: FeatureCollection["features"][number], coords: [number,
   return [parts.reduce((a, b) => (geoArea(b) > geoArea(a) ? b : a))];
 }
 
-/** 航线轨迹（经纬度坐标对：[出发点 lng, lat], [目的点 lng, lat]）
- *  装饰性弧线：确定的两条主干（大本营杜伦 ↔ 青岛 / 伦敦），
- *  其余行程等补全日期后随 trips 数据一起补充 */
-const FLIGHT_ROUTES: [number, number][][] = [
-  // 杜伦 (当前 Base) ↔ 中国青岛
-  [[-1.5759, 54.7761], [120.38, 36.07]],
-  // 杜伦 ↔ 伦敦
-  [[-1.5759, 54.7761], [-0.13, 51.51]],
-];
-
 /** 城市去重列表（按坐标去重） */
 const CITIES = (() => {
   const seen = new Set<string>();
@@ -114,14 +104,24 @@ const CITIES = (() => {
   });
 })();
 
-/** 当前大本营：英国杜伦 (Durham, UK) */
-const BASE_LOCATION = {
-  nameZh: "杜伦",
-  nameEn: "Durham",
-  roleZh: "常驻 / BASE",
-  roleEn: "CURRENT BASE",
-  coord: [-1.5759, 54.7761] as [number, number],
-};
+/** 当前常驻：上传页用 IP 属地更新，构建时注入（SITE_BASE）。
+ *  没有设置时不显示常驻点/图例——不再硬编码杜伦。 */
+const BASE_LOCATION = SITE_BASE
+  ? {
+      nameZh: SITE_BASE.place,
+      nameEn: SITE_BASE.placeEn || SITE_BASE.place,
+      coord: SITE_BASE.coord,
+    }
+  : null;
+
+/** 航线起点：有常驻时从常驻出发，否则不画 */
+const FLIGHT_ANCHORS: [number, number][] = [
+  [120.38, 36.07], // 青岛
+  [-0.13, 51.51], // 伦敦
+];
+const FLIGHT_ROUTES: [number, number][][] = BASE_LOCATION
+  ? FLIGHT_ANCHORS.map((dest) => [BASE_LOCATION.coord, dest] as [number, number][])
+  : [];
 
 /** 城市代表性微缩图标 / 艺术占位符（当照片就位前展示手作印章感） */
 const CITY_EMOJIS: Record<string, string[]> = {
@@ -264,8 +264,8 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
         return { ...c, x, y };
       });
 
-      // 英国杜伦 Base 点位映射
-      const [bx, by] = projection(BASE_LOCATION.coord) ?? [0, 0];
+      // 当前常驻点位（未设置则不画）
+      const basePosition = BASE_LOCATION ? projection(BASE_LOCATION.coord) : null;
 
       return {
         countryPaths: cPaths,
@@ -273,7 +273,7 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
         spherePath: sPath,
         flightPaths: fPaths,
         cityPositions: cPositions,
-        basePosition: { x: bx, y: by },
+        basePosition: basePosition ? { x: basePosition[0], y: basePosition[1] } : null,
       };
     }, []);
 
@@ -402,8 +402,14 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
           <span>
             {locale === "en" ? `${STOP_COUNT} STOPS` : `${STOP_COUNT} 处足迹`}
           </span>
-          <span className="hud-sep">/</span>
-          <span className="hud-base">{locale === "en" ? "BASE: DURHAM, UK" : "常驻: 英国杜伦"}</span>
+          {BASE_LOCATION ? (
+            <>
+              <span className="hud-sep">/</span>
+              <span className="hud-base">
+                {locale === "en" ? `BASE: ${BASE_LOCATION.nameEn}` : `常驻: ${BASE_LOCATION.nameZh}`}
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -475,15 +481,17 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                 </g>
               ))}
 
-              {/* 英国杜伦 Base 标点（彻底去除错位的 emoji 📍，纯净矢量雷达呈现） */}
-              <g transform={`translate(${basePosition.x}, ${basePosition.y})`} className="geo-pin is-base">
-                <circle r="12" className="pin-radar base-radar" />
-                <circle r="6" className="base-ring" />
-                <circle r="2.5" className="base-dot" />
-                <text y="-9" className="pin-text-label">
-                  DURHAM
-                </text>
-              </g>
+              {/* 当前常驻标点（位置来自上传页 IP 属地更新；未设置则不画） */}
+              {basePosition && BASE_LOCATION ? (
+                <g transform={`translate(${basePosition.x}, ${basePosition.y})`} className="geo-pin is-base">
+                  <circle r="12" className="pin-radar base-radar" />
+                  <circle r="6" className="base-ring" />
+                  <circle r="2.5" className="base-dot" />
+                  <text y="-9" className="pin-text-label">
+                    {BASE_LOCATION.nameEn.toUpperCase()}
+                  </text>
+                </g>
+              ) : null}
             </g>
           </g>
         </svg>
@@ -657,10 +665,14 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
           <span className="legend-line" />
           <span>{locale === "en" ? "Flight trajectory" : "大圆航线弧线"}</span>
         </div>
-        <div className="legend-item">
-          <span className="legend-base" />
-          <span>{locale === "en" ? "Current base (Durham, UK)" : "当前常驻（英国杜伦）"}</span>
-        </div>
+        {BASE_LOCATION ? (
+          <div className="legend-item">
+            <span className="legend-base" />
+            <span>
+              {locale === "en" ? `Current base (${BASE_LOCATION.nameEn})` : `当前常驻（${BASE_LOCATION.nameZh}）`}
+            </span>
+          </div>
+        ) : null}
         <div className="legend-tip">
           {/* 桌面/触屏各一份文案，pointer:coarse 时切换（触屏没有 Ctrl+滚轮） */}
           <span className="tip-mouse">

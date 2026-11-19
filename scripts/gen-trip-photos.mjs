@@ -84,25 +84,27 @@ function normalizeTrip(value) {
 
 function readManifest(raw) {
   const text = String(raw).trim();
-  if (!text) return { photos: [], trips: [] };
+  if (!text) return { photos: [], trips: [], base: null };
 
   if (text.startsWith("{") || text.startsWith("[")) {
     const data = JSON.parse(text);
-    if (Array.isArray(data)) return { photos: data.map((v) => normalize(v)).filter(Boolean), trips: [] };
+    if (Array.isArray(data)) return { photos: data.map((v) => normalize(v)).filter(Boolean), trips: [], base: null };
     if (Array.isArray(data.photos) || Array.isArray(data.trips)) {
       return {
         photos: (data.photos || []).map((v) => normalize(v)).filter(Boolean),
         trips: (data.trips || []).map((v) => normalizeTrip(v)).filter(Boolean),
+        base: normalizeBase(data.base),
       };
     }
     if (Array.isArray(data.items)) {
-      return { photos: data.items.map((v) => normalize(v)).filter(Boolean), trips: [] };
+      return { photos: data.items.map((v) => normalize(v)).filter(Boolean), trips: [], base: null };
     }
     return {
       photos: Object.entries(data)
         .map(([key, value]) => normalize(value, key))
         .filter(Boolean),
       trips: [],
+      base: null,
     };
   }
 
@@ -117,7 +119,25 @@ function readManifest(raw) {
     const url = t.slice(idx + 2).trim();
     if (key && url) rows.push({ key, url });
   }
-  return { photos: rows, trips: [] };
+  return { photos: rows, trips: [], base: null };
+}
+
+/** 站点「当前常驻」（上传页 IP 属地写入） */
+function normalizeBase(v) {
+  if (!v || typeof v !== "object") return null;
+  const coord = Array.isArray(v.coord) ? v.coord.map(Number) : [];
+  if (coord.length !== 2 || !coord.every(Number.isFinite)) return null;
+  const place = typeof v.place === "string" ? v.place.trim().slice(0, 40) : "";
+  if (!place) return null;
+  return {
+    place,
+    placeEn: typeof v.placeEn === "string" && v.placeEn.trim() ? v.placeEn.trim().slice(0, 40) : place,
+    region: typeof v.region === "string" ? v.region.trim().slice(0, 40) : "",
+    country: typeof v.country === "string" ? v.country.trim().slice(0, 40) : "",
+    countryCode: typeof v.countryCode === "string" ? v.countryCode.trim().slice(0, 4) : "",
+    coord,
+    updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : "",
+  };
 }
 
 /* ---------- 解析编号 ---------- */
@@ -158,7 +178,7 @@ function renderPhoto(p) {
   return `{ ${parts.join(", ")} }`;
 }
 
-function render(groups, timeline, derivedDates, extraTrips = []) {
+function render(groups, timeline, derivedDates, extraTrips = [], base = null) {
   const stops = [...groups.keys()].sort();
   const photoLines = stops
     .map((stop) => {
@@ -188,6 +208,18 @@ function render(groups, timeline, derivedDates, extraTrips = []) {
       )}, date: "", note: "", coord: [${t.coord[0]}, ${t.coord[1]}] },`;
     })
     .join("\n");
+
+  const baseBlock = base
+    ? `{
+  place: ${esc(base.place)},
+  placeEn: ${esc(base.placeEn)},
+  region: ${esc(base.region)},
+  country: ${esc(base.country)},
+  countryCode: ${esc(base.countryCode)},
+  coord: [${base.coord[0]}, ${base.coord[1]}] as [number, number],
+  updatedAt: ${esc(base.updatedAt)},
+}`
+    : "null";
 
   return `/* 由 scripts/gen-trip-photos.mjs 自动生成 —— 请勿手改
  *
@@ -219,6 +251,19 @@ export type GeneratedTrip = {
   note: string;
   coord: [number, number];
 };
+
+/** 站点「当前常驻」（上传页用 IP 属地更新；未设置时为 null） */
+export type GeneratedSiteBase = {
+  place: string;
+  placeEn: string;
+  region: string;
+  country: string;
+  countryCode: string;
+  coord: [number, number];
+  updatedAt: string;
+};
+
+export const SITE_BASE: GeneratedSiteBase | null = ${baseBlock};
 
 /** 站点编号 → 照片（第一张为封面） */
 export const TRIP_PHOTOS: Record<string, GeneratedTripPhoto[]> = {
@@ -264,6 +309,16 @@ export type GeneratedTrip = {
   note: string;
   coord: [number, number];
 };
+export type GeneratedSiteBase = {
+  place: string;
+  placeEn: string;
+  region: string;
+  country: string;
+  countryCode: string;
+  coord: [number, number];
+  updatedAt: string;
+};
+export const SITE_BASE: GeneratedSiteBase | null = null;
 export const TRIP_PHOTOS: Record<string, GeneratedTripPhoto[]> = {};
 export const TRIP_DATE: Record<string, string> = {};
 export const PHOTO_TIMELINE: (GeneratedTripPhoto & { trip: string })[] = [];
@@ -340,7 +395,7 @@ async function main() {
     process.exit(1);
   }
 
-  const { photos: rows, trips: extraTrips } = readManifest(raw);
+  const { photos: rows, trips: extraTrips, base } = readManifest(raw);
   for (const row of rows) {
     if (!/^https?:\/\//.test(row.url)) {
       if (!baseUrl) {
@@ -420,7 +475,7 @@ async function main() {
   timeline.sort((a, b) => Date.parse(a.takenAt) - Date.parse(b.takenAt));
 
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, render(groups, timeline, derivedDates, extraTrips), "utf8");
+  fs.writeFileSync(outPath, render(groups, timeline, derivedDates, extraTrips, base), "utf8");
 
   const total = [...groups.values()].reduce((n, items) => n + items.length, 0);
   console.log(
