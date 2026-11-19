@@ -10,7 +10,7 @@
  * ============================================================ */
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { geoEqualEarth, geoPath, geoGraticule10, geoGraticule } from "d3-geo";
+import { geoEqualEarth, geoPath, geoGraticule10, geoGraticule, geoContains, geoArea } from "d3-geo";
 import { zoom, zoomIdentity, ZoomTransform, ZoomBehavior } from "d3-zoom";
 import { select } from "d3-selection";
 import "d3-transition";
@@ -42,6 +42,56 @@ const VISITED_COUNTRIES: Record<string, { id: string; nameEn: string; nameZh: st
   "380": { id: "380", nameEn: "Italy", nameZh: "意大利" },
   "470": { id: "470", nameEn: "Malta", nameZh: "马耳他" },
 };
+
+/** 每个国家的实际到访坐标：只点亮「真的去过的那几块陆地」。
+ *  世界地图把海外属地并进宗主国（France 的 MultiPolygon 含法属圭亚那），
+ *  按整块国家点亮会在南美/加勒比出现从未去过的绿色。 */
+const VISITED_COORDS: Record<string, [number, number][]> = (() => {
+  const out: Record<string, [number, number][]> = {};
+  const byName = new Map(Object.values(VISITED_COUNTRIES).map((c) => [c.nameZh, c.id]));
+  for (const t of TRIPS) {
+    const id = byName.get(t.country);
+    if (id) (out[id] ||= []).push(t.coord);
+  }
+  return out;
+})();
+
+/** 把 MultiPolygon 拆成单块，只保留「到访得到」的：坐标落在多边形内，
+ *  或落在它的经纬度包围盒（±0.8°）内——110m 简化后小岛常把点甩到边界外。 */
+function visitedParts(f: FeatureCollection["features"][number], coords: [number, number][]) {
+  const geom = f.geometry;
+  if (geom?.type !== "MultiPolygon") return [f];
+  const parts = geom.coordinates.map((polygon) => {
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const ring of polygon) {
+      for (const [x, y] of ring) {
+        if (x < x0) x0 = x;
+        if (y < y0) y0 = y;
+        if (x > x1) x1 = x;
+        if (y > y1) y1 = y;
+      }
+    }
+    return {
+      type: "Feature" as const,
+      properties: f.properties,
+      geometry: { type: "Polygon" as const, coordinates: polygon },
+      bbox: [x0 - 0.8, y0 - 0.8, x1 + 0.8, y1 + 0.8] as [number, number, number, number],
+    };
+  });
+  const hit = parts.filter((p) =>
+    coords.some(
+      (c) =>
+        geoContains(p, c) ||
+        (c[0] >= p.bbox[0] && c[0] <= p.bbox[2] && c[1] >= p.bbox[1] && c[1] <= p.bbox[3])
+    )
+  );
+  if (hit.length) return hit;
+  /* 都没命中（极端简化）：退回面积最大的一块，通常是本土 */
+  return [parts.reduce((a, b) => (geoArea(b) > geoArea(a) ? b : a))];
+}
 
 /** 航线轨迹（经纬度坐标对：[出发点 lng, lat], [目的点 lng, lat]）
  *  装饰性弧线：确定的两条主干（大本营杜伦 ↔ 青岛 / 伦敦），
@@ -178,18 +228,21 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
         (worldTopology as unknown as Topology<Objects>).objects.countries
       ) as unknown as FeatureCollection<Geometry, { name?: string }>;
 
-      // 生成国家路径
-      const cPaths = countriesGeo.features.map((f, i) => {
+      // 生成国家路径（有到访记录的国家只画到访的那几块陆地）
+      const cPaths = countriesGeo.features.flatMap((f, i) => {
         const id = f.id != null ? String(f.id) : `feat-${i}`;
         const visitedInfo = VISITED_COUNTRIES[id];
-        return {
-          id: `${id}-${i}`,
+        const coords = VISITED_COORDS[id];
+        const parts =
+          visitedInfo && coords && coords.length ? visitedParts(f, coords) : [f];
+        return parts.map((part, j) => ({
+          id: `${id}-${i}-${j}`,
           isoId: id,
           name: f.properties?.name ?? id,
           isVisited: Boolean(visitedInfo),
           visitedInfo,
-          d: pathGen(f) ?? "",
-        };
+          d: pathGen(part) ?? "",
+        }));
       });
 
       // 经纬网
@@ -393,6 +446,8 @@ export default function WorldMap({ onCityClick, focusedCity }: WorldMapProps) {
                   key={c.id}
                   d={c.d}
                   className={`geo-country ${c.isVisited ? "is-visited" : ""}`}
+                  data-iso={c.isoId}
+                  data-visited={c.isVisited ? "1" : "0"}
                   onMouseEnter={() => {
                     if (c.visitedInfo) {
                       setHoveredCountry(locale === "en" ? c.visitedInfo.nameEn : c.visitedInfo.nameZh);
