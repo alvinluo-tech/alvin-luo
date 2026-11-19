@@ -227,6 +227,9 @@ export default function TravelUpload() {
    *  用 ref 累加而不是局部计数：处理途中再选一批时两批共用同一进度。 */
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const progressRef = useRef({ done: 0, total: 0 });
+  /** 上传阶段进度。上传中的卡片已经不是「待上传」，底栏必须切到这条显示，
+      否则最后一张会出现「卡片：上传中 / 底栏：0 张待上传」的矛盾。 */
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [dialog, setDialog] = useState<TripDialog>({
     open: false,
     coord: null,
@@ -450,6 +453,7 @@ export default function TravelUpload() {
   const pendingBytes = useMemo(() => uploadable.reduce((n, i) => n + (i.blob?.size ?? i.size), 0), [uploadable]);
   const doneCount = useMemo(() => items.filter((i) => i.status === "done").length, [items]);
   const dupCount = useMemo(() => items.filter((i) => i.status === "duplicate").length, [items]);
+  const errCount = useMemo(() => items.filter((i) => i.status === "error").length, [items]);
 
   function tripLabel(id: string): string {
     const t = tripById.get(id);
@@ -1085,7 +1089,12 @@ export default function TravelUpload() {
     if (!targets.length) return;
     setBusy(true);
     setNotice("");
+    let idx = 0;
+    setUploadProgress({ done: 0, total: targets.length });
     for (const snapshot of targets) {
+      /* 每轮开头刷新进度：正在处理第 idx+1 张时显示「已完成 idx/total」 */
+      setUploadProgress({ done: idx, total: targets.length });
+      idx += 1;
       // 用最新状态，避免上传途中改行程后仍传到旧行程
       const item = itemsRef.current.find((i) => i.id === snapshot.id);
       if (!item || item.status !== "ready" || !item.trip) continue;
@@ -1158,6 +1167,7 @@ export default function TravelUpload() {
       }
     }
     if (missing) setNotice(`${missing} 张还没选行程，已跳过；选好后再传一次即可`);
+    setUploadProgress(null);
     setBusy(false);
   }
 
@@ -1633,11 +1643,23 @@ export default function TravelUpload() {
 
       <footer className="upload-actions">
         <span>
-          {uploadable.length} 张待上传 · {mb(pendingBytes)}
-          {missing ? `　· ${missing} 张待定行程` : ""}
-          {dupCount ? `　· ${dupCount} 张已上传过` : ""}
-          {doneCount ? `　已上传 ${doneCount} 张` : ""}
-          {progress ? (
+          {uploadProgress ? (
+            <>
+              上传中 · 已完成 {uploadProgress.done}/{uploadProgress.total}
+              <span className="upload-progress" role="status">
+                <i style={{ width: `${uploadProgress.total ? Math.round((uploadProgress.done / uploadProgress.total) * 100) : 0}%` }} />
+              </span>
+            </>
+          ) : (
+            <>
+              {uploadable.length} 张待上传 · {mb(pendingBytes)}
+              {missing ? `　· ${missing} 张待定行程` : ""}
+              {dupCount ? `　· ${dupCount} 张已上传过` : ""}
+              {errCount ? `　· ${errCount} 张失败` : ""}
+              {doneCount ? `　已上传 ${doneCount} 张` : ""}
+            </>
+          )}
+          {!uploadProgress && progress ? (
             <span className="upload-progress" role="status">
               <i style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} />
               处理中 {progress.done}/{progress.total}

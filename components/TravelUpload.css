@@ -885,3 +885,12 @@
     transition: none;
   }
 }
+
+/* 上传阶段：进度条单独出现（没有文字），给一个可见宽度 */
+.upload-actions .upload-progress {
+  min-width: 4.5rem;
+}
+
+.upload-actions .upload-progress i {
+  min-width: 2px;
+}
