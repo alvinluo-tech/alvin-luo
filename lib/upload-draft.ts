@@ -36,6 +36,8 @@ export type DraftMeta = {
   distanceKm?: number;
   /** 原文件 SHA-256（上传时带上，服务端查重） */
   hash?: string;
+  /** 成品文件 SHA-256（老照片也能命中） */
+  bhash?: string;
 };
 
 const DB_NAME = "alvin-travel-upload";

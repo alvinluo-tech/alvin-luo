@@ -70,6 +70,8 @@ type Item = {
   cover: boolean;
   /** 原文件字节 SHA-256 */
   hash?: string;
+  /** 成品文件字节 SHA-256（老照片也能命中） */
+  bhash?: string;
   /** EXIF 方向（「仍然上传」重压缩时用） */
   orientation?: number;
   /** 用户坚持上传重复照片 */
@@ -204,6 +206,7 @@ function toDraftMeta(items: Item[]): DraftMeta[] {
       nearest: i.nearest,
       distanceKm: i.distanceKm,
       hash: i.hash,
+      bhash: i.bhash,
     }));
 }
 
@@ -259,7 +262,10 @@ export default function TravelUpload() {
               caption?: string;
               place?: string;
               cover?: boolean;
+              /** 原文件字节 hash（客户端算） */
               hash?: string;
+              /** 成品字节 hash（服务端算，老照片回填后也有） */
+              bhash?: string;
             }>;
           } | null
         ) => {
@@ -274,17 +280,17 @@ export default function TravelUpload() {
             );
           }
           if (data.photos) {
-            /* 全量登记已知 hash（不只最近 40 张），离线判重靠它 */
+            /* 全量登记已知 hash（原文件 + 成品），不只最近 40 张，离线判重靠它 */
             for (const p of data.photos) {
-              if (p.hash) {
-                knownHashes.current.set(p.hash, {
-                  state: "uploaded",
-                  trip: p.trip,
-                  takenAt: p.takenAt,
-                  key: p.key,
-                  thumbUrl: p.thumbUrl,
-                });
-              }
+              const info = {
+                state: "uploaded" as const,
+                trip: p.trip,
+                takenAt: p.takenAt,
+                key: p.key,
+                thumbUrl: p.thumbUrl,
+              };
+              if (p.hash) knownHashes.current.set(p.hash, info);
+              if (p.bhash) knownHashes.current.set(p.bhash, info);
             }
             setUploaded(
               data.photos
@@ -351,6 +357,7 @@ export default function TravelUpload() {
                 error: m.error,
                 cover: m.cover,
                 hash: m.hash,
+                bhash: m.bhash,
               },
             ];
           })
@@ -364,8 +371,10 @@ export default function TravelUpload() {
           });
           /* 恢复出来的条目也要进查重表，否则同批再选一次还会被当新照片 */
           for (const r of restored) {
-            if (r.hash && r.status !== "done") {
-              knownHashes.current.set(r.hash, {
+            if (r.status === "done") continue;
+            for (const probe of [r.hash, r.bhash]) {
+              if (!probe) continue;
+              knownHashes.current.set(probe, {
                 state: "pending",
                 trip: r.trip,
                 takenAt: r.takenAt,
@@ -551,12 +560,14 @@ export default function TravelUpload() {
     return best ? { trip: best[0], count: best[1].count } : null;
   }
 
-  /** 压缩 + 入草稿 + 变「待上传」。addFiles 与「仍然上传」共用 */
+  /** 压缩 + 查成品哈希 + 入草稿 + 变「待上传」。addFiles / 仍然上传 / 批量仍传共用。
+   *  force=true 时跳过 bhash 判重（用户已明确要求再传一份）。 */
   async function compressAndStage(
     id: string,
     file: File,
-    meta: { takenAt: string; gps?: [number, number]; orientation?: number },
-    hash?: string
+    meta: { takenAt: string; gps?: [number, number]; orientation?: number; trip?: string },
+    hash?: string,
+    force = false
   ) {
     try {
       const oldPreview = itemsRef.current.find((i) => i.id === id)?.preview;
@@ -569,6 +580,35 @@ export default function TravelUpload() {
         if (oldPreview) URL.revokeObjectURL(oldPreview);
         return;
       }
+
+      /* 成品字节 hash：老照片没有原文件 hash，只能靠它判重。
+         同一台手机/同一浏览器重选同一张，重新编码的字节一致，就能命中。 */
+      const bhash = await sha256Hex(conv.blob);
+      const byBlob = bhash && !force ? knownHashes.current.get(bhash) : undefined;
+      if (byBlob) {
+        if (oldPreview) URL.revokeObjectURL(oldPreview);
+        patch(id, {
+          status: "duplicate",
+          blob: undefined,
+          thumb: undefined,
+          preview: byBlob.thumbUrl ?? oldPreview,
+          thumbPreview: byBlob.thumbUrl ?? oldPreview,
+          /* 保留 File 句柄：用户点「仍然上传」时还要重新压缩 */
+          hash,
+          bhash,
+          geoStatus: undefined,
+          dupOf: { ...byBlob, inBatch: byBlob.state === "pending" },
+        });
+        return;
+      }
+      if (bhash) {
+        knownHashes.current.set(bhash, {
+          state: "pending",
+          trip: meta.trip ?? "",
+          takenAt: meta.takenAt,
+        });
+      }
+
       const preview = URL.createObjectURL(conv.thumb);
       void putDraftFile({
         id,
@@ -592,12 +632,14 @@ export default function TravelUpload() {
         height: conv.height,
         status: "ready",
         hash,
+        bhash,
         file: undefined,
       });
       if (oldPreview && oldPreview !== preview) URL.revokeObjectURL(oldPreview);
-      if (hash) {
-        const cur = knownHashes.current.get(hash);
-        if (cur) knownHashes.current.set(hash, { ...cur, thumbUrl: preview });
+      for (const probe of [hash, bhash]) {
+        if (!probe) continue;
+        const cur = knownHashes.current.get(probe);
+        knownHashes.current.set(probe, { ...(cur ?? { state: "pending", trip: "" }), thumbUrl: preview });
       }
     } catch (err) {
       patch(id, {
@@ -738,7 +780,7 @@ export default function TravelUpload() {
         await compressAndStage(
           seed.id,
           file,
-          { takenAt: meta.takenAt, gps: meta.gps, orientation: meta.orientation },
+          { takenAt: meta.takenAt, gps: meta.gps, orientation: meta.orientation, trip },
           hash
         );
       } catch (err) {
@@ -764,6 +806,7 @@ export default function TravelUpload() {
       return;
     }
     if (item.hash) knownHashes.current.delete(item.hash);
+    if (item.bhash) knownHashes.current.delete(item.bhash);
     patch(item.id, {
       status: "processing",
       forced: true,
@@ -774,9 +817,57 @@ export default function TravelUpload() {
     await compressAndStage(
       item.id,
       item.file,
-      { takenAt: item.takenAt, gps: item.gps, orientation: item.orientation },
-      item.hash
+      { takenAt: item.takenAt, gps: item.gps, orientation: item.orientation, trip: item.trip },
+      item.hash,
+      true
     );
+  }
+
+  /** 把所有「已上传过」的照片一次性强制上传（压缩 + 自动开始上传） */
+  async function forceAll() {
+    if (busy) return;
+    const targets = itemsRef.current.filter((i) => i.status === "duplicate" && i.file);
+    if (!targets.length) {
+      setNotice("没有可强制上传的重复照片（原文件已不在内存里）");
+      return;
+    }
+    setBusy(true);
+    setNotice("");
+    progressRef.current = { done: 0, total: targets.length };
+    setProgress({ ...progressRef.current });
+
+    for (const target of targets) {
+      const item = itemsRef.current.find((i) => i.id === target.id);
+      if (!item?.file) {
+        progressRef.current.done += 1;
+        setProgress({ ...progressRef.current });
+        continue;
+      }
+      if (item.hash) knownHashes.current.delete(item.hash);
+      if (item.bhash) knownHashes.current.delete(item.bhash);
+      patch(item.id, {
+        status: "processing",
+        forced: true,
+        dupOf: undefined,
+        error: undefined,
+        uploadedSize: undefined,
+      });
+      await compressAndStage(
+        item.id,
+        item.file,
+        { takenAt: item.takenAt, gps: item.gps, orientation: item.orientation, trip: item.trip },
+        item.hash,
+        true
+      );
+      progressRef.current.done += 1;
+      setProgress({ ...progressRef.current });
+      await nextPaint();
+    }
+    if (progressRef.current.done >= progressRef.current.total) setProgress(null);
+    setBusy(false);
+    /* 强制完直接接着上传，用户只需要点一次 */
+    const readied = itemsRef.current.filter((i) => i.status === "ready" && i.trip);
+    if (readied.length) await uploadAll();
   }
 
   function patch(id: string, next: Partial<Item>) {
@@ -787,14 +878,20 @@ export default function TravelUpload() {
     void removeDraftFile(id).catch(() => {});
     setItems((prev) => {
       const target = prev.find((it) => it.id === id);
-      if (target?.hash) {
+      if (target) {
         /* 只有没有别的「有效」条目还在用这个 hash 时才清掉待上传标记——
            重复卡片不算：否则移除原片后再选回同一张会被误判成「已上传过」 */
-        const stillUsed = prev.some(
-          (it) => it.id !== id && it.hash === target.hash && it.status !== "duplicate"
-        );
-        const info = knownHashes.current.get(target.hash);
-        if (!stillUsed && info?.state === "pending") knownHashes.current.delete(target.hash);
+        for (const probe of [target.hash, target.bhash]) {
+          if (!probe) continue;
+          const stillUsed = prev.some(
+            (it) =>
+              it.id !== id &&
+              it.status !== "duplicate" &&
+              (it.hash === probe || it.bhash === probe)
+          );
+          const info = knownHashes.current.get(probe);
+          if (!stillUsed && info?.state === "pending") knownHashes.current.delete(probe);
+        }
       }
       if (target?.preview) URL.revokeObjectURL(target.preview);
       if (target?.thumbPreview && target.thumbPreview !== target.preview) {
@@ -973,10 +1070,13 @@ export default function TravelUpload() {
   }
 
   async function uploadAll() {
-    if (busy || !uploadable.length) return;
+    if (busy) return;
+    /* 直接从 itemsRef 取，避免「强制上传后紧接着上传」时拿到旧闭包 */
+    const targets = itemsRef.current.filter((i) => i.status === "ready" && i.trip);
+    if (!targets.length) return;
     setBusy(true);
     setNotice("");
-    for (const snapshot of uploadable) {
+    for (const snapshot of targets) {
       // 用最新状态，避免上传途中改行程后仍传到旧行程
       const item = itemsRef.current.find((i) => i.id === snapshot.id);
       if (!item || item.status !== "ready" || !item.trip) continue;
@@ -1004,6 +1104,14 @@ export default function TravelUpload() {
                 key: dup.key,
               });
             }
+            if (item.bhash) {
+              knownHashes.current.set(item.bhash, {
+                state: "uploaded",
+                trip: dup.trip || item.trip,
+                takenAt: dup.takenAt,
+                key: dup.key,
+              });
+            }
             setNotice("服务器判定有照片重复，已标记为「已上传过」");
           } else {
             patch(item.id, { status: "error", error: outcome.error ?? "上传失败" });
@@ -1012,8 +1120,9 @@ export default function TravelUpload() {
         }
         const meta = outcome.photo;
         patch(item.id, { status: "done", url: meta.url, blob: undefined, uploadedSize: meta.bytes });
-        if (item.hash) {
-          knownHashes.current.set(item.hash, {
+        for (const probe of [item.hash, item.bhash]) {
+          if (!probe) continue;
+          knownHashes.current.set(probe, {
             state: "uploaded",
             trip: meta.trip,
             takenAt: meta.takenAt,
@@ -1281,6 +1390,7 @@ export default function TravelUpload() {
               <article
                 key={item.id}
                 className={`upload-item is-${item.status}${unmatched ? " is-unmatched" : ""}`}
+                data-bhash={item.bhash}
               >
                 <div className="upload-thumb">
                   <span className="upload-thumb-ph" aria-hidden="true">
@@ -1407,8 +1517,10 @@ export default function TravelUpload() {
                     </button>
                   ) : null}
 
-                  <span className={`upload-state is-${item.status}`}>{statusText(item.status)}</span>
-
+                  {/* 重复卡片上方已经有「已上传过 · 站 · 日期」说明，这里不再重复胶囊 */}
+                  {item.status === "duplicate" ? null : (
+                    <span className={`upload-state is-${item.status}`}>{statusText(item.status)}</span>
+                  )}
                   {item.url ? (
                     <a href={item.url} target="_blank" rel="noreferrer">
                       查看
@@ -1521,6 +1633,17 @@ export default function TravelUpload() {
             </span>
           ) : null}
         </span>
+        {dupCount ? (
+          <button
+            type="button"
+            className="upload-force upload-force-all"
+            onClick={() => void forceAll()}
+            disabled={busy}
+            title="把所有「已上传过」的照片强制再传一份"
+          >
+            全部仍然上传（{dupCount}）
+          </button>
+        ) : null}
         <button type="button" onClick={() => void uploadAll()} disabled={busy || !uploadable.length}>
           {busy ? "上传中…" : "开始上传"}
         </button>

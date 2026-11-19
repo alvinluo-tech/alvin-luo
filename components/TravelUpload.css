@@ -850,6 +850,11 @@
     margin-top: 0.3rem;
   }
 
+  /* 「全部仍然上传」独占一行，避免底栏三个按钮挤成两行 */
+  .upload-actions .upload-force-all {
+    flex: 1 1 100%;
+  }
+
   /* 手机端底栏固定：选完照片后「压缩中 3/8」和开始上传始终可见，
      不用滚到页面最底部；下面给页面留出等高的空间，避免压住最后一张卡片 */
   .upload-actions {
@@ -866,7 +871,7 @@
   }
 
   .upload-page {
-    padding-bottom: calc(10.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(13rem + env(safe-area-inset-bottom));
   }
 }
 

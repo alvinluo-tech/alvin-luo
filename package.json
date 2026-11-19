@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "photos:gen": "node scripts/gen-trip-photos.mjs",
-    "photos:check": "node scripts/gen-trip-photos.mjs --check"
+    "photos:check": "node scripts/gen-trip-photos.mjs --check",
+    "photos:backfill": "node scripts/backfill-bhash.mjs"
   },
   "browserslist": [
     "chrome >= 111",

@@ -28,14 +28,24 @@ const DEFAULT_ALLOWED = "https://alvin-luo.me";
 const PHOTO_PREFIX = "travel/";
 const META_PREFIX = "travel/_meta/";
 const TRIP_PREFIX = "travel/_trips/";
-/* 原文件 SHA-256 → 照片指针，用于服务端查重（客户端的 manifest 预检之外兜底）。
-   放在 _hashes/ 下，不会被 /manifest 的 _meta/_trips 列表带走。 */
+/* 原文件 SHA-256（客户端算）与处理后文件 SHA-256（服务端算）→ 照片指针，
+   用于服务端查重。放在 _hashes/ 下，不会被 /manifest 的 _meta/_trips 列表带走。 */
 const HASH_PREFIX = "travel/_hashes/";
 const THUMB_PREFIX = "travel/_thumbs/";
 const GEO_PREFIX = "travel/_geo/";
 const CACHE_IMMUTABLE = "public, max-age=31536000, immutable";
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_MANIFEST = 5000;
+
+/** 字节数组的 SHA-256（小写 hex）。Workers 自带 WebCrypto */
+async function sha256Hex(bytes: ArrayBuffer): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  let hex = "";
+  for (const b of new Uint8Array(digest)) hex += b.toString(16).padStart(2, "0");
+  return hex;
+}
+
+const SHA_RE = /^[a-f0-9]{64}$/;
 
 /* ---------------- 基础工具 ---------------- */
 
@@ -165,14 +175,21 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
       ? takenAtRaw
       : new Date().toISOString();
 
-  /* 查重：hash = 原文件字节 SHA-256（客户端算）。
+  /* 查重：hash = 原文件字节 SHA-256（客户端算）；
+     bhash = 处理后的文件字节 SHA-256（服务端算，用来覆盖没有原文件 hash 的老照片）。
      force=1 表示用户明确要求「仍然上传」同一张照片。 */
   const hashRaw = text(form.get("hash"), 64);
-  const hash = /^[a-f0-9]{64}$/.test(hashRaw) ? hashRaw : undefined;
+  const hash = SHA_RE.test(hashRaw) ? hashRaw : undefined;
   const force = text(form.get("force"), 2) === "1";
-  if (hash && !force) {
-    const hit = await env.PHOTOS.get(HASH_PREFIX + hash);
-    if (hit) {
+
+  const bytes = await file.arrayBuffer();
+  const bhash = await sha256Hex(bytes);
+
+  if (!force) {
+    for (const probe of [hash, bhash]) {
+      if (!probe) continue;
+      const hit = await env.PHOTOS.get(HASH_PREFIX + probe);
+      if (!hit) continue;
       let photo: unknown = null;
       try {
         photo = JSON.parse(await hit.text());
@@ -188,7 +205,7 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
     takenAt,
     file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : "webp"
   );
-  await env.PHOTOS.put(key, file.stream(), {
+  await env.PHOTOS.put(key, bytes, {
     httpMetadata: { contentType: file.type, cacheControl: CACHE_IMMUTABLE },
   });
 
@@ -232,16 +249,19 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
     cover,
     bytes: file.size,
     hash,
+    bhash,
     uploadedAt: new Date().toISOString(),
   };
 
   await env.PHOTOS.put(metaKeyFor(key), JSON.stringify(meta), {
     httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
   });
-  /* 先写照片与 meta，再登记 hash 指针；下次同文件上传会 409 */
-  if (hash) {
+  /* 先写照片与 meta，再登记 hash 指针；下次同文件上传会 409。
+     bhash 每次都有，hash 只有客户端算得出来时才写。 */
+  for (const probe of [hash, bhash]) {
+    if (!probe) continue;
     await env.PHOTOS.put(
-      HASH_PREFIX + hash,
+      HASH_PREFIX + probe,
       JSON.stringify({ key, trip, takenAt, url: meta.url }),
       { httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" } }
     );
@@ -489,24 +509,101 @@ async function handlePhotoDelete(request: Request, env: Env): Promise<Response> 
   await env.PHOTOS.delete(key);
   if (obj) await env.PHOTOS.delete(metaKey);
   if (meta && typeof meta.thumbKey === "string") await env.PHOTOS.delete(meta.thumbKey);
-  /* 删掉照片后清 hash 指针，否则这张照片再也传不回来。
+  /* 删掉照片后清 hash/bhash 指针，否则这张照片再也传不回来。
      同一张图被强制上传过多次时，只清指向当前 key 的指针。 */
-  if (meta && typeof meta.hash === "string") {
-    const hashKey = HASH_PREFIX + meta.hash;
-    const marker = await env.PHOTOS.get(hashKey);
-    if (marker) {
-      let pointTo: unknown = null;
-      try {
-        pointTo = (JSON.parse(await marker.text()) as { key?: string }).key;
-      } catch {
-        pointTo = null;
-      }
-      if (!pointTo || pointTo === key) await env.PHOTOS.delete(hashKey);
+  for (const probe of [meta?.hash, meta?.bhash]) {
+    if (typeof probe !== "string" || !SHA_RE.test(probe)) continue;
+    const markerKey = HASH_PREFIX + probe;
+    const marker = await env.PHOTOS.get(markerKey);
+    if (!marker) continue;
+    let pointTo: unknown = null;
+    try {
+      pointTo = (JSON.parse(await marker.text()) as { key?: string }).key;
+    } catch {
+      pointTo = null;
     }
+    if (!pointTo || pointTo === key) await env.PHOTOS.delete(markerKey);
   }
   invalidateManifest();
 
   return json({ ok: true, key }, 200);
+}
+
+/* ---------------- 老照片哈希回填 ----------------
+ * 服务端只有处理后的成品，没有原文件，所以补的是「成品字节的 SHA-256」(bhash)。
+ * 接口自验证：只接受与 R2 实际对象字节完全一致的 hash，任何人都无法伪造，
+ * 因此不需要 token；同一张照片重复调用是幂等的。
+ * 限流按 IP（与上传分开计数），防止被刷成 R2 读放大。 */
+const backfillHits = new Map<string, number[]>();
+function backfillLimited(ip: string): boolean {
+  const now = Date.now();
+  const list = (backfillHits.get(ip) || []).filter((t) => now - t < 60 * 60 * 1000);
+  if (list.length >= 120) {
+    backfillHits.set(ip, list);
+    return true;
+  }
+  list.push(now);
+  backfillHits.set(ip, list);
+  return false;
+}
+
+async function handleBackfill(request: Request, env: Env): Promise<Response> {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  if (backfillLimited(ip)) return json({ error: "too many requests" }, 429);
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return json({ error: "expected application/json" }, 400);
+  }
+
+  const key = String(body.key ?? "");
+  if (!/^travel\/\d{2}-[^/]+\.(webp|jpe?g|png)$/i.test(key)) {
+    return json({ error: "invalid photo key" }, 400);
+  }
+  const bhash = String(body.bhash ?? "").toLowerCase();
+  if (!SHA_RE.test(bhash)) return json({ error: "invalid bhash" }, 400);
+
+  const obj = await env.PHOTOS.get(key);
+  if (!obj) return json({ error: "photo not found" }, 404);
+
+  const actual = await sha256Hex(await obj.arrayBuffer());
+  if (actual !== bhash) return json({ error: "hash mismatch", actual }, 409);
+
+  const metaKey = metaKeyFor(key);
+  const metaObj = await env.PHOTOS.get(metaKey);
+  let meta: Record<string, unknown> = {};
+  if (metaObj) {
+    try {
+      meta = JSON.parse(await metaObj.text()) as Record<string, unknown>;
+    } catch {
+      meta = {};
+    }
+  }
+  if (meta.bhash === bhash) {
+    /* 已经回填过：仍确保指针存在（幂等） */
+    await env.PHOTOS.put(HASH_PREFIX + bhash, JSON.stringify({
+      key,
+      trip: meta.trip ?? null,
+      takenAt: meta.takenAt ?? null,
+      url: meta.url ?? publicUrl(env, key),
+    }), { httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" } });
+    return json({ ok: true, key, bhash, unchanged: true }, 200);
+  }
+
+  await env.PHOTOS.put(metaKey, JSON.stringify({ ...meta, bhash }), {
+    httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
+  });
+  await env.PHOTOS.put(HASH_PREFIX + bhash, JSON.stringify({
+    key,
+    trip: meta.trip ?? null,
+    takenAt: meta.takenAt ?? null,
+    url: meta.url ?? publicUrl(env, key),
+  }), { httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" } });
+  invalidateManifest();
+
+  return json({ ok: true, key, bhash }, 200);
 }
 
 type GeoPlace = {
@@ -849,6 +946,11 @@ export default {
       if (url.pathname === "/upload" && request.method === "POST") {
         if (!authorized(request, env)) return withCors(json({ error: "unauthorized" }, 401));
         return withCors(await handleUpload(request, env));
+      }
+
+      if (url.pathname === "/backfill" && request.method === "POST") {
+        /* 自验证接口：只接受与 R2 对象字节一致的 hash，因此不要求 token */
+        return withCors(await handleBackfill(request, env));
       }
 
       if (url.pathname === "/publish" && request.method === "POST") {
