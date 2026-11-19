@@ -445,6 +445,42 @@ const HAND_TRIPS: Trip[] = [
     note: "",
     coord: [13.36, 38.12],
   },
+  {
+    img: "43",
+    country: "意大利",
+    countryEn: "Italy",
+    place: "米兰 MILAN",
+    date: "",
+    note: "",
+    coord: [9.19, 45.46],
+  },
+  {
+    img: "44",
+    country: "意大利",
+    countryEn: "Italy",
+    place: "威尼斯 VENICE",
+    date: "",
+    note: "",
+    coord: [12.32, 45.44],
+  },
+  {
+    img: "45",
+    country: "意大利",
+    countryEn: "Italy",
+    place: "佛罗伦萨 FLORENCE",
+    date: "",
+    note: "",
+    coord: [11.26, 43.77],
+  },
+  {
+    img: "46",
+    country: "意大利",
+    countryEn: "Italy",
+    place: "罗马 ROME",
+    date: "",
+    note: "",
+    coord: [12.5, 41.9],
+  },
 
   /* ---------- 马耳他 ---------- */
   {
