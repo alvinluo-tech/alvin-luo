@@ -10,6 +10,7 @@
   --ink: #101400;
   --grey: #5b6052;
   --lime: #d2ff00;
+  --on-lime: #101400;
 
   /* Lando 站同款缓动曲线 */
   --ease: cubic-bezier(0.65, 0.05, 0, 1);
@@ -154,7 +155,7 @@ a {
 }
 
 .nav-logo .accent {
-  color: var(--ink);
+  color: var(--on-lime);
   background: var(--lime);
   padding: 0 0.3em;
   border-radius: 0.3em;
@@ -449,6 +450,7 @@ a {
   font-style: normal;
   display: inline-block;
   background: var(--lime);
+  color: var(--on-lime);
   padding: 0 0.18em;
   border-radius: 0.12em;
   box-shadow: 0.09em 0.09em 0 rgba(16, 20, 0, 0.9);
@@ -1154,10 +1156,9 @@ a {
   border: 1.5px solid var(--ink);
   border-radius: 22px;
   padding: 1.8rem 2.2rem;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 2.5rem;
   position: relative;
   overflow: hidden;
@@ -1170,47 +1171,10 @@ a {
   border-color: var(--lime);
 }
 
-.tile-room-body {
-  flex: 1;
-  min-width: 0;
-  max-width: 680px;
-}
-
-.tile-room-head {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 0.75rem;
-}
-
-.tile-room-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  padding: 0.28em 0.8em;
-  border-radius: 999px;
-  background: var(--lime);
-  color: #101400;
-  border: 1.2px solid var(--ink);
-}
-
-.tile-room-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #101400;
-  animation: pulse-dot 1.5s infinite;
-}
-
-.tile-room-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--grey);
-  font-family: var(--font-mono, monospace);
+.tile-room .tile-title {
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  color: var(--ink);
+  letter-spacing: -0.02em;
 }
 
 .tile-room-desc {
@@ -1220,47 +1184,18 @@ a {
   margin: 0.5rem 0 0;
 }
 
-.tile-room-cta-zone {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1.1rem;
-}
-
 .tile-room-preview {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.45rem;
-  margin: 0;
-}
-
-.tile-room-preview span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  border: 1.2px solid var(--ink);
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--ink);
+  border-radius: 14px;
   background: var(--panel);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--ink);
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.tile-room:hover .tile-room-preview span {
-  background: var(--paper);
-}
-
-.tile-room-preview small {
-  font-size: 0.7rem;
-  color: var(--grey);
 }
 
 .tile-room-enter {
   display: inline-flex;
+  margin-top: 1.1rem;
   align-items: center;
   gap: 0.5rem;
   padding: 0.7rem 1.4rem;
@@ -1283,28 +1218,13 @@ a {
 
 @media (max-width: 900px) {
   .tile-room {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.3rem;
     padding: 1.5rem;
   }
 
-  .tile-room-body {
-    max-width: 100%;
-  }
-
-  .tile-room-cta-zone {
-    width: 100%;
-    align-items: flex-start;
-  }
-
   .tile-room-preview {
-    justify-content: flex-start;
-  }
-
-  .tile-room-enter {
-    width: 100%;
-    justify-content: center;
+    order: -1;
   }
 }
 
@@ -2178,7 +2098,7 @@ a {
 
 .lang-toggle button.is-active {
   background: var(--lime);
-  color: var(--ink);
+  color: var(--on-lime);
 }
 
 .lang-toggle button:not(.is-active):hover {
@@ -3169,10 +3089,55 @@ a {
   }
 }
 
-/* 触屏设备：提示文案补充点击说明 */
+.stage-hint-touch {
+  display: none;
+}
+
 @media (pointer: coarse) {
-  .stage-hint::after {
-    content: "（触屏：点一下上半身）";
+  .stage-hint-hover {
+    display: none;
+  }
+
+  .stage-hint-touch {
+    display: inline;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero {
+    gap: 0.9rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .hero .stage {
+    height: clamp(16rem, 46svh, 28rem);
+  }
+
+  .hero .stage-hint {
+    bottom: -1.3rem;
+    font-size: 0.7rem;
+  }
+
+  .hero-copy {
+    margin: 1.25rem 1rem 0;
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-copy .headline,
+  .hero-copy .sub,
+  .hero-copy .cta-row {
+    animation: none;
+  }
+
+  .hero-copy .cta-row {
+    margin-top: 1.1rem;
+  }
+}
+
+@media (max-width: 700px) and (max-height: 700px) {
+  .hero .stage {
+    height: clamp(12rem, 38svh, 16rem);
   }
 }
 
@@ -3521,33 +3486,42 @@ a {
   white-space: nowrap;
 }
 
-/* ---- 触屏透视胶囊（仅粗指针显示） ---- */
+/* ---- 透视开关：鼠标、键盘和触屏共用 ---- */
 
 .xray-toggle {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 0.75rem;
+  top: 52%;
+  z-index: 3;
+  min-height: 44px;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--cm-paper-88);
+  color: var(--ink);
+  font: 800 0.68rem var(--font);
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
 }
 
-@media (pointer: coarse) {
-  .xray-toggle {
-    display: inline-flex;
-    align-items: center;
-    position: absolute;
-    right: 0.9rem;
-    bottom: 0.9rem;
-    z-index: 3;
-    font-size: 0.66rem;
-    font-weight: 800;
-    letter-spacing: 0.16em;
-    padding: 0.5em 1.1em;
-    border-radius: 999px;
-    border: 1.5px solid var(--ink);
-    background: var(--cm-paper-88);
-    color: var(--ink);
-    backdrop-filter: blur(4px);
-  }
+.xray-toggle:hover,
+.xray-toggle[aria-pressed="true"] {
+  background: var(--lime);
+  color: var(--on-lime);
+}
 
-  .xray-toggle.is-on {
-    background: var(--lime);
+.xray-toggle:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .xray-toggle {
+    right: -1rem;
   }
 }
 
@@ -5546,15 +5520,6 @@ a {
   }
   .hero-eyebrow::before {
     width: 1.2rem;
-  }
-}
-
-/* 2) 触屏 X 光胶囊移到卡片右上角：
-      原右下角与居中的 stage-label（BUILDING FOR THE WEB）同带重叠 */
-@media (pointer: coarse) {
-  .xray-toggle {
-    top: 0.9rem;
-    bottom: auto;
   }
 }
 

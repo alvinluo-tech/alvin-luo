@@ -30,6 +30,25 @@ export type Project = {
 
 export const PROJECTS: Project[] = [
   {
+    id: "corelayer",
+    title: "CoreLayer — Local-First AI Agent Control Plane",
+    titleZh: "CoreLayer — 本地优先 AI Agent 指挥台",
+    desc: "I designed the local-first runtime that turns goals into task graphs and verifies each step with type checks, linting, and tests. First-pass completion on multi-step tasks rose from 54% to 87% in my evaluation.",
+    descZh:
+      "我设计了本地优先的执行引擎，让 Agent 按任务图协作，并在每一步运行类型检查、Lint 和测试。在我的评估中，多步任务的首次交付成功率从 54% 提升到 87%。",
+    tags: ["Tauri 2", "Rust", "React 19", "MCP"],
+    demo: "https://corelayer.alvin-luo.me/",
+    repo: "https://github.com/alvinluo-tech/CoreLayer",
+    art: "lines",
+    image: "/projects/corelayer.webp",
+    arch: [
+      { tier: "01 · CLIENT", name: "Tauri 2 (Rust) + React 19", desc: "桌面宿主 · 本地极低内存占用" },
+      { tier: "02 · PROTOCOL", name: "MCP-first 工具体系", desc: "stdio / HTTP / SSE 多协议统一路由" },
+      { tier: "03 · GATEWAY", name: "Node.js (Hono) 网关", desc: "多供应商模型路由 (DeepSeek / MiMo)" },
+      { tier: "04 · STORAGE", name: "SQLite (Drizzle) + Supabase", desc: "本地优先 · 云端增量同步" },
+    ],
+  },
+  {
     id: "encounter",
     title: "Encounter — Encrypted Intimacy Tracker",
     titleZh: "Encounter — 加密亲密记录",
@@ -61,24 +80,5 @@ export const PROJECTS: Project[] = [
     art: "grid",
     image: "/projects/taskflow.webp",
     // 技术栈未核实（仓库暂不可访问），X-Ray 架构链路留空，组件自动隐藏按钮
-  },
-  {
-    id: "corelayer",
-    title: "CoreLayer — Local-First AI Agent Control Plane",
-    titleZh: "CoreLayer — 本地优先 AI Agent 指挥台",
-    desc: "A Tauri desktop control plane that turns goals into governed agent work: task graphs, risk-tiered approvals, an MCP tool registry, and a multi-model router across Groq, OpenRouter, Ollama and more.",
-    descZh:
-      "Tauri 桌面指挥台：把目标拆成任务图交给 Agent 执行——权限分级审批、MCP 工具注册表、多模型路由（Groq / OpenRouter / Ollama），带语音管线的本地 Jarvis。",
-    tags: ["Tauri 2", "Rust", "React 19", "MCP"],
-    demo: "https://corelayer.alvin-luo.me/",
-    repo: "https://github.com/alvinluo-tech/CoreLayer",
-    art: "lines",
-    image: "/projects/corelayer.webp",
-    arch: [
-      { tier: "01 · CLIENT", name: "Tauri 2 (Rust) + React 19", desc: "桌面宿主 · 本地极低内存占用" },
-      { tier: "02 · PROTOCOL", name: "MCP-first 工具体系", desc: "stdio / HTTP / SSE 多协议统一路由" },
-      { tier: "03 · GATEWAY", name: "Node.js (Hono) 网关", desc: "多供应商模型路由 (DeepSeek / MiMo)" },
-      { tier: "04 · STORAGE", name: "SQLite (Drizzle) + Supabase", desc: "本地优先 · 云端增量同步" },
-    ],
   },
 ];

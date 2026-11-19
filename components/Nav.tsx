@@ -6,11 +6,13 @@ import ThemeToggle from "./ThemeToggle";
 import LangToggle from "./LangToggle";
 import SfxToggle from "./SfxToggle";
 import NowPlayingTicker from "./NowPlayingTicker";
+import { T, pick, useLocale } from "./i18n";
 
 /* 导航：滚动后变为半透明毛玻璃条。
    站内链接全部走 <Link>（SPA 无刷新切换），外链保持 <a> */
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const { locale } = useLocale();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -27,21 +29,21 @@ export default function Nav() {
       </Link>
       {/* 迷你 Now Playing：在播才出现，点击滚到音乐瓷砖 */}
       <NowPlayingTicker />
-      <nav className="nav-links">
+      <nav className="nav-links" aria-label={pick(locale, "Main navigation", "主导航")}>
         {/* 导航只放 bento 里没有的页面 —— Room/Travel/GitHub 在首页 bento
             有大瓷砖（tile-room / tile-travel / tile-gh），导航里是重复挂号 */}
-        <Link href="/#projects">Work</Link>
-        <Link href="/resume">CV</Link>
-        <Link href="/year">Year</Link>
-        <Link href="/blog">Writing</Link>
+        <Link href="/#projects"><T en="Work" zh="作品" /></Link>
+        <Link href="/resume"><T en="CV" zh="简历" /></Link>
+        <Link href="/year"><T en="Year" zh="年度回顾" /></Link>
+        <Link href="/blog"><T en="Writing" zh="写作" /></Link>
       </nav>
       <div className="nav-tools">
         <LangToggle />
         <button
           className="palette-trigger"
           onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
-          aria-label="打开命令面板"
-          title="命令面板 (⌘K)"
+          aria-label={pick(locale, "Open command palette", "打开命令面板")}
+          title={pick(locale, "Command palette (⌘K)", "命令面板 (⌘K)")}
         >
           ⌘K
         </button>

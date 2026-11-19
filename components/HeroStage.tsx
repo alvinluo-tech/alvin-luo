@@ -39,6 +39,7 @@ export default function HeroStage() {
   const stageRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hintRef = useRef<HTMLParagraphElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const { locale } = useLocale();
 
   useEffect(() => {
@@ -46,14 +47,16 @@ export default function HeroStage() {
     const stageEl = stageRef.current;
     const canvasEl = canvasRef.current;
     const hintEl = hintRef.current;
+    const toggleEl = toggleRef.current;
     const revealCanvas = document.createElement("canvas");
     const ctx0 = canvasEl?.getContext("2d");
     const rctx0 = revealCanvas.getContext("2d");
-    if (!stageEl || !canvasEl || !hintEl || !ctx0 || !rctx0) return;
+    if (!stageEl || !canvasEl || !hintEl || !toggleEl || !ctx0 || !rctx0) return;
 
     const stage = stageEl;
     const canvas = canvasEl;
     const hint = hintEl;
+    const toggle = toggleEl;
     const ctx = ctx0;
     const rctx = rctx0;
 
@@ -63,7 +66,8 @@ export default function HeroStage() {
     let intensity = 0;
     let intensityTarget = 0;
     let isSelf = false;
-    let touchLocked = false;
+    let revealLock: "toggle" | "touch" | null = null;
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
     let rafId = 0;
     let idleDrawn = false; // 静止且无透视时只画一次底图，避免空转 GPU
     const state: {
@@ -186,14 +190,20 @@ export default function HeroStage() {
     }
 
     const onPointerMove = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse" && !touchLocked) return;
+      if (revealLock === "toggle" || (e.pointerType !== "mouse" && revealLock !== "touch")) return;
       updatePointerTarget(e.clientX, e.clientY);
     };
 
     const onPointerLeave = () => {
-      if (touchLocked) return;
+      if (revealLock) return;
       intensityTarget = 0;
     };
+
+    function setRevealLock(lock: typeof revealLock) {
+      revealLock = lock;
+      intensityTarget = lock ? 1 : 0;
+      toggle.setAttribute("aria-pressed", String(lock !== null));
+    }
 
     /* 触屏没有 hover：点身体开启透视（可滑动跟随），点其他区域关闭 */
     const onPointerDown = (e: PointerEvent) => {
@@ -205,38 +215,31 @@ export default function HeroStage() {
       const nx = (e.clientX - rect.left) / rect.width;
       const ny = (e.clientY - rect.top) / rect.height;
       if (bodyAlpha(nx, ny) > 0.2) {
-        touchLocked = true;
         lensTarget.x = nx;
         lensTarget.y = ny;
-        intensityTarget = 1;
-        capsule?.classList.add("is-on");
+        setRevealLock("touch");
       } else {
-        touchLocked = false;
-        intensityTarget = 0;
-        capsule?.classList.remove("is-on");
+        setRevealLock(null);
       }
     };
 
-    /* 触屏胶囊开关：一键切换透视，不用手指反复点击人像（避免遮挡视线） */
-    const capsule = stage.querySelector<HTMLButtonElement>(".xray-toggle");
+    /* 显式开关将镜头固定在上半身，直到再次切换。 */
     const onCapsule = () => {
-      touchLocked = !touchLocked;
-      if (touchLocked) {
+      if (revealLock) {
+        setRevealLock(null);
+      } else {
         lensTarget.x = 0.5;
         lensTarget.y = 0.46;
-        intensityTarget = 1;
-      } else {
-        intensityTarget = 0;
+        setRevealLock("toggle");
       }
-      capsule?.classList.toggle("is-on", touchLocked);
     };
-    capsule?.addEventListener("click", onCapsule);
+    toggle.addEventListener("click", onCapsule);
 
     /* 鼠标视差：照片随光标轻微位移（仅精确指针） */
     const heroSection = stage.closest<HTMLElement>(".hero");
     const finePointer = matchMedia("(pointer: fine)").matches;
     const onHeroMove = (e: PointerEvent) => {
-      if (!heroSection) return;
+      if (!heroSection || reducedMotion.matches) return;
       const r = heroSection.getBoundingClientRect();
       const px = ((e.clientX - r.left) / r.width - 0.5) * 2; // -1 ~ 1
       const py = ((e.clientY - r.top) / r.height - 0.5) * 2;
@@ -262,9 +265,11 @@ export default function HeroStage() {
       if (!images || !w) return;
 
       /* 缓动 */
-      lens.x += (lensTarget.x - lens.x) * CONFIG.posEase;
-      lens.y += (lensTarget.y - lens.y) * CONFIG.posEase;
-      intensity += (intensityTarget - intensity) * CONFIG.intensityEase;
+      const posEase = reducedMotion.matches ? 1 : CONFIG.posEase;
+      const intensityEase = reducedMotion.matches ? 1 : CONFIG.intensityEase;
+      lens.x += (lensTarget.x - lens.x) * posEase;
+      lens.y += (lensTarget.y - lens.y) * posEase;
+      intensity += (intensityTarget - intensity) * intensityEase;
 
       const active = intensity > 0.004 || intensityTarget > 0;
       if (!active) {
@@ -433,7 +438,7 @@ export default function HeroStage() {
       stage.removeEventListener("pointermove", onPointerMove);
       stage.removeEventListener("pointerleave", onPointerLeave);
       stage.removeEventListener("pointerdown", onPointerDown);
-      capsule?.removeEventListener("click", onCapsule);
+      toggle.removeEventListener("click", onCapsule);
       if (heroSection && finePointer) {
         heroSection.removeEventListener("pointermove", onHeroMove);
         heroSection.removeEventListener("pointerleave", onHeroLeave);
@@ -477,19 +482,25 @@ export default function HeroStage() {
           role="img"
           aria-label={pick(
             locale,
-            "A young man standing; hover over his upper body to see through the shirt",
-            "站立的年轻人，鼠标滑过上半身会透过衣服看到训练状态",
+            "Portrait of Alvin with an optional training view",
+            "Alvin 的站立人像，可切换到训练状态",
           )}
         />
 
-        {/* 触屏专用：透视开关胶囊（桌面隐藏） */}
-        <button type="button" className="xray-toggle" aria-label="开关 X 光透视">
+        <button
+          ref={toggleRef}
+          type="button"
+          className="xray-toggle"
+          aria-label={pick(locale, "X-ray", "X 光透视")}
+          aria-pressed={false}
+          aria-controls="heroCanvas"
+        >
           X-RAY
         </button>
       </div>
 
       {/* 状态标签：两行叠放，随鼠标是否在身体上交叉切换 */}
-      <span className="stage-label" aria-live="polite">
+      <span className="stage-label" aria-hidden="true">
         <span className="dot" aria-hidden="true" />
         <span className="labels">
           <span className="label is-web">BUILDING&nbsp;FOR&nbsp;THE&nbsp;WEB</span>
@@ -498,7 +509,12 @@ export default function HeroStage() {
       </span>
 
       <p className="stage-hint" ref={hintRef}>
-        <T en="Hover the torso · X-RAY" zh="鼠标滑过上半身 · X-RAY" />
+        <span className="stage-hint-hover">
+          <T en="Hover the portrait" zh="将鼠标移到人像上" />
+        </span>
+        <span className="stage-hint-touch">
+          <T en="Tap X-RAY to reveal training mode" zh="点按 X-RAY 切换训练状态" />
+        </span>
       </p>
     </figure>
   );
