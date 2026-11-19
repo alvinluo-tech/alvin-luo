@@ -31,6 +31,8 @@ import "./TravelUpload.css";
 const API = (process.env.NEXT_PUBLIC_UPLOAD_API || "https://upload.alvin-luo.me").replace(/\/+$/, "");
 const TOKEN_KEY = "travel_upload_token";
 const TRIP_KEY = "travel_upload_last_trip";
+/** 相机 RAW：浏览器无法解码，需要先在相册/电脑导出 JPG */
+const RAW_RE = /\.(cr2|cr3|nef|arw|dng|raf|rw2|orf|pef|srw|3fr|iiq|x3f)$/i;
 
 type Status = "queued" | "processing" | "ready" | "uploading" | "done" | "duplicate" | "error";
 
@@ -652,13 +654,20 @@ export default function TravelUpload() {
 
   async function addFiles(list: FileList | null) {
     if (!list?.length) return;
-    const files = Array.from(list).filter((f) => f.type.startsWith("image/") || isHeic(f));
+    const all = Array.from(list);
+    const raws = all.filter((f) => RAW_RE.test(f.name) || /x-canon-cr|raw|dng/i.test(f.type));
+    const files = all.filter((f) => !raws.includes(f) && (f.type.startsWith("image/") || isHeic(f)));
     if (!files.length) {
-      setNotice("没有识别到图片文件");
+      setNotice(
+        raws.length
+          ? `RAW 格式浏览器解不了（${raws.length} 张）：请先在相册或电脑导出 JPG 再上传；相机可开「RAW + JPEG」双格式`
+          : "没有识别到图片文件"
+      );
+      if (fileRef.current) fileRef.current.value = "";
       return;
     }
     if (fileRef.current) fileRef.current.value = "";
-    setNotice("");
+    setNotice(raws.length ? `已跳过 ${raws.length} 张 RAW（浏览器解不了），请先导出 JPG` : "");
 
     /* 阶段 1：先同步把占位全部放进列表，界面立刻有反馈。
        压缩是重活，放到阶段 2 逐张做，期间卡片显示「排队中 / 压缩中」。 */
@@ -1338,6 +1347,8 @@ export default function TravelUpload() {
         </h1>
         <p className="upload-sub">
           自动读拍摄时间和 GPS 归站 → 转 WebP → 批量上传 → 点一次发布才触发构建。
+          <br />
+          支持 JPG / PNG / WebP / HEIC；相机 RAW（CR2/NEF/ARW/DNG…）请先导出 JPG。
         </p>
       </header>
 

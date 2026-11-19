@@ -35,9 +35,12 @@ export type TripSuggestion = {
 };
 
 export const MAX_EDGE = 2000;
-export const THUMB_EDGE = 480;
-export const WEBP_QUALITY = 0.82;
-export const THUMB_QUALITY = 0.78;
+/** 卡片主图在 2–3x 手机上约需 600px 宽；640 比 480 明显更锐，单张只多 ~8KB */
+export const THUMB_EDGE = 640;
+/** 实测（4000×3000→2000px，canvas 编码）：q82 33.9dB / q85 37.2dB / q90 38.3dB；
+ *  q85 只比 q82 大 ~30%，颗粒与细纹理保留明显更好 */
+export const WEBP_QUALITY = 0.85;
+export const THUMB_QUALITY = 0.8;
 /** 超过这个体积就改 JPEG：Safari 的 WebP 编码器可能忽略质量参数，输出接近无损 */
 export const MAX_UPLOAD_BYTES = 1_300_000;
 /** 缩略图超过这个体积也改 JPEG */

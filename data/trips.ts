@@ -493,15 +493,6 @@ const HAND_TRIPS: Trip[] = [
     coord: [14.51, 35.9],
   },
   {
-    img: "49",
-    country: "马耳他",
-    countryEn: "Malta",
-    place: "戈佐 GOZO",
-    date: "",
-    note: "",
-    coord: [14.24, 36.04],
-  },
-  {
     img: "50",
     country: "马耳他",
     countryEn: "Malta",
