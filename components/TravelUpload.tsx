@@ -157,9 +157,14 @@ function statusText(s: Status): string {
   }[s];
 }
 
-/** 把一帧让给浏览器：先画出「排队中」，再开始压缩这种重活 */
+/** 把一帧让给浏览器：先画出「排队中」，再开始压缩这种重活。
+ *  页面切到后台时 rAF 不触发，用 setTimeout 兜底，保证处理循环不会停住。 */
 function nextPaint(): Promise<void> {
   return new Promise((resolve) => {
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+      setTimeout(resolve, 50);
+      return;
+    }
     if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => setTimeout(resolve, 0));
     else setTimeout(resolve, 0);
   });
@@ -213,8 +218,10 @@ export default function TravelUpload() {
   const [notice, setNotice] = useState("");
   const [run, setRun] = useState<RunStatus | null>(null);
   const [publishing, setPublishing] = useState(false);
-  /** 本批「读信息 + 查重 + 压缩」的进度，显示在底栏 */
+  /** 本批「读信息 + 查重 + 压缩」的进度，显示在底栏。
+   *  用 ref 累加而不是局部计数：处理途中再选一批时两批共用同一进度。 */
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const progressRef = useRef({ done: 0, total: 0 });
   const [dialog, setDialog] = useState<TripDialog>({
     open: false,
     coord: null,
@@ -557,6 +564,11 @@ export default function TravelUpload() {
         hasGps: Boolean(meta.gps),
         orientation: meta.orientation,
       });
+      /* 压缩期间用户可能已经把这张移除了：别再往 IndexedDB 写孤儿行 */
+      if (!itemsRef.current.some((i) => i.id === id)) {
+        if (oldPreview) URL.revokeObjectURL(oldPreview);
+        return;
+      }
       const preview = URL.createObjectURL(conv.thumb);
       void putDraftFile({
         id,
@@ -630,7 +642,8 @@ export default function TravelUpload() {
         cover: false,
       })),
     ]);
-    setProgress({ done: 0, total: seeds.length });
+    progressRef.current = { done: progressRef.current.done, total: progressRef.current.total + seeds.length };
+    setProgress({ ...progressRef.current });
 
     /* 手机端把列表滚进视野：看得见进度，就不会误以为还卡在「添加照片」 */
     requestAnimationFrame(() => {
@@ -642,7 +655,6 @@ export default function TravelUpload() {
     /* 让浏览器先把「排队中」画出来，再开始读 EXIF / 压缩 */
     await nextPaint();
 
-    let done = 0;
     for (const seed of seeds) {
       const file = seed.file;
       try {
@@ -671,8 +683,8 @@ export default function TravelUpload() {
             geoStatus: undefined,
           });
           if (dupPreview && dupPreview !== seed.preview) URL.revokeObjectURL(seed.preview);
-          done += 1;
-          setProgress({ done, total: seeds.length });
+          progressRef.current.done += 1;
+          setProgress({ ...progressRef.current });
           await nextPaint();
           continue;
         }
@@ -736,12 +748,13 @@ export default function TravelUpload() {
           file: undefined,
         });
       }
-      done += 1;
-      setProgress({ done, total: seeds.length });
+      progressRef.current.done += 1;
+      setProgress({ ...progressRef.current });
       /* 每张之间让出一帧，保证滚动和进度更新能画出来 */
       await nextPaint();
     }
-    setProgress(null);
+    /* 可能还有另一批在跑：只有全部处理完才收起进度 */
+    if (progressRef.current.done >= progressRef.current.total) setProgress(null);
   }
 
   /** 重复照片：用户坚持要传。用保留的 File 现场压缩，再回到待上传 */
@@ -775,8 +788,13 @@ export default function TravelUpload() {
     setItems((prev) => {
       const target = prev.find((it) => it.id === id);
       if (target?.hash) {
+        /* 只有没有别的「有效」条目还在用这个 hash 时才清掉待上传标记——
+           重复卡片不算：否则移除原片后再选回同一张会被误判成「已上传过」 */
+        const stillUsed = prev.some(
+          (it) => it.id !== id && it.hash === target.hash && it.status !== "duplicate"
+        );
         const info = knownHashes.current.get(target.hash);
-        if (info?.state === "pending") knownHashes.current.delete(target.hash);
+        if (!stillUsed && info?.state === "pending") knownHashes.current.delete(target.hash);
       }
       if (target?.preview) URL.revokeObjectURL(target.preview);
       if (target?.thumbPreview && target.thumbPreview !== target.preview) {
