@@ -2,18 +2,21 @@
 
 /**
  * /upload —— 手机端旅行照片上传。
- * 流程：选照片 → 读 EXIF（时间/GPS）→ 自动建议行程 → 转 WebP → 批量上传 → 发布触发构建。
+ * 流程：选照片 → 立即入列表占位（排队中）→ 读 EXIF（时间/GPS）→ 计算原文件 SHA-256
+ *       → 查重（已上传过就标记、不压缩）→ 转 WebP（压缩中）→ 批量上传 → 发布触发构建。
  *
  * 归站规则（2026-11 调整）：
  *   ≤50km   自动归入；
  *   50–200km 只给候选，不自动采用；
  *   >200km  视为「不在已知站点」，不猜、不回落默认行程，交给用户选择或新建。
  * 安全：页面只是壳，写权限在 Worker 的 UPLOAD_TOKEN。
+ * 查重：原文件字节的 SHA-256；客户端先查（manifest 里已知的 hash + 本批已选），
+ *       Worker 端再用 `travel/_hashes/<sha>` 标记兜底（409），删除照片会清标记。
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TRIPS } from "@/data/trips";
-import { distanceKm, formatTakenAt, isHeic, readPhotoMeta, suggestTrip, toOptimizedImage } from "@/lib/client-photo";
+import { distanceKm, formatTakenAt, isHeic, readPhotoMeta, sha256Hex, suggestTrip, toOptimizedImage } from "@/lib/client-photo";
 import { tripFromPlace, type GeoPlace } from "@/lib/geo";
 import {
   clearDraft,
@@ -29,7 +32,7 @@ const API = (process.env.NEXT_PUBLIC_UPLOAD_API || "https://upload.alvin-luo.me"
 const TOKEN_KEY = "travel_upload_token";
 const TRIP_KEY = "travel_upload_last_trip";
 
-type Status = "processing" | "ready" | "uploading" | "done" | "error";
+type Status = "queued" | "processing" | "ready" | "uploading" | "done" | "duplicate" | "error";
 
 type LocalTrip = {
   img: string;
@@ -43,6 +46,8 @@ type Item = {
   id: string;
   name: string;
   size: number;
+  /** 未压缩时保留文件句柄（File 只是引用，不占内存）；「仍然上传」复查重照片时要用 */
+  file?: File;
   blob?: Blob;
   thumb?: Blob;
   preview?: string;
@@ -63,6 +68,30 @@ type Item = {
   uploadedSize?: number;
   error?: string;
   cover: boolean;
+  /** 原文件字节 SHA-256 */
+  hash?: string;
+  /** EXIF 方向（「仍然上传」重压缩时用） */
+  orientation?: number;
+  /** 用户坚持上传重复照片 */
+  forced?: boolean;
+  /** 判定为重复时，已有照片的信息 */
+  dupOf?: {
+    trip: string;
+    takenAt?: string;
+    key?: string;
+    thumbUrl?: string;
+    /** true = 与本次已选的照片重复，而不是历史已上传 */
+    inBatch?: boolean;
+  };
+};
+
+/** 已知照片 hash：uploaded = 已上传成功；pending = 本批已选但还没传 */
+type HashInfo = {
+  state: "uploaded" | "pending";
+  trip: string;
+  takenAt?: string;
+  key?: string;
+  thumbUrl?: string;
 };
 
 type RunStatus = {
@@ -117,7 +146,23 @@ function mb(bytes: number): string {
 }
 
 function statusText(s: Status): string {
-  return { processing: "处理中", ready: "待上传", uploading: "上传中", done: "已上传", error: "失败" }[s];
+  return {
+    queued: "排队中",
+    processing: "压缩中",
+    ready: "待上传",
+    uploading: "上传中",
+    done: "已上传",
+    duplicate: "已上传过",
+    error: "失败",
+  }[s];
+}
+
+/** 把一帧让给浏览器：先画出「排队中」，再开始压缩这种重活 */
+function nextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => setTimeout(resolve, 0));
+    else setTimeout(resolve, 0);
+  });
 }
 
 function timeoutSignal(ms: number): AbortSignal | undefined {
@@ -136,10 +181,11 @@ function friendlyError(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
 
-/** 只把可重建状态写进 IndexedDB；Blob 单独按 id 存，避免每次改行程都重写大文件 */
+/** 只把可重建状态写进 IndexedDB；Blob 单独按 id 存，避免每次改行程都重写大文件。
+ *  排队中/压缩中/已上传过的条目没有恢复价值，不写草稿。 */
 function toDraftMeta(items: Item[]): DraftMeta[] {
   return items
-    .filter((i) => i.status !== "processing")
+    .filter((i) => i.status === "ready" || i.status === "uploading" || i.status === "done" || i.status === "error")
     .map((i, order) => ({
       id: i.id,
       order,
@@ -152,6 +198,7 @@ function toDraftMeta(items: Item[]): DraftMeta[] {
       candidate: i.candidate,
       nearest: i.nearest,
       distanceKm: i.distanceKm,
+      hash: i.hash,
     }));
 }
 
@@ -166,6 +213,8 @@ export default function TravelUpload() {
   const [notice, setNotice] = useState("");
   const [run, setRun] = useState<RunStatus | null>(null);
   const [publishing, setPublishing] = useState(false);
+  /** 本批「读信息 + 查重 + 压缩」的进度，显示在底栏 */
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [dialog, setDialog] = useState<TripDialog>({
     open: false,
     coord: null,
@@ -175,9 +224,12 @@ export default function TravelUpload() {
     error: "",
   });
   const fileRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLElement>(null);
   const restoredRef = useRef(false);
   const itemsRef = useRef<Item[]>([]);
   const geoCache = useRef(new Map<string, GeoPlace | null>());
+  /** hash → 已上传/本批已选。manifest 拉到后填充 uploaded；本批选中时填 pending */
+  const knownHashes = useRef(new Map<string, HashInfo>());
 
   useEffect(() => {
     setToken(localStorage.getItem(TOKEN_KEY) || "");
@@ -200,6 +252,7 @@ export default function TravelUpload() {
               caption?: string;
               place?: string;
               cover?: boolean;
+              hash?: string;
             }>;
           } | null
         ) => {
@@ -214,6 +267,18 @@ export default function TravelUpload() {
             );
           }
           if (data.photos) {
+            /* 全量登记已知 hash（不只最近 40 张），离线判重靠它 */
+            for (const p of data.photos) {
+              if (p.hash) {
+                knownHashes.current.set(p.hash, {
+                  state: "uploaded",
+                  trip: p.trip,
+                  takenAt: p.takenAt,
+                  key: p.key,
+                  thumbUrl: p.thumbUrl,
+                });
+              }
+            }
             setUploaded(
               data.photos
                 .slice(-40)
@@ -278,6 +343,7 @@ export default function TravelUpload() {
                 uploadedSize: m.uploadedSize,
                 error: m.error,
                 cover: m.cover,
+                hash: m.hash,
               },
             ];
           })
@@ -289,6 +355,17 @@ export default function TravelUpload() {
             const seen = new Set(prev.map((p) => p.id));
             return [...restored.filter((r) => !seen.has(r.id)), ...prev];
           });
+          /* 恢复出来的条目也要进查重表，否则同批再选一次还会被当新照片 */
+          for (const r of restored) {
+            if (r.hash && r.status !== "done") {
+              knownHashes.current.set(r.hash, {
+                state: "pending",
+                trip: r.trip,
+                takenAt: r.takenAt,
+                thumbUrl: r.thumbPreview,
+              });
+            }
+          }
           const interrupted = meta.filter((m) => m.status === "uploading").length;
           setNotice(
             interrupted
@@ -354,6 +431,7 @@ export default function TravelUpload() {
   const missing = ready.length - uploadable.length;
   const pendingBytes = useMemo(() => uploadable.reduce((n, i) => n + (i.blob?.size ?? i.size), 0), [uploadable]);
   const doneCount = useMemo(() => items.filter((i) => i.status === "done").length, [items]);
+  const dupCount = useMemo(() => items.filter((i) => i.status === "duplicate").length, [items]);
 
   function tripLabel(id: string): string {
     const t = tripById.get(id);
@@ -466,6 +544,58 @@ export default function TravelUpload() {
     return best ? { trip: best[0], count: best[1].count } : null;
   }
 
+  /** 压缩 + 入草稿 + 变「待上传」。addFiles 与「仍然上传」共用 */
+  async function compressAndStage(
+    id: string,
+    file: File,
+    meta: { takenAt: string; gps?: [number, number]; orientation?: number },
+    hash?: string
+  ) {
+    try {
+      const oldPreview = itemsRef.current.find((i) => i.id === id)?.preview;
+      const conv = await toOptimizedImage(file, {
+        hasGps: Boolean(meta.gps),
+        orientation: meta.orientation,
+      });
+      const preview = URL.createObjectURL(conv.thumb);
+      void putDraftFile({
+        id,
+        name: file.name,
+        size: file.size,
+        blob: conv.blob,
+        thumb: conv.thumb,
+        width: conv.width,
+        height: conv.height,
+        takenAt: meta.takenAt,
+        gps: meta.gps,
+      }).catch(() => {
+        /* 存储空间不足时仍可继续上传 */
+      });
+      patch(id, {
+        blob: conv.blob,
+        thumb: conv.thumb,
+        preview,
+        thumbPreview: preview,
+        width: conv.width,
+        height: conv.height,
+        status: "ready",
+        hash,
+        file: undefined,
+      });
+      if (oldPreview && oldPreview !== preview) URL.revokeObjectURL(oldPreview);
+      if (hash) {
+        const cur = knownHashes.current.get(hash);
+        if (cur) knownHashes.current.set(hash, { ...cur, thumbUrl: preview });
+      }
+    } catch (err) {
+      patch(id, {
+        status: "error",
+        error: err instanceof Error ? err.message : "转码失败",
+        file: undefined,
+      });
+    }
+  }
+
   async function addFiles(list: FileList | null) {
     if (!list?.length) return;
     const files = Array.from(list).filter((f) => f.type.startsWith("image/") || isHeic(f));
@@ -473,111 +603,167 @@ export default function TravelUpload() {
       setNotice("没有识别到图片文件");
       return;
     }
+    if (fileRef.current) fileRef.current.value = "";
     setNotice("");
 
-    for (const file of files) {
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const meta = await readPhotoMeta(file);
-      const sug = suggestTrip(meta.gps);
-      // 有 GPS 但没匹配上就不猜；只有完全没有 GPS 时才用默认行程
-      const trip = sug.trip ?? (meta.gps ? "" : defaultTrip);
+    /* 阶段 1：先同步把占位全部放进列表，界面立刻有反馈。
+       压缩是重活，放到阶段 2 逐张做，期间卡片显示「排队中 / 压缩中」。 */
+    const seeds = files.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setItems((prev) => [
+      ...prev,
+      ...seeds.map((s) => ({
+        id: s.id,
+        name: s.file.name,
+        size: s.file.size,
+        file: s.file,
+        preview: s.preview,
+        thumbPreview: s.preview,
+        trip: "",
+        takenAt: "",
+        width: 0,
+        height: 0,
+        status: "queued" as Status,
+        cover: false,
+      })),
+    ]);
+    setProgress({ done: 0, total: seeds.length });
 
-      setItems((prev) => [
-        ...prev,
-        {
-          id,
-          name: file.name,
-          size: file.size,
+    /* 手机端把列表滚进视野：看得见进度，就不会误以为还卡在「添加照片」 */
+    requestAnimationFrame(() => {
+      if (window.matchMedia("(max-width: 700px)").matches) {
+        listRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    });
+
+    /* 让浏览器先把「排队中」画出来，再开始读 EXIF / 压缩 */
+    await nextPaint();
+
+    let done = 0;
+    for (const seed of seeds) {
+      const file = seed.file;
+      try {
+        const meta = await readPhotoMeta(file);
+        const sug = suggestTrip(meta.gps);
+        // 有 GPS 但没匹配上就不猜；只有完全没有 GPS 时才用默认行程
+        const trip = sug.trip ?? (meta.gps ? "" : defaultTrip);
+        const hash = await sha256Hex(file);
+
+        /* 查重：同文件再选一次直接标「已上传过」，不压缩、不解析地名 */
+        const dup = hash ? knownHashes.current.get(hash) : undefined;
+        if (dup) {
+          const dupPreview = dup.state === "uploaded" ? dup.thumbUrl : undefined;
+          patch(seed.id, {
+            status: "duplicate",
+            hash,
+            gps: meta.gps,
+            takenAt: meta.takenAt,
+            trip,
+            candidate: sug.candidate,
+            nearest: sug.nearest,
+            distanceKm: sug.distanceKm,
+            dupOf: { ...dup, inBatch: dup.state === "pending" },
+            preview: dupPreview ?? seed.preview,
+            thumbPreview: dupPreview ?? seed.preview,
+            geoStatus: undefined,
+          });
+          if (dupPreview && dupPreview !== seed.preview) URL.revokeObjectURL(seed.preview);
+          done += 1;
+          setProgress({ done, total: seeds.length });
+          await nextPaint();
+          continue;
+        }
+        if (hash) {
+          knownHashes.current.set(hash, { state: "pending", trip, takenAt: meta.takenAt });
+        }
+
+        patch(seed.id, {
+          status: "processing",
           gps: meta.gps,
+          takenAt: meta.takenAt,
           trip,
           candidate: sug.candidate,
           nearest: sug.nearest,
           distanceKm: sug.distanceKm,
-          takenAt: meta.takenAt,
-          width: 0,
-          height: 0,
-          status: "processing",
-          geoStatus: meta.gps ? "loading" : undefined,
-          cover: false,
-        },
-      ]);
-
-      // 后台解析地名：命中后补到卡片上，不阻塞转码
-      if (meta.gps) {
-        const gps = meta.gps;
-        void geocode(gps).then((r) => {
-          setItems((prev) =>
-            prev.map((it) =>
-              it.id === id
-                ? {
-                    ...it,
-                    geo: r.geo,
-                    geoStatus: r.geo ? "done" : "error",
-                    geoError: r.error,
-                  }
-                : it
-            )
-          );
-          // 弹窗如果已经打开且还是空的，地名到了就补上预填
-          if (r.geo) {
-            setDialog((d) => {
-              if (!d.open || d.country || d.place || !d.coord) return d;
-              const same =
-                Math.abs(d.coord[0] - gps[0]) < 0.001 && Math.abs(d.coord[1] - gps[1]) < 0.001;
-              if (!same) return d;
-              const pre = tripFromPlace(r.geo);
-              return { ...d, country: pre.country, countryEn: pre.countryEn, place: pre.place };
-            });
-          }
-        });
-      }
-
-      try {
-        const conv = await toOptimizedImage(file, {
-          hasGps: Boolean(meta.gps),
+          hash,
           orientation: meta.orientation,
+          geoStatus: meta.gps ? "loading" : undefined,
         });
-        const preview = URL.createObjectURL(conv.thumb);
-        void putDraftFile({
-          id,
-          name: file.name,
-          size: file.size,
-          blob: conv.blob,
-          thumb: conv.thumb,
-          width: conv.width,
-          height: conv.height,
-          takenAt: meta.takenAt,
-          gps: meta.gps,
-        }).catch(() => {
-          /* 存储空间不足时仍可继续上传 */
-        });
-        setItems((prev) =>
-          prev.map((it) =>
-            it.id === id
-              ? {
-                  ...it,
-                  blob: conv.blob,
-                  thumb: conv.thumb,
-                  preview,
-                  thumbPreview: preview,
-                  width: conv.width,
-                  height: conv.height,
-                  status: "ready",
-                }
-              : it
-          )
+
+        // 后台解析地名：命中后补到卡片上，不阻塞转码
+        if (meta.gps) {
+          const gps = meta.gps;
+          void geocode(gps).then((r) => {
+            setItems((prev) =>
+              prev.map((it) =>
+                it.id === seed.id
+                  ? {
+                      ...it,
+                      geo: r.geo,
+                      geoStatus: r.geo ? "done" : "error",
+                      geoError: r.error,
+                    }
+                  : it
+              )
+            );
+            // 弹窗如果已经打开且还是空的，地名到了就补上预填
+            if (r.geo) {
+              setDialog((d) => {
+                if (!d.open || d.country || d.place || !d.coord) return d;
+                const same =
+                  Math.abs(d.coord[0] - gps[0]) < 0.001 && Math.abs(d.coord[1] - gps[1]) < 0.001;
+                if (!same) return d;
+                const pre = tripFromPlace(r.geo);
+                return { ...d, country: pre.country, countryEn: pre.countryEn, place: pre.place };
+              });
+            }
+          });
+        }
+
+        await compressAndStage(
+          seed.id,
+          file,
+          { takenAt: meta.takenAt, gps: meta.gps, orientation: meta.orientation },
+          hash
         );
       } catch (err) {
-        setItems((prev) =>
-          prev.map((it) =>
-            it.id === id
-              ? { ...it, status: "error", error: err instanceof Error ? err.message : "转码失败" }
-              : it
-          )
-        );
+        patch(seed.id, {
+          status: "error",
+          error: err instanceof Error ? err.message : "读取信息失败",
+          file: undefined,
+        });
       }
+      done += 1;
+      setProgress({ done, total: seeds.length });
+      /* 每张之间让出一帧，保证滚动和进度更新能画出来 */
+      await nextPaint();
     }
-    if (fileRef.current) fileRef.current.value = "";
+    setProgress(null);
+  }
+
+  /** 重复照片：用户坚持要传。用保留的 File 现场压缩，再回到待上传 */
+  async function forceUpload(item: Item) {
+    if (!item.file) {
+      setNotice("原文件已不在内存里，请重新选择这张照片");
+      return;
+    }
+    if (item.hash) knownHashes.current.delete(item.hash);
+    patch(item.id, {
+      status: "processing",
+      forced: true,
+      dupOf: undefined,
+      error: undefined,
+      uploadedSize: undefined,
+    });
+    await compressAndStage(
+      item.id,
+      item.file,
+      { takenAt: item.takenAt, gps: item.gps, orientation: item.orientation },
+      item.hash
+    );
   }
 
   function patch(id: string, next: Partial<Item>) {
@@ -588,6 +774,10 @@ export default function TravelUpload() {
     void removeDraftFile(id).catch(() => {});
     setItems((prev) => {
       const target = prev.find((it) => it.id === id);
+      if (target?.hash) {
+        const info = knownHashes.current.get(target.hash);
+        if (info?.state === "pending") knownHashes.current.delete(target.hash);
+      }
       if (target?.preview) URL.revokeObjectURL(target.preview);
       if (target?.thumbPreview && target.thumbPreview !== target.preview) {
         URL.revokeObjectURL(target.thumbPreview);
@@ -713,9 +903,13 @@ export default function TravelUpload() {
     }
   }
 
-  async function uploadOne(item: Item): Promise<UploadedPhoto> {
-    if (!item.blob) throw new Error("文件还没准备好");
-    if (!item.trip) throw new Error("还没选行程");
+  type UploadOutcome =
+    | { ok: true; photo: UploadedPhoto }
+    | { ok: false; duplicate?: { trip?: string; takenAt?: string; key?: string; url?: string }; error?: string };
+
+  async function uploadOne(item: Item): Promise<UploadOutcome> {
+    if (!item.blob) return { ok: false, error: "文件还没准备好" };
+    if (!item.trip) return { ok: false, error: "还没选行程" };
     const fd = new FormData();
     const ext = item.blob.type === "image/jpeg" ? "jpg" : item.blob.type === "image/png" ? "png" : "webp";
     fd.append("file", new File([item.blob], `${item.trip}.${ext}`, { type: item.blob.type || "image/webp" }));
@@ -735,6 +929,9 @@ export default function TravelUpload() {
     fd.append("h", String(item.height));
     if (item.geo?.label) fd.append("place", item.geo.label);
     fd.append("cover", item.cover ? "1" : "0");
+    /* 原文件 hash：服务端据此兜底查重；用户点过「仍然上传」才带 force */
+    if (item.hash) fd.append("hash", item.hash);
+    if (item.forced) fd.append("force", "1");
 
     const res = await fetch(`${API}/upload`, {
       method: "POST",
@@ -742,13 +939,19 @@ export default function TravelUpload() {
       body: fd,
       signal: timeoutSignal(120_000),
     });
+    if (res.status === 409) {
+      const data = (await res.json().catch(() => ({}))) as {
+        photo?: { trip?: string; takenAt?: string; key?: string; url?: string } | null;
+      };
+      return { ok: false, duplicate: data.photo ?? {} };
+    }
     if (!res.ok) {
       const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (res.status === 401) throw new Error("token 无效，请重新输入");
-      throw new Error(data.error || `上传失败（HTTP ${res.status}）`);
+      if (res.status === 401) return { ok: false, error: "token 无效，请重新输入" };
+      return { ok: false, error: data.error || `上传失败（HTTP ${res.status}）` };
     }
     const data = (await res.json()) as UploadedPhoto;
-    return { ...data, trip: item.trip, takenAt: item.takenAt };
+    return { ok: true, photo: { ...data, trip: item.trip, takenAt: item.takenAt } };
   }
 
   async function uploadAll() {
@@ -761,8 +964,45 @@ export default function TravelUpload() {
       if (!item || item.status !== "ready" || !item.trip) continue;
       patch(item.id, { status: "uploading", error: undefined });
       try {
-        const meta = await uploadOne(item);
+        const outcome = await uploadOne(item);
+        if (!outcome.ok) {
+          /* 服务端兜底判重（并发/异设备上传）：转成「已上传过」，不算失败 */
+          if (outcome.duplicate) {
+            const dup = outcome.duplicate;
+            patch(item.id, {
+              status: "duplicate",
+              dupOf: {
+                trip: dup.trip || item.trip,
+                takenAt: dup.takenAt,
+                key: dup.key,
+              },
+              error: undefined,
+            });
+            if (item.hash) {
+              knownHashes.current.set(item.hash, {
+                state: "uploaded",
+                trip: dup.trip || item.trip,
+                takenAt: dup.takenAt,
+                key: dup.key,
+              });
+            }
+            setNotice("服务器判定有照片重复，已标记为「已上传过」");
+          } else {
+            patch(item.id, { status: "error", error: outcome.error ?? "上传失败" });
+          }
+          continue;
+        }
+        const meta = outcome.photo;
         patch(item.id, { status: "done", url: meta.url, blob: undefined, uploadedSize: meta.bytes });
+        if (item.hash) {
+          knownHashes.current.set(item.hash, {
+            state: "uploaded",
+            trip: meta.trip,
+            takenAt: meta.takenAt,
+            key: meta.key,
+            thumbUrl: meta.thumbUrl,
+          });
+        }
         // 草稿瘦身：上传成功后只保留缩略图，释放 IndexedDB 空间
         if (item.thumb) {
           void putDraftFile({
@@ -1011,34 +1251,52 @@ export default function TravelUpload() {
 
       {notice ? <p className="upload-notice">{notice}</p> : null}
 
-      <section className="upload-list" aria-live="polite">
+      <section className="upload-list" aria-live="polite" ref={listRef}>
         {items.length === 0 ? (
           <p className="upload-empty">还没有照片。点「选择照片」开始。</p>
         ) : (
           items.map((item) => {
             const unmatched = item.status === "ready" && !item.trip;
             const dayTrip = unmatched ? sameDayTrip(item) : null;
+            const locked = busy || item.status === "done" || item.status === "uploading" || item.status === "duplicate" || item.status === "queued" || item.status === "processing";
             return (
               <article
                 key={item.id}
                 className={`upload-item is-${item.status}${unmatched ? " is-unmatched" : ""}`}
               >
                 <div className="upload-thumb">
+                  <span className="upload-thumb-ph" aria-hidden="true">
+                    {item.status === "duplicate" ? "✓" : item.status === "error" ? "!" : "…"}
+                  </span>
                   {(item.thumbPreview ?? item.preview) ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={item.thumbPreview ?? item.preview} alt="" />
-                  ) : (
-                    <span>{item.status === "processing" ? "转码中…" : "!"}</span>
-                  )}
+                    <img
+                      src={item.thumbPreview ?? item.preview}
+                      alt=""
+                      onError={(e) => {
+                        e.currentTarget.dataset.broken = "1";
+                      }}
+                    />
+                  ) : null}
                 </div>
 
                 <div className="upload-info">
                   <b title={item.name}>{item.name}</b>
                   <span>
-                    {formatTakenAt(item.takenAt)}
+                    {item.status === "queued" ? "读取信息中…" : formatTakenAt(item.takenAt)}
                     {item.width ? ` · ${item.width}×${item.height}` : ""} · 原始 {mb(item.size)}
                     {item.blob ? ` → 上传 ${mb(item.blob.size)}` : item.uploadedSize ? ` → 已上传 ${mb(item.uploadedSize)}` : ""}
                   </span>
+
+                  {item.status === "duplicate" ? (
+                    <em className="is-dup">
+                      {item.dupOf?.inBatch
+                        ? "这张照片在这批里已经选过一次了"
+                        : `已上传过${item.dupOf?.trip ? ` · ${tripLabel(item.dupOf.trip)}` : ""}${
+                            item.dupOf?.takenAt ? ` · ${formatTakenAt(item.dupOf.takenAt)}` : ""
+                          }`}
+                    </em>
+                  ) : null}
 
                   {unmatched ? (
                     <em className="is-unmatched">
@@ -1104,7 +1362,7 @@ export default function TravelUpload() {
                   <select
                     value={item.trip}
                     onChange={(e) => patch(item.id, { trip: e.target.value, candidate: undefined })}
-                    disabled={busy || item.status === "done" || item.status === "uploading"}
+                    disabled={locked}
                     aria-label="归到哪个行程"
                   >
                     {tripOptions(true)}
@@ -1115,10 +1373,21 @@ export default function TravelUpload() {
                       type="checkbox"
                       checked={item.cover}
                       onChange={() => setCover(item.id)}
-                      disabled={busy || item.status === "done" || !item.trip}
+                      disabled={locked || !item.trip}
                     />
                     封面
                   </label>
+
+                  {item.status === "duplicate" ? (
+                    <button
+                      type="button"
+                      className="upload-ghost upload-force"
+                      onClick={() => void forceUpload(item)}
+                      disabled={busy}
+                    >
+                      仍然上传
+                    </button>
+                  ) : null}
 
                   <span className={`upload-state is-${item.status}`}>{statusText(item.status)}</span>
 
@@ -1225,7 +1494,14 @@ export default function TravelUpload() {
         <span>
           {uploadable.length} 张待上传 · {mb(pendingBytes)}
           {missing ? `　· ${missing} 张待定行程` : ""}
+          {dupCount ? `　· ${dupCount} 张已上传过` : ""}
           {doneCount ? `　已上传 ${doneCount} 张` : ""}
+          {progress ? (
+            <span className="upload-progress" role="status">
+              <i style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} />
+              处理中 {progress.done}/{progress.total}
+            </span>
+          ) : null}
         </span>
         <button type="button" onClick={() => void uploadAll()} disabled={busy || !uploadable.length}>
           {busy ? "上传中…" : "开始上传"}

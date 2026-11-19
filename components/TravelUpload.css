@@ -752,3 +752,131 @@
     max-width: none;
   }
 }
+
+/* ================= 上传状态：排队 / 压缩中 / 已上传过（2026-11-19） ================= */
+
+/* 缩略图：占位符号垫底，img 盖在上面；HEIC 在本机预览失败时隐藏破图 */
+.upload-thumb > * {
+  grid-area: 1 / 1;
+}
+
+.upload-thumb-ph {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--grey);
+}
+
+.upload-thumb img[data-broken="1"] {
+  display: none;
+}
+
+.upload-item.is-queued,
+.upload-item.is-processing {
+  border-color: color-mix(in srgb, var(--lime) 42%, transparent);
+}
+
+/* 排队/压缩中：状态胶囊脉冲，明确在干活而不是卡死 */
+.upload-item.is-queued .upload-state,
+.upload-item.is-processing .upload-state {
+  color: #7a8a00;
+  border-style: dashed;
+  animation: upload-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes upload-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.upload-item.is-duplicate {
+  border-color: color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--panel) 32%, transparent);
+}
+
+.upload-item.is-duplicate .upload-thumb {
+  opacity: 0.6;
+}
+
+.upload-state.is-duplicate {
+  color: var(--grey);
+  border-style: dashed;
+}
+
+.upload-info em.is-dup {
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+  color: var(--grey);
+}
+
+.upload-controls .upload-force {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* 底栏进度：处理中 3/12 + 细进度条，手机端单独一行 */
+.upload-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.6rem;
+  position: relative;
+  padding-bottom: 0.35rem;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.upload-progress i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--lime);
+  transition: width 0.25s ease;
+}
+
+@media (max-width: 700px) {
+  .upload-progress {
+    display: flex;
+    margin-left: 0;
+    margin-top: 0.3rem;
+  }
+
+  /* 手机端底栏固定：选完照片后「压缩中 3/8」和开始上传始终可见，
+     不用滚到页面最底部；下面给页面留出等高的空间，避免压住最后一张卡片 */
+  .upload-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin: 0;
+    padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper) 94%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  .upload-page {
+    padding-bottom: calc(10.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-item.is-queued .upload-state,
+  .upload-item.is-processing .upload-state {
+    animation: none;
+  }
+
+  .upload-progress i {
+    transition: none;
+  }
+}

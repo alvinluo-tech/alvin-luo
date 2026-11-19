@@ -34,6 +34,8 @@ export type DraftMeta = {
   candidate?: string;
   nearest?: string;
   distanceKm?: number;
+  /** 原文件 SHA-256（上传时带上，服务端查重） */
+  hash?: string;
 };
 
 const DB_NAME = "alvin-travel-upload";

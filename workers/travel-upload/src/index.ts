@@ -28,6 +28,9 @@ const DEFAULT_ALLOWED = "https://alvin-luo.me";
 const PHOTO_PREFIX = "travel/";
 const META_PREFIX = "travel/_meta/";
 const TRIP_PREFIX = "travel/_trips/";
+/* 原文件 SHA-256 → 照片指针，用于服务端查重（客户端的 manifest 预检之外兜底）。
+   放在 _hashes/ 下，不会被 /manifest 的 _meta/_trips 列表带走。 */
+const HASH_PREFIX = "travel/_hashes/";
 const THUMB_PREFIX = "travel/_thumbs/";
 const GEO_PREFIX = "travel/_geo/";
 const CACHE_IMMUTABLE = "public, max-age=31536000, immutable";
@@ -162,6 +165,24 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
       ? takenAtRaw
       : new Date().toISOString();
 
+  /* 查重：hash = 原文件字节 SHA-256（客户端算）。
+     force=1 表示用户明确要求「仍然上传」同一张照片。 */
+  const hashRaw = text(form.get("hash"), 64);
+  const hash = /^[a-f0-9]{64}$/.test(hashRaw) ? hashRaw : undefined;
+  const force = text(form.get("force"), 2) === "1";
+  if (hash && !force) {
+    const hit = await env.PHOTOS.get(HASH_PREFIX + hash);
+    if (hit) {
+      let photo: unknown = null;
+      try {
+        photo = JSON.parse(await hit.text());
+      } catch {
+        photo = null;
+      }
+      return json({ error: "duplicate", photo }, 409);
+    }
+  }
+
   const key = keyFor(
     trip,
     takenAt,
@@ -210,12 +231,21 @@ async function handleUpload(request: Request, env: Env): Promise<Response> {
     place,
     cover,
     bytes: file.size,
+    hash,
     uploadedAt: new Date().toISOString(),
   };
 
   await env.PHOTOS.put(metaKeyFor(key), JSON.stringify(meta), {
     httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" },
   });
+  /* 先写照片与 meta，再登记 hash 指针；下次同文件上传会 409 */
+  if (hash) {
+    await env.PHOTOS.put(
+      HASH_PREFIX + hash,
+      JSON.stringify({ key, trip, takenAt, url: meta.url }),
+      { httpMetadata: { contentType: "application/json; charset=utf-8", cacheControl: "no-store" } }
+    );
+  }
   invalidateManifest();
 
   return json(meta, 201);
@@ -459,6 +489,21 @@ async function handlePhotoDelete(request: Request, env: Env): Promise<Response> 
   await env.PHOTOS.delete(key);
   if (obj) await env.PHOTOS.delete(metaKey);
   if (meta && typeof meta.thumbKey === "string") await env.PHOTOS.delete(meta.thumbKey);
+  /* 删掉照片后清 hash 指针，否则这张照片再也传不回来。
+     同一张图被强制上传过多次时，只清指向当前 key 的指针。 */
+  if (meta && typeof meta.hash === "string") {
+    const hashKey = HASH_PREFIX + meta.hash;
+    const marker = await env.PHOTOS.get(hashKey);
+    if (marker) {
+      let pointTo: unknown = null;
+      try {
+        pointTo = (JSON.parse(await marker.text()) as { key?: string }).key;
+      } catch {
+        pointTo = null;
+      }
+      if (!pointTo || pointTo === key) await env.PHOTOS.delete(hashKey);
+    }
+  }
   invalidateManifest();
 
   return json({ ok: true, key }, 200);

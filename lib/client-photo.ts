@@ -386,6 +386,20 @@ export function isHeic(file: File): boolean {
   return /\.(heic|heif)$/i.test(file.name) || /heic|heif/i.test(file.type);
 }
 
+/** 原文件字节的 SHA-256（查重用）。环境不支持或读取失败时返回 undefined，不影响上传 */
+export async function sha256Hex(file: Blob): Promise<string | undefined> {
+  try {
+    const subtle = (globalThis.crypto as Crypto | undefined)?.subtle;
+    if (!subtle) return undefined;
+    const digest = await subtle.digest("SHA-256", await file.arrayBuffer());
+    let hex = "";
+    for (const b of new Uint8Array(digest)) hex += b.toString(16).padStart(2, "0");
+    return hex;
+  } catch {
+    return undefined;
+  }
+}
+
 /** 显示拍摄时间：直接取 ISO 里的当地日期与时间（不换算时区） */
 export function formatTakenAt(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(iso);
