@@ -492,6 +492,24 @@ const HAND_TRIPS: Trip[] = [
     note: "",
     coord: [14.51, 35.9],
   },
+  {
+    img: "47",
+    country: "马耳他",
+    countryEn: "Malta",
+    place: "戈佐 GOZO",
+    date: "",
+    note: "",
+    coord: [14.24, 36.04],
+  },
+  {
+    img: "48",
+    country: "马耳他",
+    countryEn: "Malta",
+    place: "科米诺 COMINO",
+    date: "",
+    note: "",
+    coord: [14.33, 36.01],
+  },
 ];
 
 /** 全部站点 = 手写 + 上传页新建（构建时从 R2 manifest 生成） */
