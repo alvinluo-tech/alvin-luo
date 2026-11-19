@@ -185,6 +185,15 @@ const HAND_TRIPS: Trip[] = [
     note: "",
     coord: [114.06, 22.55],
   },
+  {
+    img: "51",
+    country: "中国",
+    countryEn: "China",
+    place: "漳州 ZHANGZHOU",
+    date: "",
+    note: "",
+    coord: [117.65, 24.51],
+  },
 
   /* ---------- 新加坡 ---------- */
   {
